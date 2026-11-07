@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush — Create Cadet Account</title>
+  <link rel="icon" type="image/png"
+    href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+
+  <!-- Space Arcade Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&display=swap"
+    rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            arcade: ['"Press Start 2P"', 'monospace', 'cursive'],
+          },
+          colors: {
+            void: '#07090e',
+            surface: '#11131d',
+            card: '#161926',
+            popup: '#141828',
+            borderDim: '#2d334a',
+            borderMid: '#4b5578',
+            textMain: '#F5F8FF',
+            textMuted: '#9aa5c4',
+            gold: '#FACC15',
+            goldMuted: '#ca9e16',
+            cyan: '#38BDF8',
+            cyanNeon: '#00F2FE',
+            pinkNeon: '#F472B6',
+            success: '#34D399',
+            danger: '#F87171'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #07090e;
+      color: #F5F8FF;
+      font-family: 'Space Grotesk', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Starfield particle base styling */
+    .star {
+      position: absolute;
+      background-color: #ffffff;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .star.tiny {
+      width: 1.5px;
+      height: 1.5px;
+      opacity: 0.4;
+    }
+
+    .star.med {
+      width: 3px;
+      height: 3px;
+      opacity: 0.7;
+    }
+
+    .star.twinkle {
+      animation: twinkle 3.5s ease-in-out infinite alternate;
+    }
+
+    .star.four-point {
+      width: 6px;
+      height: 6px;
+      background: #FACC15;
+      clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
+      opacity: 0.85;
+      filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.6));
+    }
+
+    @keyframes twinkle {
+      0% {
+        opacity: 0.25;
+        transform: scale(0.85);
+      }
+
+      50% {
+        opacity: 0.9;
+        transform: scale(1.2);
+      }
+
+      100% {
+        opacity: 0.35;
+        transform: scale(0.9);
+      }
+    }
+
+    /* Primary glowing arcade button */
+    .arcade-btn-primary {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1.5px solid #38BDF8;
+      box-shadow: 0 5px 0 #0284c7, 0 0 25px rgba(56, 189, 248, 0.3);
+    }
+
+    .arcade-btn-primary:hover:not(:disabled) {
+      border-color: #FACC15;
+      box-shadow: 0 7px 0 #0284c7, 0 0 32px rgba(250, 204, 21, 0.38);
+      transform: translateY(-2px);
+    }
+
+    .arcade-btn-primary:active:not(:disabled) {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #0284c7;
+    }
+
+    .arcade-btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Concentric Radar Rings */
+    @keyframes cosmicRadar {
+      0% {
+        transform: translate(-50%, -50%) scale(0.7);
+        opacity: 0.35;
+      }
+
+      50% {
+        opacity: 0.55;
+      }
+
+      100% {
+        transform: translate(-50%, -50%) scale(1.35);
+        opacity: 0;
+      }
+    }
+
+    .kinetic-wave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(56, 189, 248, 0.2);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: cosmicRadar 12s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+
+    .kinetic-wave.delay-1 {
+      animation-delay: 4s;
+      border-style: dotted;
+      border-color: rgba(250, 204, 21, 0.22);
+    }
+
+    /* Floating Math Equations */
+    .constellation-glyph {
+      position: absolute;
+      pointer-events: none;
+      animation: glyphFloat 9s ease-in-out infinite alternate;
+      z-index: 1;
+    }
+
+    @keyframes glyphFloat {
+      0% {
+        transform: translateY(0px) rotate(0deg);
+        opacity: 0.45;
+      }
+
+      50% {
+        transform: translateY(-8px) rotate(1.5deg);
+        opacity: 0.75;
+      }
+
+      100% {
+        transform: translateY(5px) rotate(-1.5deg);
+        opacity: 0.5;
+      }
+    }
+
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #07090e;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #2d334a;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38BDF8;
+    }
+  </style>
+</head>
+
+<body
+  class="min-h-screen relative flex flex-col justify-between selection:bg-cyan/30 selection:text-cyan bg-void text-textMain">
+
+  <!-- ============================================================ -->
+  <!-- COSMIC BACKGROUND LAYER                                     -->
+  <!-- ============================================================ -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" id="cosmic-bg">
+    <div
+      class="absolute inset-0 bg-[#07090e] bg-[radial-gradient(ellipse_80%_80%_at_50%_-15%,rgba(56,189,248,0.12),rgba(0,0,0,0))]">
+    </div>
+    <div class="kinetic-wave"></div>
+    <div class="kinetic-wave delay-1"></div>
+
+    <!-- Cosmic Spark Vector Line -->
+    <svg class="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-[320px] pointer-events-none opacity-20"
+      preserveAspectRatio="none" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M0,160 Q180,158 280,160 T420,160 L450,130 L470,200 L490,105 L515,215 L535,160 L620,160 Q720,160 840,160 L870,135 L885,190 L900,115 L920,205 L935,160 Q1050,160 1440,160"
+        fill="none" stroke="#38BDF8" stroke-dasharray="8 6" stroke-width="1.6"></path>
+      <path d="M0,160 C320,185 480,135 720,160 C960,185 1120,135 1440,160" fill="none" opacity="0.25" stroke="#FACC15"
+        stroke-dasharray="4 8" stroke-width="1"></path>
+    </svg>
+
+    <!-- Floating Math Challenge Badges -->
+    <div class="constellation-glyph pointer-events-none select-none hidden md:block"
+      style="top: 18%; right: 9%; opacity: 0.35;">
+      <div
+        class="flex items-center gap-2 px-3 py-1 rounded-full border border-borderDim bg-surface/70 backdrop-blur-sm text-xs font-mono text-textMuted">
+        <span>15 + 27 = 42</span>
+      </div>
+    </div>
+    <div class="constellation-glyph pointer-events-none select-none hidden md:block"
+      style="top: 75%; left: 7%; opacity: 0.35;">
+      <div
+        class="flex items-center gap-2 px-3 py-1 rounded-full border border-borderDim bg-surface/70 backdrop-blur-sm text-xs font-mono text-textMuted">
+        <span>7 × 7 = 49</span>
+      </div>
+    </div>
+    <div class="constellation-glyph pointer-events-none select-none hidden lg:block"
+      style="top: 45%; left: 4%; opacity: 0.3;">
+      <div
+        class="flex items-center gap-1.5 px-2.5 py-1 rounded border border-borderDim bg-surface/50 text-xs font-mono text-cyan">
+        <span>5 × ? = 35</span>
+      </div>
+    </div>
+
+    <!-- Twinkling Star Anchors -->
+    <div class="star four-point twinkle" style="top: 14%; left: 12%; animation-delay: 0s;"></div>
+    <div class="star four-point twinkle" style="top: 24%; left: 86%; animation-delay: 1.4s;"></div>
+    <div class="star four-point twinkle" style="top: 72%; left: 14%; animation-delay: 2.1s;"></div>
+    <div class="star four-point twinkle" style="top: 80%; left: 88%; animation-delay: 0.9s;"></div>
+    <div class="star med" style="top: 10%; left: 36%;"></div>
+    <div class="star tiny" style="top: 28%; left: 24%;"></div>
+    <div class="star med twinkle" style="top: 15%; left: 72%; animation-delay: 1s;"></div>
+    <div class="star tiny twinkle" style="top: 66%; left: 82%; animation-delay: 2.4s;"></div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TOP HEADER HUD                                              -->
+  <!-- ============================================================ -->
+  <header
+    class="relative z-20 w-full px-4 sm:px-8 py-4 flex items-center justify-between border-b border-borderDim/40 bg-void/60 backdrop-blur-md">
+    <!-- Star Cadet Return Link -->
+    <a href="dashboard.html"
+      class="group flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-borderDim bg-surface/80 hover:border-gold hover:bg-card transition-all text-textMain shadow-md backdrop-blur-sm"
+      title="Back to Homepage">
+      <div class="w-5 h-5 text-gold flex items-center justify-center">
+        <svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor"
+          stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+          <polyline points="15 18 9 12 15 6"></polyline>
+        </svg>
+      </div>
+      <div class="flex flex-col text-left">
+        <span class="text-[10px] font-mono tracking-widest text-gold font-bold uppercase">STAR CADET</span>
+        <span class="text-xs font-sans font-semibold text-textMain group-hover:text-gold transition-colors">Back to
+          Homepage</span>
+      </div>
+    </a>
+
+    <!-- Center Status Pill -->
+    <div
+      class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/80 border border-borderDim text-xs font-mono text-textMuted">
+      <span class="w-2 h-2 rounded-full bg-cyan inline-block animate-pulse"></span>
+      <span class="text-[11px] uppercase tracking-wider text-textMain">REGISTRATION PORTAL</span>
+    </div>
+
+    <!-- Right Action: Login Link -->
+    <div class="flex items-center gap-2.5">
+      <a href="login.html"
+        class="px-3.5 py-2 rounded-xl border border-borderDim bg-surface/80 hover:bg-card hover:border-cyan text-xs font-mono font-semibold text-textMain hover:text-cyan transition-all shadow-md">
+        SIGN IN &rarr;
+      </a>
+    </div>
+  </header>
+
+  <!-- ============================================================ -->
+  <!-- MAIN REGISTRATION PANEL                                      -->
+  <!-- ============================================================ -->
+  <main class="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 backdrop-blur-md">
+    <div
+      class="w-full max-w-[560px] bg-popup/95 border border-borderMid/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.85)] backdrop-blur-xl relative overflow-hidden flex flex-col">
+      <!-- Top neon decorative border highlight -->
+      <div class="h-1 w-full bg-gradient-to-r from-cyan/60 via-gold/80 to-pinkNeon/60"></div>
+
+      <div class="p-5 sm:p-7 relative z-10">
+        <!-- Arcade Header Branding -->
+        <div class="mb-5 text-center select-none">
+          <h1
+            class="text-2xl sm:text-3xl font-bold tracking-wider text-textMain leading-none uppercase drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)]"
+            style="font-family: 'Press Start 2P', monospace, cursive; text-shadow: 0 0 16px rgba(56, 189, 248, 0.45), 0 3px 0 #07090e;">
+            MINDRUSH
+          </h1>
+          <p class="text-xs sm:text-sm text-gold font-bold tracking-widest uppercase font-sans mt-2.5">
+            THINK FAST. WAVE YOUR HANDS. JOIN THE SQUAD!
+          </p>
+        </div>
+
+        <!-- Inline Server Alert / Notification Box -->
+        <div id="general-alert"
+          class="hidden mb-4 p-3 bg-danger/15 border border-danger/40 rounded-xl flex items-center gap-2.5"
+          role="alert">
+          <span class="material-symbols-outlined text-danger text-[20px] shrink-0">error</span>
+          <span id="general-alert-text" class="text-xs font-mono text-danger font-medium"></span>
+        </div>
+
+        <!-- Success Toast Container -->
+        <div id="success-alert"
+          class="hidden mb-4 p-3 bg-success/15 border border-success/40 rounded-xl flex items-center gap-2.5"
+          role="alert">
+          <span class="material-symbols-outlined text-success text-[20px] shrink-0">check_circle</span>
+          <span id="success-alert-text" class="text-xs font-mono text-success font-medium"></span>
+        </div>
+
+        <!-- Cadet Registration Form (Strictly required fields only, NO phone number) -->
+        <form id="signup-form" class="space-y-4" novalidate>
+
+          <!-- 1. Full Name -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <label for="fullName" class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">
+                FULL NAME
+              </label>
+              <span id="fullname-error" class="hidden text-[11px] font-mono text-danger">Required</span>
+            </div>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">badge</span>
+              <input type="text" id="fullName" name="fullName" placeholder="Enter cadet full name (e.g. Alex Vance)"
+                required autocomplete="name"
+                class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-4 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50">
+            </div>
+          </div>
+
+          <!-- 2. Username (3-16 chars, letters/numbers/underscores) -->
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center justify-between">
+              <label for="username" class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">
+                CADET USERNAME
+              </label>
+              <span id="username-error" class="hidden text-[11px] font-mono text-danger">3–16 letters, numbers, or
+                _</span>
+            </div>
+            <div class="relative">
+              <span
+                class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">alternate_email</span>
+              <input type="text" id="username" name="username" maxlength="16" placeholder="e.g. StarVoyager_09" required
+                autocomplete="username"
+                class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-4 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50">
+            </div>
+            <p class="text-[11px] font-mono text-textMuted/70">3–16 characters: letters, numbers, or underscores only.
+            </p>
+          </div>
+
+          <!-- 3. Date of Birth & Pilot Avatar (Gender) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Date of Birth -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <label for="dob" class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">
+                  DATE OF BIRTH
+                </label>
+                <span id="dob-error" class="hidden text-[11px] font-mono text-danger">Required</span>
+              </div>
+              <div class="relative">
+                <span
+                  class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">calendar_today</span>
+                <input type="date" id="dob" name="dob" required
+                  class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-3 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50 [color-scheme:dark] h-11">
+              </div>
+            </div>
+
+            <!-- Gender Selection (Required) -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">
+                  GENDER
+                </label>
+                <span id="gender-error" class="hidden text-[11px] font-mono text-danger">Required</span>
+              </div>
+              <input type="hidden" id="gender" name="gender" value="" required>
+              <div class="grid grid-cols-2 gap-2 h-11" role="radiogroup" aria-label="Select Gender">
+                <button type="button" id="btn-gender-male" onclick="selectGender('male')"
+                  class="gender-btn flex items-center justify-center h-11 px-3 rounded-xl border transition-all text-xs font-mono font-bold uppercase border-borderDim bg-void/90 text-textMuted hover:bg-card hover:text-textMain shadow-sm"
+                  aria-checked="false">
+                  <span>MALE</span>
+                </button>
+                <button type="button" id="btn-gender-female" onclick="selectGender('female')"
+                  class="gender-btn flex items-center justify-center h-11 px-3 rounded-xl border transition-all text-xs font-mono font-bold uppercase border-borderDim bg-void/90 text-textMuted hover:bg-card hover:text-textMain shadow-sm"
+                  aria-checked="false">
+                  <span>FEMALE</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. Password & Confirm Password -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <!-- Password Field -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <label for="password" class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">
+                  CREATE PASSWORD
+                </label>
+                <span id="password-error" class="hidden text-[11px] font-mono text-danger">Min 8 chars</span>
+              </div>
+              <div class="relative">
+                <span
+                  class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">lock</span>
+                <input type="password" id="password" name="password" placeholder="Min. 8 characters" required
+                  autocomplete="new-password" oninput="updatePasswordStrength()"
+                  class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-10 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50">
+                <button type="button" id="toggle-password" aria-label="Toggle password visibility"
+                  onclick="togglePasswordVisibility('password', 'password-eye-icon')"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textMain transition-colors p-1">
+                  <span class="material-symbols-outlined text-[18px]" id="password-eye-icon">visibility</span>
+                </button>
+              </div>
+
+              <!-- Real Calculated Password Strength Indicator -->
+              <div class="space-y-1 mt-0.5">
+                <div class="w-full h-1 bg-card rounded-full overflow-hidden flex gap-0.5">
+                  <div id="strength-bar-1" class="h-full flex-1 bg-borderDim rounded-full transition-colors"></div>
+                  <div id="strength-bar-2" class="h-full flex-1 bg-borderDim rounded-full transition-colors"></div>
+                  <div id="strength-bar-3" class="h-full flex-1 bg-borderDim rounded-full transition-colors"></div>
+                  <div id="strength-bar-4" class="h-full flex-1 bg-borderDim rounded-full transition-colors"></div>
+                </div>
+                <div class="flex justify-between items-center text-[10px] font-mono text-textMuted">
+                  <span>Min 8 characters</span>
+                  <span id="strength-label" class="font-bold uppercase text-textMuted">EMPTY</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Confirm Password Field -->
+            <div class="flex flex-col gap-1.5">
+              <div class="flex items-center justify-between">
+                <label for="confirmPassword"
+                  class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">
+                  CONFIRM PASSWORD
+                </label>
+                <span id="confirm-error" class="hidden text-[11px] font-mono text-danger">Must match</span>
+              </div>
+              <div class="relative">
+                <span
+                  class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">lock_reset</span>
+                <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password"
+                  required autocomplete="new-password"
+                  class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-10 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50">
+                <button type="button" id="toggle-confirm" aria-label="Toggle confirm password visibility"
+                  onclick="togglePasswordVisibility('confirmPassword', 'confirm-eye-icon')"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textMain transition-colors p-1">
+                  <span class="material-symbols-outlined text-[18px]" id="confirm-eye-icon">visibility</span>
+                </button>
+              </div>
+              <p class="text-[11px] font-mono text-textMuted/70">Must match password above.</p>
+            </div>
+          </div>
+
+          <!-- 5. Terms & Conditions Checkbox -->
+          <div class="pt-1 text-xs">
+            <label class="flex items-start gap-2.5 cursor-pointer select-none group">
+              <input type="checkbox" id="terms" name="terms" required
+                class="mt-0.5 w-4 h-4 rounded border-borderDim bg-void text-cyan focus:ring-cyan focus:ring-offset-void cursor-pointer accent-cyan">
+              <span class="text-textMuted leading-tight font-sans">
+                I agree to the <a href="terms.html" class="text-cyan underline hover:text-cyanNeon">Terms of Flight</a>
+                and Privacy Protocol.
+              </span>
+            </label>
+            <span id="terms-error" class="hidden text-[11px] font-mono text-danger mt-1 block">You must agree to the
+              Terms of Flight.</span>
+          </div>
+
+          <!-- PRIMARY CTA BUTTON -->
+          <button type="submit" id="submit-btn"
+            class="arcade-btn-primary w-full h-[74px] sm:h-[80px] rounded-2xl flex items-center justify-between px-5 sm:px-6 bg-gradient-to-r from-card via-[#172033] to-surface text-textMain font-bold tracking-wide focus:outline-none group backdrop-blur-md relative overflow-hidden mt-3">
+            <div class="flex items-center gap-3.5 text-left">
+              <!-- Play Icon Box -->
+              <div
+                class="w-11 h-11 rounded-xl bg-cyan/15 border border-cyan/50 flex items-center justify-center text-cyan group-hover:bg-cyan group-hover:text-void transition-colors shadow-md flex-shrink-0">
+                <svg class="w-5 h-5 ml-0.5 fill-current" viewBox="0 0 24 24">
+                  <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                </svg>
+              </div>
+              <div>
+                <div
+                  class="text-base sm:text-lg font-sans font-bold tracking-tight text-textMain group-hover:text-cyan transition-colors flex items-center gap-2">
+                  <span id="btn-label-text">CREATE ACCOUNT</span>
+                </div>
+                <div class="text-[11px] sm:text-xs font-sans text-gold font-medium mt-0.5 flex items-center gap-1.5">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round"
+                    stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                    <polygon
+                      points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2">
+                    </polygon>
+                  </svg>
+                  <span>COMMENCE STAR CADET REGISTRATION</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Arrow Indicator -->
+            <svg class="w-6 h-6 text-cyan group-hover:translate-x-1.5 transition-transform flex-shrink-0" fill="none"
+              stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+              viewBox="0 0 24 24">
+              <line x1="5" x2="19" y1="12" y2="12"></line>
+              <polyline points="12 5 19 12 12 19"></polyline>
+            </svg>
+
+            <!-- Loading Spinner State -->
+            <div id="btn-spinner"
+              class="hidden absolute inset-0 bg-card/95 backdrop-blur-sm flex items-center justify-center gap-2 text-cyan font-mono text-xs font-bold">
+              <svg class="animate-spin h-5 w-5 text-cyan" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" d="M4 12a8 8 0 018-8v8H4z" fill="currentColor"></path>
+              </svg>
+              <span>INITIALIZING CADET PROFILE...</span>
+            </div>
+          </button>
+        </form>
+
+        <!-- Footer Navigation Link -->
+        <div class="mt-5 pt-4 text-center border-t border-borderDim/50">
+          <p class="text-xs sm:text-sm font-sans text-textMuted">
+            Already have an account?
+            <a href="login.html" class="text-gold hover:text-yellow-300 font-bold ml-1 transition-colors underline">Sign
+              in</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- JAVASCRIPT: Client Logic & Real Backend Integration         -->
+  <!-- ============================================================ -->
+  <script>
+      // Check if already authenticated; if so, redirect directly to dashboard
+      (async function checkExistingSession() {
+        try {
+          const res = await fetch('/api/auth/me', { credentials: 'include' });
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.authenticated) {
+              window.location.replace('dashboard.html');
+            }
+          }
+        } catch (e) {
+          // Offline or server booting
+        }
+      })();
+
+    // Gender toggle (Required: male or female)
+    function selectGender(val) {
+      document.getElementById('gender').value = val;
+      const maleBtn = document.getElementById('btn-gender-male');
+      const femaleBtn = document.getElementById('btn-gender-female');
+      const genderErr = document.getElementById('gender-error');
+      if (genderErr) genderErr.classList.add('hidden');
+
+      if (val === 'male') {
+        maleBtn.className = 'gender-btn flex items-center justify-center h-11 px-3 rounded-xl border transition-all text-xs font-mono font-bold uppercase border-cyan bg-cyan/15 text-cyan shadow-sm';
+        maleBtn.setAttribute('aria-checked', 'true');
+        femaleBtn.className = 'gender-btn flex items-center justify-center h-11 px-3 rounded-xl border transition-all text-xs font-mono font-bold uppercase border-borderDim bg-void/90 text-textMuted hover:bg-card hover:text-textMain shadow-sm';
+        femaleBtn.setAttribute('aria-checked', 'false');
+      } else if (val === 'female') {
+        femaleBtn.className = 'gender-btn flex items-center justify-center h-11 px-3 rounded-xl border transition-all text-xs font-mono font-bold uppercase border-cyan bg-cyan/15 text-cyan shadow-sm';
+        femaleBtn.setAttribute('aria-checked', 'true');
+        maleBtn.className = 'gender-btn flex items-center justify-center h-11 px-3 rounded-xl border transition-all text-xs font-mono font-bold uppercase border-borderDim bg-void/90 text-textMuted hover:bg-card hover:text-textMain shadow-sm';
+        maleBtn.setAttribute('aria-checked', 'false');
+      }
+    }
+
+    // Password visibility toggle
+    function togglePasswordVisibility(fieldId, iconId) {
+      const field = document.getElementById(fieldId);
+      const icon = document.getElementById(iconId);
+      if (!field || !icon) return;
+      if (field.type === 'password') {
+        field.type = 'text';
+        icon.textContent = 'visibility_off';
+      } else {
+        field.type = 'password';
+        icon.textContent = 'visibility';
+      }
+    }
+
+    // Dynamic real password strength calculation
+    function updatePasswordStrength() {
+      const password = document.getElementById('password').value || '';
+      const bars = [
+        document.getElementById('strength-bar-1'),
+        document.getElementById('strength-bar-2'),
+        document.getElementById('strength-bar-3'),
+        document.getElementById('strength-bar-4')
+      ];
+      const label = document.getElementById('strength-label');
+
+      if (!password) {
+        bars.forEach(b => b.className = 'h-full flex-1 bg-borderDim rounded-full transition-colors');
+        label.textContent = 'EMPTY';
+        label.className = 'font-bold uppercase text-textMuted';
+        return;
+      }
+
+      let score = 0;
+      if (password.length >= 8) score++;
+      if (/[A-Z]/.test(password) && /[a-z]/.test(password)) score++;
+      if (/[0-9]/.test(password)) score++;
+      if (/[^A-Za-z0-9]/.test(password)) score++;
+
+      // Reset
+      bars.forEach(b => b.className = 'h-full flex-1 bg-borderDim rounded-full transition-colors');
+
+      if (score === 1) {
+        bars[0].className = 'h-full flex-1 bg-danger rounded-full transition-colors';
+        label.textContent = 'WEAK';
+        label.className = 'font-bold uppercase text-danger';
+      } else if (score === 2) {
+        bars[0].className = 'h-full flex-1 bg-gold rounded-full transition-colors';
+        bars[1].className = 'h-full flex-1 bg-gold rounded-full transition-colors';
+        label.textContent = 'FAIR';
+        label.className = 'font-bold uppercase text-gold';
+      } else if (score === 3) {
+        bars[0].className = 'h-full flex-1 bg-cyan rounded-full transition-colors';
+        bars[1].className = 'h-full flex-1 bg-cyan rounded-full transition-colors';
+        bars[2].className = 'h-full flex-1 bg-cyan rounded-full transition-colors';
+        label.textContent = 'GOOD';
+        label.className = 'font-bold uppercase text-cyan';
+      } else if (score >= 4) {
+        bars[0].className = 'h-full flex-1 bg-success rounded-full transition-colors';
+        bars[1].className = 'h-full flex-1 bg-success rounded-full transition-colors';
+        bars[2].className = 'h-full flex-1 bg-success rounded-full transition-colors';
+        bars[3].className = 'h-full flex-1 bg-success rounded-full transition-colors';
+        label.textContent = 'STRONG';
+        label.className = 'font-bold uppercase text-success';
+      }
+    }
+
+    // Show/hide helper for inline field errors
+    function setFieldError(fieldId, errorId, isError) {
+      const errEl = document.getElementById(errorId);
+      const fieldEl = document.getElementById(fieldId);
+      if (errEl) {
+        if (isError) errEl.classList.remove('hidden');
+        else errEl.classList.add('hidden');
+      }
+      if (fieldEl) {
+        if (isError) {
+          fieldEl.classList.add('border-danger', 'ring-1', 'ring-danger');
+          fieldEl.classList.remove('border-borderDim', 'focus:border-cyan');
+        } else {
+          fieldEl.classList.remove('border-danger', 'ring-1', 'ring-danger');
+          fieldEl.classList.add('border-borderDim');
+        }
+      }
+    }
+
+    // Form Submission Handler
+    const form = document.getElementById('signup-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const btnSpinner = document.getElementById('btn-spinner');
+    const generalAlert = document.getElementById('general-alert');
+    const generalAlertText = document.getElementById('general-alert-text');
+    const successAlert = document.getElementById('success-alert');
+    const successAlertText = document.getElementById('success-alert-text');
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      // Reset alerts
+      generalAlert.classList.add('hidden');
+      successAlert.classList.add('hidden');
+
+      const fullName = document.getElementById('fullName').value.trim();
+      const username = document.getElementById('username').value.trim();
+      const dob = document.getElementById('dob').value;
+      const gender = document.getElementById('gender').value;
+      const password = document.getElementById('password').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+      const terms = document.getElementById('terms').checked;
+
+      let hasError = false;
+
+      // 1. Validate full name
+      if (!fullName) {
+        setFieldError('fullName', 'fullname-error', true);
+        hasError = true;
+      } else {
+        setFieldError('fullName', 'fullname-error', false);
+      }
+
+      // 2. Validate username
+      const usernameRegex = /^[a-zA-Z0-9_]{3,16}$/;
+      if (!usernameRegex.test(username)) {
+        setFieldError('username', 'username-error', true);
+        hasError = true;
+      } else {
+        setFieldError('username', 'username-error', false);
+      }
+
+      // 3. Validate DOB
+      if (!dob) {
+        setFieldError('dob', 'dob-error', true);
+        hasError = true;
+      } else {
+        setFieldError('dob', 'dob-error', false);
+      }
+
+      // 3.5 Validate Gender (Required: male or female)
+      const genderError = document.getElementById('gender-error');
+      const maleBtn = document.getElementById('btn-gender-male');
+      const femaleBtn = document.getElementById('btn-gender-female');
+      if (!gender || (gender !== 'male' && gender !== 'female')) {
+        if (genderError) genderError.classList.remove('hidden');
+        if (maleBtn && !maleBtn.classList.contains('border-cyan')) maleBtn.classList.add('border-danger');
+        if (femaleBtn && !femaleBtn.classList.contains('border-cyan')) femaleBtn.classList.add('border-danger');
+        hasError = true;
+      } else {
+        if (genderError) genderError.classList.add('hidden');
+        if (maleBtn) maleBtn.classList.remove('border-danger');
+        if (femaleBtn) femaleBtn.classList.remove('border-danger');
+      }
+
+      // 4. Validate password
+      if (!password || password.length < 8) {
+        setFieldError('password', 'password-error', true);
+        hasError = true;
+      } else {
+        setFieldError('password', 'password-error', false);
+      }
+
+      // 5. Validate confirm password
+      if (password !== confirmPassword) {
+        setFieldError('confirmPassword', 'confirm-error', true);
+        hasError = true;
+      } else {
+        setFieldError('confirmPassword', 'confirm-error', false);
+      }
+
+      // 6. Validate terms
+      const termsError = document.getElementById('terms-error');
+      if (!terms) {
+        termsError.classList.remove('hidden');
+        hasError = true;
+      } else {
+        termsError.classList.add('hidden');
+      }
+
+      if (hasError) return;
+
+      // Lock button and show spinner
+      submitBtn.disabled = true;
+      btnSpinner.classList.remove('hidden');
+
+      try {
+        const response = await fetch('/api/auth/signup', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            fullName,
+            username,
+            dob,
+            gender,
+            password,
+            confirmPassword,
+            terms
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          if (data.user) {
+            try {
+              sessionStorage.setItem('mindrush_active_user', JSON.stringify(data.user));
+            } catch (e) {}
+          }
+          // Success: show confirmation toast and redirect to dashboard
+          successAlertText.textContent = data.message || 'Cadet registration successful! Syncing mission telemetry...';
+          successAlert.classList.remove('hidden');
+          setTimeout(() => {
+            window.location.href = 'dashboard.html';
+          }, 800);
+        } else {
+          // Server error (e.g. 409 duplicate username, 400 validation)
+          submitBtn.disabled = false;
+          btnSpinner.classList.add('hidden');
+          generalAlertText.textContent = data.error || 'Registration failed. Please check your inputs.';
+          generalAlert.classList.remove('hidden');
+          generalAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      } catch (err) {
+        submitBtn.disabled = false;
+        btnSpinner.classList.add('hidden');
+        generalAlertText.textContent = 'Mission Control connection failed. Please ensure the server is online and retry.';
+        generalAlert.classList.remove('hidden');
+      }
+    });
+  </script>
+</body>
+
+</html>

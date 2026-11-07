@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush — Cadet Badge Gallery</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <link rel="icon" type="image/png" href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+
+  <!-- Core Space-Arcade Design System -->
+  <link rel="stylesheet" href="css/main.css">
+
+  <!-- p5.js library for high-fidelity badge animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+
+  <style>
+    body {
+      background-color: var(--void);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-x: hidden;
+      font-family: var(--font-body);
+      user-select: none;
+      position: relative;
+    }
+
+    /* Fixed Cosmic Background Layer */
+    .cosmic-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Header */
+    .top-header {
+      width: 100%;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(7, 9, 14, 0.85);
+      border-bottom: 1px solid var(--border-dim);
+      backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+
+    .nav-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-dim);
+      background: rgba(17, 19, 29, 0.7);
+      transition: all 0.2s ease;
+    }
+
+    .nav-back-link:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: var(--card);
+      transform: translateX(-3px);
+    }
+
+    .header-branding {
+      font-family: var(--font-arcade);
+      font-size: 16px;
+      color: var(--text-main);
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    /* Main Container */
+    .gallery-container {
+      width: 100%;
+      max-width: 1280px;
+      padding: 36px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+
+    .page-title {
+      font-family: var(--font-arcade);
+      font-size: clamp(22px, 4vw, 38px);
+      letter-spacing: 3px;
+      text-align: center;
+      color: var(--text-main);
+      text-shadow: 0 0 20px rgba(250, 204, 21, 0.35);
+      margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 660px;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    /* Collection Progress Header Bar */
+    .progress-bar-container {
+      width: 100%;
+      max-width: 640px;
+      background: rgba(22, 25, 38, 0.85);
+      border: 1.5px solid var(--border-dim);
+      border-radius: 16px;
+      padding: 16px 22px;
+      margin-bottom: 34px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(45, 51, 74, 0.8);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--cyan), var(--gold));
+      transition: width 0.4s ease;
+      box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+    }
+
+    /* Badges Grid (12 Badges) */
+    .badges-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+
+    .badge-card {
+      background: var(--card);
+      border: 1.5px solid var(--border-dim);
+      border-radius: 18px;
+      padding: 22px 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* Unlocked badge state */
+    .badge-card.unlocked {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(22, 25, 38, 0.9);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .badge-card.unlocked:hover {
+      border-color: var(--cyan);
+      transform: translateY(-4px);
+      box-shadow: 0 12px 30px rgba(56, 189, 248, 0.2);
+    }
+
+    /* Locked badge state */
+    .badge-card.locked {
+      opacity: 0.55;
+      border-style: dashed;
+      background: rgba(15, 18, 28, 0.6);
+    }
+
+    .badge-card.locked:hover {
+      opacity: 0.75;
+    }
+
+    /* Badge Canvas Mount */
+    .badge-canvas-box {
+      width: 80px;
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .lock-icon-box {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(45, 51, 74, 0.4);
+      border: 1.5px dashed var(--border-mid);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--text-muted);
+    }
+
+    .badge-card-name {
+      font-family: var(--font-sans);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .badge-card.locked .badge-card-name {
+      color: var(--text-muted);
+    }
+
+    .badge-card-val {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+
+    .badge-card.locked .badge-card-val {
+      color: var(--text-muted);
+    }
+
+    .badge-card-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 14px;
+      min-height: 36px;
+    }
+
+    .badge-status-pill {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .pill-unlocked {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid var(--cyan);
+      color: var(--cyan);
+    }
+
+    .pill-locked {
+      background: rgba(45, 51, 74, 0.3);
+      border: 1px solid var(--border-dim);
+      color: var(--text-muted);
+    }
+
+    /* Actions bottom row */
+    .gallery-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 36px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    /* Footer */
+    .gallery-footer {
+      width: 100%;
+      padding: 16px 24px;
+      background: rgba(7, 9, 14, 0.85);
+      border-top: 1px solid var(--border-dim);
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      font-size: 13px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .gallery-footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .gallery-footer a:hover {
+      color: var(--cyan);
+    }
+
+    @media (max-width: 1100px) {
+      .badges-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .badges-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .badges-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Layer -->
+  <div class="cosmic-layer" id="starfield">
+    <canvas id="parallaxStarfieldCanvas" style="opacity: 0.35; width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
+    <div class="kinetic-wave"></div>
+    <div class="kinetic-wave delay-1"></div>
+    <div class="kinetic-wave delay-2"></div>
+  </div>
+
+  <!-- Top Navigation Header -->
+  <header class="top-header">
+    <a href="dashboard.html" class="nav-back-link" title="Return to Dashboard">
+      &larr; Back to Hub
+    </a>
+    <div class="header-branding">MINDRUSH</div>
+    <div style="width: 110px;"></div>
+  </header>
+
+  <!-- Main Gallery Container -->
+  <main class="gallery-container">
+    <span class="page-eyebrow">Skyfall Collectible Arsenal</span>
+    <h1 class="page-title">CADET BADGE GALLERY</h1>
+    <p class="page-subtitle">
+      Every unique badge collected in Skyfall is preserved here. Catch new badges during missions to complete your celestial archive.
+    </p>
+
+    <!-- Progress Tracker -->
+    <div class="progress-bar-container">
+      <div class="progress-labels">
+        <span style="color: var(--text-main); font-weight: 700;">COLLECTION PROGRESS</span>
+        <span style="color: var(--gold); font-weight: 700;" id="progress-text">0 / 12 UNLOCKED</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill-bar" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <!-- 12-Badge Grid -->
+    <div class="badges-grid" id="badges-grid-container">
+      <!-- Injected dynamically based on real localStorage collection -->
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="gallery-actions">
+      <a href="difficulty-select.html" class="arcade-btn arcade-btn-primary" style="padding: 14px 28px; font-weight: 700;">
+        <span>PLAY SKYFALL &rarr;</span>
+      </a>
+      <a href="dashboard.html" class="top-action-btn" style="padding: 14px 24px;">
+        MISSION HUB
+      </a>
+      <button class="top-action-btn" id="btn-reset-badges" onclick="handleResetBadges()" style="padding: 14px 20px; color: var(--danger); border-color: rgba(248, 113, 113, 0.4);" title="Reset local collection for testing">
+        RESET PROGRESS
+      </button>
+    </div>
+  </main>
+
+  <!-- Footer Navigation -->
+  <footer class="gallery-footer">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="mode-select.html">Game Modes</a>
+    <a href="difficulty-select.html">Difficulty Select</a>
+    <a href="about.html">About</a>
+    <a href="terms.html">Terms</a>
+    <a href="contact.html">Contact</a>
+  </footer>
+
+  <!-- Starfield Canvas Script -->
+  <script type="module" src="js/starfield.js"></script>
+
+  <!-- Badge Gallery Logic & p5 Renderers -->
+  <script type="module">
+    import {
+      COLLECTIBLE_BADGES,
+      getUnlockedBadges,
+      getUnlockedBadgeCount,
+      getTotalBadgeCount,
+      isBadgeUnlocked,
+      resetBadgeCollection
+    } from './js/game/badges.js?v=3';
+    import { FallingObject } from './js/game/objects.js?v=3';
+
+    let badgeInstances = [];
+
+    window.handleResetBadges = function() {
+      if (confirm('Reset your badge collection progress back to 0?')) {
+        resetBadgeCollection();
+        renderGallery();
+      }
+    };
+
+    function renderGallery() {
+      const container = document.getElementById('badges-grid-container');
+      const progressText = document.getElementById('progress-text');
+      const progressFill = document.getElementById('progress-fill-bar');
+
+      const unlockedIds = getUnlockedBadges();
+      const unlockedCount = unlockedIds.length;
+      const totalCount = getTotalBadgeCount();
+
+      // Update progress bar
+      if (progressText) {
+        progressText.textContent = `${unlockedCount} / ${totalCount} UNLOCKED`;
+      }
+      if (progressFill) {
+        const pct = totalCount > 0 ? (unlockedCount / totalCount) * 100 : 0;
+        progressFill.style.width = `${pct}%`;
+      }
+
+      if (!container) return;
+      container.innerHTML = '';
+      badgeInstances = [];
+
+      const allKeys = Object.keys(COLLECTIBLE_BADGES);
+
+      allKeys.forEach((key) => {
+        const badge = COLLECTIBLE_BADGES[key];
+        const isUnlocked = unlockedIds.includes(key);
+
+        const card = document.createElement('div');
+        card.className = `badge-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+        card.id = `badge-card-${key}`;
+
+        let valText = '';
+        if (badge.points > 0) {
+          valText = `+${badge.points} PTS`;
+        } else if (badge.lifeDelta > 0) {
+          valText = `+${badge.lifeDelta} EXTRA LIFE ❤️`;
+        }
+
+        const canvasBoxId = `canvas-box-${key}`;
+
+        card.innerHTML = `
+          <div class="badge-canvas-box" id="${canvasBoxId}">
+            ${isUnlocked ? '' : '<div class="lock-icon-box">🔒</div>'}
+          </div>
+          <div class="badge-card-name">${isUnlocked ? badge.name : '??? (Locked)'}</div>
+          <div class="badge-card-val" style="color: ${badge.lifeDelta > 0 ? 'var(--pink-neon)' : 'var(--cyan)'};">
+            ${isUnlocked ? valText : 'LOCKED'}
+          </div>
+          <div class="badge-card-desc">
+            ${isUnlocked ? badge.description : `Collect in ${badge.tier} mode to unlock.`}
+          </div>
+          <span class="badge-status-pill ${isUnlocked ? 'pill-unlocked' : 'pill-locked'}">
+            ${isUnlocked ? '✨ UNLOCKED' : '🔒 LOCKED'}
+          </span>
+        `;
+
+        container.appendChild(card);
+
+        // If unlocked, record instance for p5 mini-rendering
+        if (isUnlocked) {
+          badgeInstances.push({
+            key,
+            boxId: canvasBoxId,
+            config: badge
+          });
+        }
+      });
+
+      // Mount mini p5 preview animations for unlocked badges
+      mountUnlockedBadgeCanvases();
+    }
+
+    function mountUnlockedBadgeCanvases() {
+      badgeInstances.forEach((item) => {
+        const box = document.getElementById(item.boxId);
+        if (!box || box.querySelector('canvas')) return;
+
+        const sketch = (p) => {
+          let obj;
+          p.setup = () => {
+            const c = p.createCanvas(80, 80);
+            c.parent(box);
+            obj = new FallingObject({
+              ...item.config,
+              x: 40,
+              y: 40,
+              w: 32,
+              dy: 0
+            });
+          };
+
+          p.draw = () => {
+            p.clear();
+            if (obj) {
+              obj.x = 40;
+              obj.y = 40;
+              obj.animTicks++;
+              obj.draw(p);
+            }
+          };
+        };
+
+        new window.p5(sketch);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderGallery();
+    });
+  </script>
+</body>
+</html>

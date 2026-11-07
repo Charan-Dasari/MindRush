@@ -1,0 +1,1015 @@
+/**
+ * MINDRUSH — Core UI/UX Design System
+ * Clean, minimal futuristic arcade-game interface
+ * Navy Dark + Cyan & Purple Accents
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Press+Start+2P&family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+  /* ==========================================================================
+     PROTOTYPE SPACE-ARCADE TOKENS (Visual Reference: prototype.html)
+     ========================================================================== */
+  --void: #07090e;
+  --surface: #11131d;
+  --card: #161926;
+  --popup: #191c2b;
+  --border-dim: #2d334a;
+  --border-mid: #4b5578;
+  --text-main: #F5F8FF;
+  --text-muted: #9aa5c4;
+  --gold: #FACC15;
+  --gold-muted: #ca9e16;
+  --cyan: #38BDF8;
+  --cyan-neon: #00F2FE;
+  --pink-neon: #F472B6;
+  --success: #34D399;
+  --danger: #F87171;
+
+  /* ==========================================================================
+     COLOR TOKENS
+     ========================================================================== */
+  /* Dark Navy Backgrounds */
+  --bg-navy-950: #07090e;
+  --bg-navy-900: #11131d;
+  --bg-navy-850: #161926;
+  --bg-navy-800: #191c2b;
+  --bg-navy-750: #1d2133;
+  --bg-navy-700: #252b42;
+  --bg-navy-card: rgba(22, 25, 38, 0.90);
+  --bg-navy-card-hover: rgba(29, 33, 51, 0.96);
+  --bg-navy-modal: rgba(25, 28, 43, 0.97);
+  --bg-glass: rgba(17, 19, 29, 0.80);
+  --bg-glass-heavy: rgba(7, 9, 14, 0.90);
+
+  /* Cyan Accents (Primary Action / High Energy) */
+  --accent-cyan: #00f0ff;
+  --accent-cyan-light: #6df4ff;
+  --accent-cyan-hover: #38f4ff;
+  --accent-cyan-dim: #00adb8;
+  --accent-cyan-glow: rgba(0, 240, 255, 0.35);
+  --accent-cyan-glow-subtle: rgba(0, 240, 255, 0.15);
+
+  /* Purple Accents (Secondary Cyber / Arcade) */
+  --accent-purple: #8b5cf6;
+  --accent-purple-light: #a78bfa;
+  --accent-purple-hover: #9c6af8;
+  --accent-purple-dark: #6d28d9;
+  --accent-purple-glow: rgba(139, 92, 246, 0.35);
+  --accent-purple-glow-subtle: rgba(139, 92, 246, 0.15);
+
+  /* Gold / Milestone Accents */
+  --accent-gold: #fbbf24;
+  --accent-gold-hover: #f59e0b;
+  --accent-gold-glow: rgba(251, 191, 36, 0.35);
+
+  /* Status Colors */
+  --color-danger: #ef4444;
+  --color-danger-hover: #dc2626;
+  --color-danger-glow: rgba(239, 68, 68, 0.35);
+  --color-success: #10b981;
+  --color-success-glow: rgba(16, 185, 129, 0.35);
+  --color-warning: #f59e0b;
+
+  /* Typography Colors */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+  --text-dim: #64748b;
+  --text-inverse: #060913;
+
+  /* Border & Divider Tokens */
+  --border-subtle: rgba(148, 163, 184, 0.14);
+  --border-glass: rgba(255, 255, 255, 0.10);
+  --border-cyan: rgba(0, 240, 255, 0.40);
+  --border-cyan-active: #00f0ff;
+  --border-purple: rgba(139, 92, 246, 0.40);
+  --border-purple-active: #8b5cf6;
+
+  /* Elevation & Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.55);
+  --shadow-glow-cyan: 0 0 20px rgba(0, 240, 255, 0.35);
+  --shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.35);
+
+  /* ==========================================================================
+     TYPOGRAPHY TOKENS
+     ========================================================================== */
+  --font-display: 'Orbitron', 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-arcade: 'Press Start 2P', monospace;
+  --font-retro: 'Press Start 2P', monospace;
+  --font-body: 'Space Grotesk', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Typography Scale */
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 2rem;      /* 32px */
+  --text-4xl: 2.5rem;    /* 40px */
+  --text-5xl: 3.5rem;    /* 56px */
+
+  /* Spacing Scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Border Radii */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+  --transition-smooth: 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* ==========================================================================
+     LEGACY COMPATIBILITY ALIASES (Prevents regressions across old components)
+     ========================================================================== */
+  --color-primary: var(--accent-purple);
+  --color-primary-light: var(--accent-purple-light);
+  --color-primary-glow: var(--accent-purple-glow);
+  --color-accent-cyan: var(--accent-cyan);
+  --color-accent-gold: var(--accent-gold);
+  --bg-dark-base: var(--bg-navy-950);
+  --bg-dark-card: var(--bg-navy-card);
+  --bg-dark-modal: var(--bg-navy-modal);
+  --border-neon: var(--border-purple);
+}
+
+/* ==========================================================================
+   RESET & BASE STYLING
+   ========================================================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  font-family: var(--font-body);
+  background-color: var(--bg-navy-950);
+  color: var(--text-primary);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible Keyboard Focus Rings */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 3px;
+  box-shadow: 0 0 10px var(--accent-cyan-glow);
+}
+
+/* ==========================================================================
+   TYPOGRAPHY HIERARCHY
+   ========================================================================== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.25;
+  letter-spacing: 0.5px;
+}
+
+h1 { font-size: clamp(2rem, 5vw, 3.25rem); }
+h2 { font-size: clamp(1.5rem, 3.5vw, 2.25rem); }
+h3 { font-size: clamp(1.2rem, 2.5vw, 1.5rem); }
+h4 { font-size: 1.15rem; }
+
+p {
+  color: var(--text-secondary);
+  font-size: var(--text-base);
+}
+
+.text-arcade {
+  font-family: var(--font-arcade);
+  letter-spacing: 1px;
+}
+
+.text-display {
+  font-family: var(--font-display);
+}
+
+.text-cyan { color: var(--accent-cyan) !important; }
+.text-purple { color: var(--accent-purple) !important; }
+.text-gold { color: var(--accent-gold) !important; }
+.text-danger { color: var(--color-danger) !important; }
+.text-muted { color: var(--text-muted) !important; }
+
+.text-gradient-cyan {
+  background: linear-gradient(135deg, var(--accent-cyan), #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #c084fc, var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================================================
+   CONTAINERS & PANELS
+   ========================================================================== */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--space-4);
+  padding-right: var(--space-4);
+}
+
+.panel {
+  background: var(--bg-navy-850);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-md);
+}
+
+.glass-panel {
+  background: var(--bg-navy-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-cyan);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg), 0 0 25px rgba(0, 240, 255, 0.08);
+}
+
+.card {
+  background: var(--bg-navy-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: var(--space-6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-cyan);
+  box-shadow: var(--shadow-lg), var(--shadow-glow-cyan);
+}
+
+/* ==========================================================================
+   BUTTONS SYSTEM
+   ========================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-size: var(--text-sm);
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-decoration: none;
+  padding: 12px 28px;
+  border-radius: var(--radius-sm);
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  user-select: none;
+  -webkit-user-select: none;
+  white-space: nowrap;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Primary Button (Futuristic Cyan Arcade Accent) */
+.btn-primary {
+  background: linear-gradient(135deg, #00d2df, #0099b8);
+  border-color: var(--accent-cyan);
+  color: #040914;
+  box-shadow: 0 0 16px var(--accent-cyan-glow);
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--accent-cyan-light), #00bcd4);
+  box-shadow: 0 0 28px rgba(0, 240, 255, 0.65);
+  transform: translateY(-2px);
+  color: #020610;
+}
+
+/* Secondary Button (Dark Navy Glass with Cyan/Purple Border) */
+.btn-secondary {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: var(--border-purple);
+  color: var(--text-primary);
+  backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+  background: rgba(26, 38, 70, 0.9);
+  border-color: var(--accent-purple-light);
+  box-shadow: 0 0 20px var(--accent-purple-glow);
+  transform: translateY(-2px);
+  color: #ffffff;
+}
+
+/* Accent Button (Electric Cyber Purple) */
+.btn-accent {
+  background: linear-gradient(135deg, var(--accent-purple), #7c3aed);
+  border-color: var(--accent-purple-light);
+  color: #ffffff;
+  box-shadow: 0 0 16px var(--accent-purple-glow);
+}
+
+.btn-accent:hover {
+  background: linear-gradient(135deg, var(--accent-purple-hover), #9061f9);
+  box-shadow: 0 0 28px rgba(139, 92, 246, 0.65);
+  transform: translateY(-2px);
+}
+
+/* Danger Button (Controlled Ruby Red for Traps/Quit/Destructive) */
+.btn-danger {
+  background: rgba(185, 28, 28, 0.25);
+  border-color: var(--color-danger);
+  color: #fca5a5;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.2);
+}
+
+.btn-danger:hover {
+  background: var(--color-danger);
+  border-color: #f87171;
+  color: #ffffff;
+  box-shadow: 0 0 24px var(--color-danger-glow);
+  transform: translateY(-2px);
+}
+
+/* Ghost Button (Minimalist Translucent) */
+.btn-ghost {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-secondary);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+}
+
+/* Retro Arcade Button (Dedicated Press Start 2P font) */
+.btn-retro {
+  font-family: var(--font-arcade);
+  font-size: 13px;
+  padding: 14px 26px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--accent-cyan);
+  background: linear-gradient(135deg, #0b1528, #162444);
+  color: var(--accent-cyan);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: all var(--transition-base);
+  box-shadow: 0 0 14px var(--accent-cyan-glow-subtle);
+}
+
+.btn-retro:hover {
+  background: linear-gradient(135deg, #102142, #1f3563);
+  box-shadow: 0 0 24px var(--accent-cyan-glow);
+  transform: translateY(-2px);
+  color: #ffffff;
+}
+
+/* Legacy Class Aliases */
+.btn-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 32px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 1.5px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.btn-play {
+  background: linear-gradient(135deg, #00d2df, #008fa8);
+  color: #050b18;
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 0 20px var(--accent-cyan-glow);
+}
+
+.btn-play:hover {
+  background: linear-gradient(135deg, var(--accent-cyan-light), #00bcd4);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.7);
+  transform: translateY(-2px);
+  color: #030813;
+}
+
+/* Button Sizing Modifiers */
+.btn-sm {
+  padding: 8px 18px;
+  font-size: var(--text-xs);
+}
+
+.btn-lg {
+  padding: 16px 36px;
+  font-size: var(--text-base);
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* ==========================================================================
+   BADGES & PILLS
+   ========================================================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 12px;
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border-radius: var(--radius-full);
+  border: 1px solid transparent;
+}
+
+.badge-cyan {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--border-cyan);
+  color: var(--accent-cyan);
+}
+
+.badge-purple {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--border-purple);
+  color: var(--accent-purple-light);
+}
+
+.badge-gold {
+  background: rgba(251, 191, 36, 0.15);
+  border-color: rgba(251, 191, 36, 0.4);
+  color: var(--accent-gold);
+}
+
+.badge-danger {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #f87171;
+}
+
+/* ==========================================================================
+   FORM CONTROLS
+   ========================================================================== */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  text-align: left;
+}
+
+.form-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(10, 15, 29, 0.85);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 12px var(--accent-cyan-glow);
+}
+
+.form-input::placeholder {
+  color: var(--text-dim);
+}
+
+/* ==========================================================================
+   MODAL & OVERLAY SYSTEM
+   ========================================================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 7, 16, 0.82);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-base);
+}
+
+.modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-content {
+  background: var(--bg-navy-modal);
+  border: 1px solid var(--border-cyan);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  text-align: center;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: var(--shadow-lg), 0 0 30px rgba(0, 240, 255, 0.15);
+  transform: scale(0.94);
+  transition: transform var(--transition-smooth);
+}
+
+.modal-overlay.active .modal-content {
+  transform: scale(1);
+}
+
+/* ==========================================================================
+   NAVIGATION & FOOTER
+   ========================================================================== */
+.footer-nav {
+  width: 100%;
+  background: rgba(6, 9, 19, 0.90);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border-subtle);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  justify-content: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  font-size: var(--text-sm);
+  z-index: 10;
+}
+
+.footer-nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+.footer-nav a:hover {
+  color: var(--accent-cyan);
+}
+
+/* ==========================================================================
+   UTILITY HELPERS
+   ========================================================================== */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+.flex-center { display: flex; justify-content: center; align-items: center; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.hidden { display: none !important; }
+
+/* ==========================================================================
+   ACCESSIBILITY: REDUCED MOTION PREFERENCE
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .container {
+    max-width: 900px;
+  }
+}
+
+@media (max-width: 768px) {
+  .btn {
+    padding: 10px 20px;
+    font-size: var(--text-xs);
+  }
+  .modal-content {
+    padding: var(--space-6) var(--space-4);
+  }
+  .footer-nav {
+    gap: var(--space-4);
+  }
+}
+
+@media (max-width: 480px) {
+  .btn {
+    width: 100%;
+  }
+  .modal-content {
+    width: 95%;
+  }
+}
+
+/* ==========================================================================
+   PROTOTYPE SPACE-ARCADE DESIGN SYSTEM & COSMIC ANIMATIONS
+   (Visual reference: prototype.html)
+   ========================================================================== */
+
+/* Starfield particle base styling */
+.star {
+  position: absolute;
+  background-color: #ffffff;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.star.tiny { width: 1.5px; height: 1.5px; opacity: 0.4; }
+.star.med { width: 3px; height: 3px; opacity: 0.7; }
+.star.twinkle {
+  animation: twinkle 3.5s ease-in-out infinite alternate;
+}
+.star.four-point {
+  width: 6px;
+  height: 6px;
+  background: var(--gold);
+  clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
+  opacity: 0.85;
+  filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.6));
+}
+@keyframes twinkle {
+  0% { opacity: 0.25; transform: scale(0.85); }
+  50% { opacity: 0.9; transform: scale(1.2); }
+  100% { opacity: 0.35; transform: scale(0.9); }
+}
+
+/* Modal transition & backdrops */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(5, 7, 14, 0.84);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+.modal-backdrop.hidden {
+  display: none !important;
+}
+
+.modal-popup-panel {
+  background: var(--popup);
+  border: 1.5px solid var(--border-mid);
+  border-radius: 20px;
+  width: min(640px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), 0 0 30px rgba(56, 189, 248, 0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  z-index: 60;
+}
+
+/* ============================================================
+   Custom Dark Scrollbars for Modals & Scrollable Containers
+   Matches the dark space-arcade theme with subtle visible thumb
+   ============================================================ */
+.modal-popup-panel,
+.guide-modal-content,
+.guide-body,
+.modal-popup-panel > div[style*="overflow-y"],
+#dashboard-badges-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(75, 85, 120, 0.5) transparent;
+}
+.modal-popup-panel ::-webkit-scrollbar,
+.guide-modal-content ::-webkit-scrollbar,
+.guide-body::-webkit-scrollbar,
+#dashboard-badges-list::-webkit-scrollbar {
+  width: 6px;
+}
+.modal-popup-panel ::-webkit-scrollbar-track,
+.guide-modal-content ::-webkit-scrollbar-track,
+.guide-body::-webkit-scrollbar-track,
+#dashboard-badges-list::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+.modal-popup-panel ::-webkit-scrollbar-thumb,
+.guide-modal-content ::-webkit-scrollbar-thumb,
+.guide-body::-webkit-scrollbar-thumb,
+#dashboard-badges-list::-webkit-scrollbar-thumb {
+  background: rgba(75, 85, 120, 0.5);
+  border-radius: 3px;
+  border: 1px solid rgba(45, 51, 74, 0.3);
+}
+.modal-popup-panel ::-webkit-scrollbar-thumb:hover,
+.guide-modal-content ::-webkit-scrollbar-thumb:hover,
+.guide-body::-webkit-scrollbar-thumb:hover,
+#dashboard-badges-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 115, 155, 0.65);
+}
+
+/* Arcade Action Buttons with playful hover bounce & neon rim */
+.arcade-btn {
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  border: 1.5px solid var(--border-dim);
+  background: rgba(22, 25, 38, 0.9);
+  box-shadow: 0 6px 0 #151827, 0 12px 24px rgba(0, 0, 0, 0.4);
+  color: var(--text-main);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  border-radius: 18px;
+  cursor: pointer;
+  user-select: none;
+}
+.arcade-btn:hover {
+  background: linear-gradient(135deg, rgba(25, 29, 46, 0.95), rgba(35, 41, 65, 0.95));
+  border-color: var(--cyan);
+  transform: translateY(-4px);
+  box-shadow: 0 10px 0 #151827, 0 16px 28px rgba(56, 189, 248, 0.18);
+  color: var(--text-main);
+}
+.arcade-btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 3px 0 #151827;
+  border-color: var(--gold);
+}
+
+/* Primary glowing Play button enhancement */
+.arcade-btn-primary {
+  border: 1.5px solid var(--cyan);
+  background: linear-gradient(135deg, rgba(22, 25, 38, 0.95), rgba(17, 19, 29, 0.95));
+  box-shadow: 0 6px 0 #0284c7, 0 0 25px rgba(56, 189, 248, 0.25);
+}
+.arcade-btn-primary:hover {
+  border-color: var(--gold);
+  box-shadow: 0 10px 0 #0284c7, 0 0 35px rgba(250, 204, 21, 0.35);
+}
+
+/* Floating Celestial Glyphs */
+.constellation-glyph {
+  position: absolute;
+  pointer-events: none;
+  animation: glyphFloat 9s ease-in-out infinite alternate;
+  z-index: 1;
+}
+@keyframes glyphFloat {
+  0% { transform: translateY(0px) rotate(0deg); opacity: 0.75; }
+  50% { transform: translateY(-10px) rotate(1.5deg); opacity: 1; }
+  100% { transform: translateY(6px) rotate(-1.5deg); opacity: 0.8; }
+}
+
+/* Concentric Cosmic Radar Rings */
+@keyframes cosmicRadar {
+  0% {
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.55;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.35);
+    opacity: 0;
+  }
+}
+.kinetic-wave {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  width: 480px;
+  height: 480px;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(56, 189, 248, 0.22);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: cosmicRadar 12s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+}
+.kinetic-wave.delay-1 {
+  animation-delay: 4s;
+  border-style: dotted;
+  border-color: rgba(250, 204, 21, 0.25);
+}
+.kinetic-wave.delay-2 {
+  animation-delay: 8s;
+  border-style: solid;
+  border-width: 1px;
+  border-color: rgba(244, 114, 182, 0.2);
+}
+
+/* Hand Gesture Wave Indicator Animation */
+@keyframes handWave {
+  0%, 100% { transform: rotate(0deg); }
+  20%, 60% { transform: rotate(14deg); }
+  40%, 80% { transform: rotate(-10deg); }
+}
+.wave-anim {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: handWave 2.4s infinite ease-in-out;
+}
+
+/* 1. Flying Pixel Spaceship */
+@keyframes spaceshipFlight {
+  0% {
+    transform: translate3d(-180px, 0, 0) rotate(1deg);
+    opacity: 0;
+  }
+  4% {
+    opacity: 0.95;
+  }
+  40% {
+    transform: translate3d(calc(100vw + 200px), -28px, 0) rotate(2deg);
+    opacity: 0.95;
+  }
+  41%, 100% {
+    transform: translate3d(calc(100vw + 200px), -28px, 0) rotate(2deg);
+    opacity: 0;
+  }
+}
+.cosmic-spaceship {
+  position: absolute;
+  top: 22%;
+  left: 0;
+  opacity: 0;
+  animation: spaceshipFlight 28s linear infinite;
+  animation-delay: 1.5s;
+  pointer-events: none;
+  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.5));
+  will-change: transform, opacity;
+  z-index: 1;
+}
+.engine-trail-flicker {
+  animation: enginePulse 0.3s ease-in-out infinite alternate;
+}
+@keyframes enginePulse {
+  0% { opacity: 0.5; transform: scaleX(0.85); }
+  100% { opacity: 1; transform: scaleX(1.35); }
+}
+
+/* 2. Cruising Rocket */
+@keyframes rocketCruise {
+  0% {
+    transform: translate3d(-160px, calc(100vh + 100px), 0) rotate(-42deg);
+    opacity: 0;
+  }
+  4% {
+    opacity: 0.95;
+  }
+  42% {
+    transform: translate3d(calc(100vw + 160px), -180px, 0) rotate(-40deg);
+    opacity: 0.95;
+  }
+  43%, 100% {
+    transform: translate3d(calc(100vw + 160px), -180px, 0) rotate(-40deg);
+    opacity: 0;
+  }
+}
+.cosmic-rocket {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  animation: rocketCruise 32s linear infinite;
+  animation-delay: 9s;
+  pointer-events: none;
+  filter: drop-shadow(0 0 14px rgba(250, 204, 21, 0.45));
+  will-change: transform, opacity;
+  z-index: 1;
+}
+
+/* 3. Friendly Hovering UFO */
+@keyframes ufoDrift {
+  0% {
+    transform: translate3d(-180px, 0, 0);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.95;
+  }
+  46% {
+    transform: translate3d(calc(100vw + 200px), 16px, 0);
+    opacity: 0.95;
+  }
+  47%, 100% {
+    transform: translate3d(calc(100vw + 200px), 16px, 0);
+    opacity: 0;
+  }
+}
+@keyframes ufoHoverBob {
+  0%, 100% {
+    transform: translateY(0px) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-16px) rotate(2.5deg);
+  }
+}
+@keyframes ufoBeamScan {
+  0%, 100% {
+    opacity: 0.25;
+    transform: scaleX(0.9);
+  }
+  50% {
+    opacity: 0.65;
+    transform: scaleX(1.15);
+  }
+}
+@keyframes ufoCabinBlink {
+  0%, 100% { fill: #38BDF8; opacity: 1; }
+  50% { fill: #FACC15; opacity: 0.7; }
+}
+.cosmic-ufo-track {
+  position: absolute;
+  top: 10%;
+  left: 0;
+  opacity: 0;
+  animation: ufoDrift 38s ease-in-out infinite;
+  animation-delay: 16s;
+  pointer-events: none;
+  will-change: transform, opacity;
+  z-index: 1;
+}
+.cosmic-ufo-craft {
+  animation: ufoHoverBob 3.8s ease-in-out infinite;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.45));
+}
+.ufo-beam {
+  animation: ufoBeamScan 2s ease-in-out infinite;
+  transform-origin: top center;
+}
+.ufo-light-pulsar {
+  animation: ufoCabinBlink 0.9s ease-in-out infinite;
+}
+
+/* Floating Golden Star Coin */
+@keyframes coinSpin {
+  0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 6px #FACC15); }
+  50% { transform: translateY(-8px) scale(1.08); filter: drop-shadow(0 0 14px #FACC15); }
+}
+.star-coin {
+  animation: coinSpin 3s ease-in-out infinite;
+}
+
+/* Reduced motion support for cosmic animations */
+@media (prefers-reduced-motion: reduce) {
+  .star.twinkle, .cosmic-spaceship, .cosmic-rocket, .cosmic-ufo-track, .cosmic-ufo-craft, .engine-trail-flicker, .ufo-beam, .constellation-glyph, .kinetic-wave, .wave-anim, .star-coin {
+    animation: none !important;
+  }
+  .cosmic-spaceship, .cosmic-rocket, .cosmic-ufo-track {
+    display: none !important;
+  }
+}
+

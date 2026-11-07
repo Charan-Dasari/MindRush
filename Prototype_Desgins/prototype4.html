@@ -1,0 +1,951 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MindRush - Reflex Arcade</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=Inter:wght@400;500;600;700&amp;family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', '"Space Grotesk"', 'sans-serif'],
+          pixel: ['"Press Start 2P"', 'monospace', 'cursive'],
+        },
+        colors: {
+          void: '#050505',
+          surface: '#141414',
+          card: '#181818',
+          popup: '#181818',
+          borderDim: '#2E2E2E',
+          borderMid: '#444444',
+          textMain: '#F5F3EE',
+          textMuted: '#A6A6A6',
+          gold: '#C6A66B',
+          goldMuted: '#8F7546',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  body {
+    background-color: #050505;
+    color: #F5F3EE;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    user-select: none;
+    overflow-x: hidden;
+  }
+
+  /* Minimalist Starfield */
+  .star {
+    position: absolute;
+    background-color: #ffffff;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .star.tiny { width: 1.5px; height: 1.5px; opacity: 0.25; }
+  .star.med { width: 2.5px; height: 2.5px; opacity: 0.45; }
+
+  /* Backdrop blur for modals */
+  .modal-backdrop {
+    background: rgba(5, 5, 5, 0.82);
+    backdrop-filter: blur(8px);
+  }
+
+  /* Viewport Constrained Modal Framework */
+  .modal-panel {
+    width: min(640px, calc(100vw - 32px));
+    max-height: calc(100dvh - 32px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: #181818;
+    border: 1px solid #333333;
+    border-radius: 1.25rem;
+    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  /* Refined Arcade Action Buttons */
+  .arcade-btn {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid #2E2E2E;
+    background: #141414;
+  }
+  .arcade-btn:hover {
+    background: #1C1C1C;
+    border-color: #555555;
+    transform: translateY(-2px);
+  }
+  .arcade-btn:active {
+    transform: translateY(0);
+    border-color: #C6A66B;
+  }
+
+  /* Mode selection cards */
+  .mode-card {
+    transition: all 0.18s ease;
+    border: 1px solid #2E2E2E;
+    background: #141414;
+  }
+  .mode-card:hover {
+    background: #1E1E1E;
+    border-color: #555555;
+    transform: translateY(-2px);
+  }
+  .mode-card:active {
+    border-color: #C6A66B;
+  }
+
+  /* Custom slim scrollbar */
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #141414;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2E2E2E;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+  }
+
+  /* Subdued orbital watermark line */
+  .subtle-radar {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 680px;
+    height: 680px;
+    border-radius: 50%;
+    border: 1px dashed rgba(255, 255, 255, 0.06);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+</style>
+</head>
+<body class="min-h-screen relative flex flex-col justify-between selection:bg-gold/20 selection:text-gold">
+<!-- ============================================================ -->
+<!-- SUBTLE ASTRONOMICAL BACKGROUND (Restrained opacity & noise)  -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" id="starfield">
+<canvas class="absolute inset-0 w-full h-full pointer-events-none opacity-40" id="parallaxStarfieldCanvas"></canvas>
+<div class="subtle-radar"></div>
+<div class="subtle-radar w-[920px] h-[920px] border-solid border-white/[0.03]"></div>
+<!-- Subtle low-opacity math watermark elements (max 15-20% opacity) -->
+<div class="absolute top-[18%] left-[10%] opacity-15 hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/5 text-[11px] font-mono tracking-wider">
+<span>9 × 8 = 72</span>
+</div>
+<div class="absolute top-[22%] right-[12%] opacity-15 hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/5 text-[11px] font-mono tracking-wider">
+<span>15 + 27 = 42</span>
+</div>
+<div class="absolute bottom-[20%] left-[8%] opacity-15 hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/5 text-[11px] font-mono tracking-wider">
+<span>7 × 7 = 49</span>
+</div>
+<div class="absolute bottom-[22%] right-[10%] opacity-15 hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-white/20 bg-white/5 text-[11px] font-mono tracking-wider">
+<span>120 ÷ 4 = 30</span>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- TOP BAR: Navigation, Badges & Profile Shortcut               -->
+<!-- ============================================================ -->
+<header class="relative z-10 w-full px-5 sm:px-8 py-5 flex items-center justify-between">
+<!-- Top-Left: Star Cadet Trophy & Badges Counter -->
+<button aria-label="Achievements &amp; Badges" class="group flex items-center gap-3 px-3.5 py-2 rounded-xl border border-borderDim bg-surface/90 hover:border-borderMid hover:bg-card transition-all text-textMain focus:outline-none focus:ring-1 focus:ring-gold/60 backdrop-blur-md" onclick="openModal('achievementsModal')" title="View Badges &amp; Trophies">
+<div class="w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-gold group-hover:scale-105 transition-transform">
+<!-- Trophy Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+<path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+<path d="M4 22h16"></path>
+<path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+</svg>
+</div>
+<div class="flex flex-col text-left">
+<span class="text-[10px] tracking-wider text-textMuted uppercase font-medium">Badges</span>
+<span class="text-xs font-semibold text-textMain group-hover:text-gold transition-colors">14 / 28 Badges</span>
+</div>
+</button>
+<!-- Top-Right: How to Play (Book) + Cadet Profile Tag -->
+<div class="flex items-center gap-2.5">
+<!-- Visual Guide Button -->
+<button aria-label="How to Play" class="group flex items-center gap-2 px-3.5 py-2 rounded-xl border border-borderDim bg-surface/90 hover:border-borderMid hover:bg-card transition-all text-textMuted hover:text-textMain focus:outline-none focus:ring-1 focus:ring-white/40 backdrop-blur-md" onclick="openModal('instructionsModal')" title="How to Play Guide" style="height: 42.6px;">
+<!-- Book Open Icon -->
+<svg class="w-4 h-4 text-textMuted group-hover:text-textMain transition-colors" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+<path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+</svg>
+<span class="text-xs font-medium tracking-wide hidden sm:inline text-textMain">How to Play</span>
+</button>
+<!-- Player Profile Badge -->
+<button aria-label="Player Profile" class="group flex items-center gap-2.5 px-3 py-1.5 rounded-xl border border-borderDim bg-surface/90 hover:border-borderMid hover:bg-card transition-all focus:outline-none focus:ring-1 focus:ring-white/40 backdrop-blur-md" onclick="openModal('profileModal')" title="Cadet Profile">
+<div class="w-7 h-7 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMuted group-hover:text-textMain">
+<!-- User Icon -->
+<svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+<circle cx="12" cy="7" r="4"></circle>
+</svg>
+</div>
+<div class="text-left hidden md:block pr-1">
+<div class="text-xs font-semibold text-textMain leading-none">Cadet Alex</div>
+<div class="text-[10px] text-gold font-medium mt-0.5">Level 5</div>
+</div>
+</button>
+</div>
+</header>
+<!-- ============================================================ -->
+<!-- CENTER HERO AREA: Arcade Title & 2x2 Clean Menu Grid         -->
+<!-- ============================================================ -->
+<main class="relative z-10 flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-8 sm:py-12">
+<div class="text-center max-w-3xl w-full flex flex-col items-center">
+<!-- Wordmark & Clean Tagline -->
+<div class="mb-10 sm:mb-14 flex flex-col items-center select-none">
+<h1 class="text-4xl sm:text-6xl md:text-7xl font-bold tracking-wider text-textMain leading-tight" style="font-family: 'Press Start 2P', monospace; text-shadow: 0 4px 18px rgba(0, 0, 0, 0.9);">
+        MINDRUSH
+      </h1>
+<p class="mt-4 sm:mt-5 text-sm sm:text-base font-medium tracking-widest uppercase text-textMuted">
+        Think. React. Learn.
+      </p>
+</div>
+<!-- Main Menu Buttons: 2x2 Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-[720px]">
+<!-- 1. PLAY BUTTON -->
+<button class="arcade-btn w-full h-[88px] rounded-xl flex items-center justify-between px-6 text-textMain font-semibold focus:outline-none group relative" id="btnPlay" onclick="openModal('modeModal')">
+<div class="flex items-center gap-4 text-left">
+<div class="w-11 h-11 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors">
+<!-- Play Triangle Icon -->
+<svg class="w-5 h-5 fill-current ml-0.5" viewBox="0 0 24 24">
+<polygon points="6 3 20 12 6 21 6 3"></polygon>
+</svg>
+</div>
+<div>
+<div class="text-lg sm:text-xl font-bold tracking-tight text-textMain group-hover:text-gold transition-colors">
+              PLAY
+            </div>
+<div class="text-xs text-textMuted font-normal mt-0.5">Select a challenge mode</div>
+</div>
+</div>
+<!-- Arrow Right Icon -->
+<svg class="w-5 h-5 text-textMuted group-hover:text-textMain group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="5" x2="19" y1="12" y2="12"></line>
+<polyline points="12 5 19 12 12 19"></polyline>
+</svg>
+</button>
+<!-- 2. LEADERBOARD BUTTON -->
+<button class="arcade-btn w-full h-[88px] rounded-xl flex items-center justify-between px-6 text-textMain font-semibold focus:outline-none group" id="btnLeaderboard" onclick="openModal('leaderboardModal')">
+<div class="flex items-center gap-4 text-left">
+<div class="w-11 h-11 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors">
+<!-- Trophy Outline Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path>
+<path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path>
+<path d="M4 22h16"></path>
+<path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"></path>
+<path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"></path>
+<path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path>
+</svg>
+</div>
+<div>
+<div class="text-lg sm:text-xl font-bold tracking-tight text-textMain group-hover:text-gold transition-colors">
+              LEADERBOARD
+            </div>
+<div class="text-xs text-textMuted font-normal mt-0.5">Top rankings &amp; scores</div>
+</div>
+</div>
+<svg class="w-5 h-5 text-textMuted group-hover:text-textMain group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="5" x2="19" y1="12" y2="12"></line>
+<polyline points="12 5 19 12 12 19"></polyline>
+</svg>
+</button>
+<!-- 3. ACHIEVEMENTS BUTTON -->
+<button class="arcade-btn w-full h-[88px] rounded-xl flex items-center justify-between px-6 text-textMain font-semibold focus:outline-none group" id="btnAchievements" onclick="openModal('achievementsModal')">
+<div class="flex items-center gap-4 text-left">
+<div class="w-11 h-11 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors">
+<!-- Badge / Medal Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+</svg>
+</div>
+<div>
+<div class="text-lg sm:text-xl font-bold tracking-tight text-textMain group-hover:text-gold transition-colors">
+              ACHIEVEMENTS
+            </div>
+<div class="text-xs text-textMuted font-normal mt-0.5">14 of 28 unlocked</div>
+</div>
+</div>
+<svg class="w-5 h-5 text-textMuted group-hover:text-textMain group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="5" x2="19" y1="12" y2="12"></line>
+<polyline points="12 5 19 12 12 19"></polyline>
+</svg>
+</button>
+<!-- 4. SETTINGS BUTTON -->
+<button class="arcade-btn w-full h-[88px] rounded-xl flex items-center justify-between px-6 text-textMain font-semibold focus:outline-none group" id="btnSettings" onclick="openModal('settingsModal')">
+<div class="flex items-center gap-4 text-left">
+<div class="w-11 h-11 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors">
+<!-- Settings Gear Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+<circle cx="12" cy="12" r="3"></circle>
+</svg>
+</div>
+<div>
+<div class="text-lg sm:text-xl font-bold tracking-tight text-textMain group-hover:text-gold transition-colors">
+              SETTINGS
+            </div>
+<div class="text-xs text-textMuted font-normal mt-0.5">Controls, audio &amp; display</div>
+</div>
+</div>
+<svg class="w-5 h-5 text-textMuted group-hover:text-textMain group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="5" x2="19" y1="12" y2="12"></line>
+<polyline points="12 5 19 12 12 19"></polyline>
+</svg>
+</button>
+</div>
+</div>
+</main>
+<!-- ============================================================ -->
+<!-- FOOTER: System Status & Privacy Guarantee                    -->
+<!-- ============================================================ -->
+<footer class="relative z-10 w-full px-5 sm:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-3 text-xs text-textMuted border-t border-borderDim/70 bg-surface/40 backdrop-blur-md">
+<div class="flex items-center gap-2 text-textMuted">
+<!-- Camera Icon -->
+<svg class="w-4 h-4 text-textMuted" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="m22 8-6 4 6 4V8Z"></path>
+<rect height="12" rx="2" width="14" x="2" y="6"></rect>
+</svg>
+<span>Hand tracking enabled • Position 2–3 ft from camera</span>
+</div>
+<div class="flex items-center gap-2 text-textMuted">
+<!-- Shield Check Icon -->
+<svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+<path d="m9 12 2 2 4-4"></path>
+</svg>
+<span>Private local processing • No video stream recorded</span>
+</div>
+</footer>
+<!-- ============================================================ -->
+<!-- MODAL 1: MODE SELECTION POPUP                                -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="modeModal" onclick="handleBackdropClick(event, 'modeModal')">
+<div class="modal-panel" onclick="event.stopPropagation()">
+<!-- Modal Header -->
+<div class="flex items-start justify-between p-6 pb-4 border-b border-borderDim flex-shrink-0">
+<div>
+<h2 class="text-xl sm:text-2xl font-bold tracking-tight text-textMain">
+          CHOOSE YOUR MODE
+        </h2>
+<p class="text-xs sm:text-sm text-textMuted mt-1">How do you want to play today?</p>
+</div>
+<button aria-label="Close modal" class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 border border-transparent hover:border-borderDim transition-all" onclick="closeModal('modeModal')">
+<!-- Minimal Cross Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<!-- Scrollable Internal Wrapper -->
+<div class="overflow-y-auto p-6 space-y-3 sm:space-y-4 flex-1">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+<!-- Mode 1: Fun Mode -->
+<div class="mode-card rounded-xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Fun Mode')">
+<div>
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors mb-3.5">
+<!-- Gamepad Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="6" x2="10" y1="12" y2="12"></line>
+<line x1="8" x2="8" y1="10" y2="14"></line>
+<line x1="15" x2="15.01" y1="13" y2="13"></line>
+<line x1="18" x2="18.01" y1="11" y2="11"></line>
+<rect height="12" rx="2" width="20" x="2" y="6"></rect>
+</svg>
+</div>
+<h3 class="text-base font-bold text-textMain group-hover:text-gold transition-colors">Fun Mode</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              React fast. Chase your high score.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/70 flex items-center justify-between text-xs text-textMuted font-mono">
+<span class="text-gold font-medium">Record: 48,250</span>
+<span class="text-textMain group-hover:translate-x-1 transition-transform">→</span>
+</div>
+</div>
+<!-- Mode 2: Educational Mode -->
+<div class="mode-card rounded-xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Educational Mode')">
+<div>
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors mb-3.5">
+<!-- Calculator Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect height="20" rx="2" width="16" x="4" y="2"></rect>
+<line x1="8" x2="16" y1="6" y2="6"></line>
+<line x1="16" x2="16" y1="14"></line>
+<path d="M16 10h.01"></path>
+<path d="M12 10h.01"></path>
+<path d="M8 10h.01"></path>
+<path d="M12 14h.01"></path>
+<path d="M8 14h.01"></path>
+<path d="M12 18h.01"></path>
+<path d="M8 18h.01"></path>
+</svg>
+</div>
+<h3 class="text-base font-bold text-textMain group-hover:text-gold transition-colors">Educational Mode</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              Learn through interactive challenges.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/70 flex items-center justify-between text-xs text-textMuted font-mono">
+<span class="text-gold font-medium">Accuracy: 98%</span>
+<span class="text-textMain group-hover:translate-x-1 transition-transform">→</span>
+</div>
+</div>
+<!-- Mode 3: Daily Challenge -->
+<div class="mode-card rounded-xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Daily Challenge')">
+<div>
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors mb-3.5">
+<!-- Calendar Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</div>
+<h3 class="text-base font-bold text-textMain group-hover:text-gold transition-colors">Daily Challenge</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              A new challenge awaits every day.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/70 flex items-center justify-between text-xs text-textMuted font-mono">
+<span class="text-gold font-medium">+150 XP</span>
+<span class="text-textMain group-hover:translate-x-1 transition-transform">→</span>
+</div>
+</div>
+<!-- Mode 4: Practice -->
+<div class="mode-card rounded-xl p-4 sm:p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Practice')">
+<div>
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-textMain group-hover:border-gold/50 group-hover:text-gold transition-colors mb-3.5">
+<!-- Target Icon -->
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<circle cx="12" cy="12" r="6"></circle>
+<circle cx="12" cy="12" r="2"></circle>
+</svg>
+</div>
+<h3 class="text-base font-bold text-textMain group-hover:text-gold transition-colors">Practice</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              Train at your own pace without pressure.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/70 flex items-center justify-between text-xs text-textMuted font-mono">
+<span class="text-textMuted font-medium">Untimed</span>
+<span class="text-textMain group-hover:translate-x-1 transition-transform">→</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Modal Footer -->
+<div class="p-4 sm:px-6 border-t border-borderDim flex items-center justify-between text-xs text-textMuted flex-shrink-0">
+<span>Press <kbd class="px-1.5 py-0.5 rounded bg-white/5 border border-borderDim text-textMain font-mono text-[11px]">ESC</kbd> to return</span>
+<span class="text-textMuted">Select an option to launch</span>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 2: BADGES & TROPHIES (Achievements)                    -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="achievementsModal" onclick="handleBackdropClick(event, 'achievementsModal')">
+<div class="modal-panel" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between p-6 pb-4 border-b border-borderDim flex-shrink-0">
+<div>
+<h2 class="text-xl sm:text-2xl font-bold tracking-tight text-textMain">ACHIEVEMENTS</h2>
+<p class="text-xs sm:text-sm text-textMuted mt-1">14 of 28 badges unlocked</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 border border-transparent hover:border-borderDim transition-all" onclick="closeModal('achievementsModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<div class="overflow-y-auto p-6 space-y-3 flex-1">
+<!-- Badge 1 -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-gold/40 flex items-center justify-center text-gold flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+</svg>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">First Orbit</h4>
+<span class="text-[10px] font-mono text-gold border border-gold/30 px-2 py-0.5 rounded">UNLOCKED</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Completed your first arcade session.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-gold h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Badge 2 -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-gold/40 flex items-center justify-center text-gold flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+</svg>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">Precision Mind</h4>
+<span class="text-[10px] font-mono text-gold border border-gold/30 px-2 py-0.5 rounded">UNLOCKED</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Answered 10 arithmetic challenges consecutively without error.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-gold h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Badge 3 -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-gold/40 flex items-center justify-center text-gold flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<path d="m9 12 2 2 4-4"></path>
+</svg>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">Swift Reflex</h4>
+<span class="text-[10px] font-mono text-gold border border-gold/30 px-2 py-0.5 rounded">UNLOCKED</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Captured 25 target nodes in under 30 seconds.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-gold h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Badge 4 In Progress -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface/70 flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-borderDim flex items-center justify-center text-textMuted flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+</svg>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">Consistency Streak</h4>
+<span class="text-[10px] font-mono text-textMuted">4 / 5 DAYS</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Train five days consecutively.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-gold/60 h-full rounded-full" style="width: 80%;"></div>
+</div>
+</div>
+</div>
+<!-- Badge 5 Locked -->
+<div class="p-4 rounded-xl border border-borderDim/60 bg-surface/40 opacity-70 flex items-center gap-4">
+<div class="w-10 h-10 rounded-lg bg-white/5 border border-borderDim flex items-center justify-center text-textMuted flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
+<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+</svg>
+</div>
+<div class="flex-1 min-w-0">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMuted">Grandmaster</h4>
+<span class="text-[10px] font-mono text-textMuted">LOCKED</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Reach Level 10 and maintain 95%+ accuracy.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-white/20 h-full rounded-full" style="width: 35%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 sm:px-6 border-t border-borderDim flex justify-end flex-shrink-0">
+<button class="px-4 py-2 rounded-lg bg-surface border border-borderMid hover:border-gold text-xs font-medium text-textMain transition-colors" onclick="closeModal('achievementsModal')">Close</button>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 3: LEADERBOARD SCREEN                                 -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="leaderboardModal" onclick="handleBackdropClick(event, 'leaderboardModal')">
+<div class="modal-panel" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between p-6 pb-4 border-b border-borderDim flex-shrink-0">
+<div>
+<h2 class="text-xl sm:text-2xl font-bold tracking-tight text-textMain">LEADERBOARD</h2>
+<p class="text-xs sm:text-sm text-textMuted mt-1">Global standings and rankings</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 border border-transparent hover:border-borderDim transition-all" onclick="closeModal('leaderboardModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<!-- Period Tabs -->
+<div class="flex gap-2 px-6 pt-4 pb-2 border-b border-borderDim/70 text-xs font-medium flex-shrink-0">
+<button class="px-3 py-1.5 rounded-lg bg-white/10 text-textMain font-semibold">This Week</button>
+<button class="px-3 py-1.5 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 transition-colors">Classroom</button>
+<button class="px-3 py-1.5 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 transition-colors">All Time</button>
+</div>
+<!-- Rankings Table Container -->
+<div class="overflow-y-auto px-6 py-3 divide-y divide-borderDim/50 flex-1">
+<div class="grid grid-cols-12 text-[11px] font-mono text-textMuted uppercase py-2 tracking-wider">
+<span class="col-span-2">Rank</span>
+<span class="col-span-6">Player</span>
+<span class="col-span-2 text-right">Level</span>
+<span class="col-span-2 text-right">Score</span>
+</div>
+<!-- Rank 1 -->
+<div class="grid grid-cols-12 items-center py-3 text-sm hover:bg-white/5 rounded-lg transition-colors px-2">
+<span class="col-span-2 font-mono text-gold font-semibold">#01</span>
+<div class="col-span-6 flex items-center gap-2.5">
+<div class="w-6 h-6 rounded bg-gold/10 border border-gold/30 flex items-center justify-center text-xs text-gold font-mono">1</div>
+<span class="text-textMain font-medium truncate">Nova_Rocket</span>
+</div>
+<span class="col-span-2 text-right font-mono text-xs text-textMuted">LV 18</span>
+<span class="col-span-2 text-right font-mono text-textMain font-semibold">148,920</span>
+</div>
+<!-- Rank 2 -->
+<div class="grid grid-cols-12 items-center py-3 text-sm hover:bg-white/5 rounded-lg transition-colors px-2">
+<span class="col-span-2 font-mono text-textMuted font-semibold">#02</span>
+<div class="col-span-6 flex items-center gap-2.5">
+<div class="w-6 h-6 rounded bg-white/5 border border-borderDim flex items-center justify-center text-xs text-textMuted font-mono">2</div>
+<span class="text-textMain font-medium truncate">CosmicMaya</span>
+</div>
+<span class="col-span-2 text-right font-mono text-xs text-textMuted">LV 15</span>
+<span class="col-span-2 text-right font-mono text-textMain font-semibold">134,250</span>
+</div>
+<!-- Rank 3 -->
+<div class="grid grid-cols-12 items-center py-3 text-sm hover:bg-white/5 rounded-lg transition-colors px-2">
+<span class="col-span-2 font-mono text-textMuted font-semibold">#03</span>
+<div class="col-span-6 flex items-center gap-2.5">
+<div class="w-6 h-6 rounded bg-white/5 border border-borderDim flex items-center justify-center text-xs text-textMuted font-mono">3</div>
+<span class="text-textMain font-medium truncate">PixelLeo</span>
+</div>
+<span class="col-span-2 text-right font-mono text-xs text-textMuted">LV 12</span>
+<span class="col-span-2 text-right font-mono text-textMain font-semibold">122,800</span>
+</div>
+<!-- Rank 8 (User) -->
+<div class="grid grid-cols-12 items-center py-3 text-sm bg-white/5 border border-gold/30 rounded-lg px-2 my-1">
+<span class="col-span-2 font-mono text-gold font-semibold">#08</span>
+<div class="col-span-6 flex items-center gap-2.5">
+<div class="w-6 h-6 rounded bg-gold/20 border border-gold/40 flex items-center justify-center text-xs text-gold font-mono font-bold">8</div>
+<span class="text-textMain font-semibold truncate">Cadet Alex <span class="text-[10px] font-mono text-gold ml-1 font-normal">(You)</span></span>
+</div>
+<span class="col-span-2 text-right font-mono text-xs text-gold">LV 5</span>
+<span class="col-span-2 text-right font-mono text-gold font-semibold">48,250</span>
+</div>
+</div>
+<!-- Summary Footer -->
+<div class="p-4 sm:px-6 border-t border-borderDim flex items-center justify-between text-xs text-textMuted flex-shrink-0">
+<div>Current Rank: <span class="text-textMain font-semibold">#08</span> (Top 10%)</div>
+<div>Best Score: <span class="text-gold font-semibold">48,250</span></div>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 4: SETTINGS                                            -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="settingsModal" onclick="handleBackdropClick(event, 'settingsModal')">
+<div class="modal-panel" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between p-6 pb-4 border-b border-borderDim flex-shrink-0">
+<div>
+<h2 class="text-xl sm:text-2xl font-bold tracking-tight text-textMain">SETTINGS</h2>
+<p class="text-xs sm:text-sm text-textMuted mt-1">Configure gesture camera, audio and display</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 border border-transparent hover:border-borderDim transition-all" onclick="closeModal('settingsModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<div class="overflow-y-auto p-6 space-y-6 flex-1">
+<!-- Section 1: Camera & Tracking -->
+<div class="space-y-4">
+<h3 class="text-xs font-semibold uppercase text-gold tracking-wider">Hand Tracking</h3>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">On-Screen Hand Cursor</div>
+<div class="text-xs text-textMuted">Display marker over detected hand position</div>
+</div>
+<input checked="" class="w-4 h-4 accent-[#C6A66B] rounded cursor-pointer" type="checkbox">
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Challenge Velocity</div>
+<div class="text-xs text-textMuted">Pacing of falling numbers and equations</div>
+</div>
+<select class="bg-surface border border-borderMid rounded-lg px-3 py-1.5 text-xs text-textMain focus:outline-none focus:border-gold">
+<option>Relaxed</option>
+<option selected="">Balanced</option>
+<option>Accelerated</option>
+</select>
+</div>
+</div>
+<!-- Section 2: Audio -->
+<div class="space-y-4 pt-4 border-t border-borderDim">
+<h3 class="text-xs font-semibold uppercase text-gold tracking-wider">Audio Feedback</h3>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Sound Effects</div>
+<div class="text-xs text-textMuted">Target catch and combo confirmation cues</div>
+</div>
+<input checked="" class="w-4 h-4 accent-[#C6A66B] rounded cursor-pointer" type="checkbox">
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Background Ambiance</div>
+<div class="text-xs text-textMuted">Subtle synthetic rhythm during gameplay</div>
+</div>
+<input checked="" class="w-4 h-4 accent-[#C6A66B] rounded cursor-pointer" type="checkbox">
+</div>
+</div>
+<!-- Section 3: Visual & Accessibility -->
+<div class="space-y-4 pt-4 border-t border-borderDim">
+<h3 class="text-xs font-semibold uppercase text-gold tracking-wider">Visual &amp; Accessibility</h3>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">High Contrast Equations</div>
+<div class="text-xs text-textMuted">Enhance typography scale and contrast</div>
+</div>
+<input checked="" class="w-4 h-4 accent-[#C6A66B] rounded cursor-pointer" type="checkbox">
+</div>
+</div>
+</div>
+<div class="p-4 sm:px-6 border-t border-borderDim flex justify-end flex-shrink-0">
+<button class="px-4 py-2 rounded-lg bg-surface border border-borderMid hover:border-gold text-xs font-semibold text-textMain transition-colors" onclick="closeModal('settingsModal')">Save &amp; Close</button>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 5: HOW TO PLAY                                         -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="instructionsModal" onclick="handleBackdropClick(event, 'instructionsModal')">
+<div class="modal-panel" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between p-6 pb-4 border-b border-borderDim flex-shrink-0">
+<div>
+<h2 class="text-xl sm:text-2xl font-bold tracking-tight text-textMain">HOW TO PLAY</h2>
+<p class="text-xs sm:text-sm text-textMuted mt-1">Quick guide to webcam gesture control</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 border border-transparent hover:border-borderDim transition-all" onclick="closeModal('instructionsModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<div class="overflow-y-auto p-6 space-y-3.5 text-sm text-textMuted flex-1">
+<div class="p-4 rounded-xl border border-borderDim bg-surface flex items-start gap-3.5">
+<div class="w-8 h-8 rounded-lg bg-white/5 border border-borderMid text-textMain font-semibold flex items-center justify-center flex-shrink-0 text-xs">
+          1
+        </div>
+<div>
+<h4 class="text-sm font-semibold text-textMain">Position Your Camera</h4>
+<p class="text-xs text-textMuted mt-1">Sit 2–3 feet away from your webcam. Ensure sufficient frontal lighting and keep hands in frame.</p>
+</div>
+</div>
+<div class="p-4 rounded-xl border border-borderDim bg-surface flex items-start gap-3.5">
+<div class="w-8 h-8 rounded-lg bg-white/5 border border-borderMid text-textMain font-semibold flex items-center justify-center flex-shrink-0 text-xs">
+          2
+        </div>
+<div>
+<h4 class="text-sm font-semibold text-textMain">Read the Target Equation</h4>
+<p class="text-xs text-textMuted mt-1">Inspect the problem displayed at the top bar (e.g. 9 × 8 = ?). Potential answer nodes fall toward the baseline.</p>
+</div>
+</div>
+<div class="p-4 rounded-xl border border-borderDim bg-surface flex items-start gap-3.5">
+<div class="w-8 h-8 rounded-lg bg-white/5 border border-borderMid text-textMain font-semibold flex items-center justify-center flex-shrink-0 text-xs">
+          3
+        </div>
+<div>
+<h4 class="text-sm font-semibold text-textMain">Intercept Correct Answers</h4>
+<p class="text-xs text-textMuted mt-1">Move your palm to contact the correct value (72) before it exits the screen. Avoid decoy numbers.</p>
+</div>
+</div>
+<div class="p-4 rounded-xl border border-borderDim bg-surface flex items-start gap-3.5">
+<div class="w-8 h-8 rounded-lg bg-white/5 border border-borderMid text-textMain font-semibold flex items-center justify-center flex-shrink-0 text-xs">
+          4
+        </div>
+<div>
+<h4 class="text-sm font-semibold text-textMain">Multiply &amp; Score</h4>
+<p class="text-xs text-textMuted mt-1">Sustain consecutive catches without mistake to raise your score multiplier up to 4×.</p>
+</div>
+</div>
+</div>
+<div class="p-4 sm:px-6 border-t border-borderDim flex justify-between items-center flex-shrink-0">
+<span class="text-xs text-textMuted">Keyboard &amp; mouse inputs supported</span>
+<button class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-textMain transition-colors" onclick="closeModal('instructionsModal')">Ready</button>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 6: CADET PROFILE                                       -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="profileModal" onclick="handleBackdropClick(event, 'profileModal')">
+<div class="modal-panel" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between p-6 pb-4 border-b border-borderDim flex-shrink-0">
+<div>
+<h2 class="text-xl sm:text-2xl font-bold tracking-tight text-textMain">PILOT PROFILE</h2>
+<p class="text-xs sm:text-sm text-textMuted mt-1">Cadet Alex • Service Record</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-white/5 border border-transparent hover:border-borderDim transition-all" onclick="closeModal('profileModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<div class="overflow-y-auto p-6 space-y-4 flex-1">
+<!-- Avatar & Rank Header -->
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-xl bg-surface border border-borderMid flex items-center justify-center text-textMuted">
+<svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+<circle cx="12" cy="7" r="4"></circle>
+</svg>
+</div>
+<div>
+<h3 class="text-base font-bold text-textMain">Cadet Alex</h3>
+<div class="text-xs text-gold font-medium">Level 5 Explorer</div>
+<div class="text-[11px] text-textMuted">Global Tier: Top 10%</div>
+</div>
+</div>
+<!-- Experience Meter -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface">
+<div class="flex items-center justify-between text-xs mb-2">
+<span class="text-textMuted">Next Level Progression</span>
+<span class="font-mono text-textMain">740 / 1,000 XP</span>
+</div>
+<div class="w-full bg-borderDim h-2 rounded-full overflow-hidden">
+<div class="bg-gold h-full rounded-full" style="width: 74%;"></div>
+</div>
+</div>
+<!-- Stats Grid -->
+<div class="grid grid-cols-2 gap-3 text-xs">
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface">
+<div class="text-textMuted font-mono text-[11px]">SESSIONS</div>
+<div class="text-lg font-bold text-textMain mt-1">42</div>
+</div>
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface">
+<div class="text-textMuted font-mono text-[11px]">HIGH SCORE</div>
+<div class="text-lg font-bold text-gold mt-1">48,250</div>
+</div>
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface">
+<div class="text-textMuted font-mono text-[11px]">ACCURACY</div>
+<div class="text-lg font-bold text-textMain mt-1">94.2%</div>
+</div>
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface">
+<div class="text-textMuted font-mono text-[11px]">STREAK</div>
+<div class="text-lg font-bold text-textMain mt-1">5 Days</div>
+</div>
+</div>
+</div>
+<div class="p-4 sm:px-6 border-t border-borderDim flex justify-end flex-shrink-0">
+<button class="px-4 py-2 rounded-lg bg-surface border border-borderMid hover:border-gold text-xs font-semibold text-textMain transition-colors" onclick="closeModal('profileModal')">Close</button>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- SCRIPT: Starfield Canvas + Viewport Modal Logic              -->
+<!-- ============================================================ -->
+<script>
+  // Minimalist Quiet Starfield Animation
+  (function initSubtleStarfield() {
+    const canvas = document.getElementById('parallaxStarfieldCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+
+    const starCount = 85;
+    const stars = [];
+
+    for (let i = 0; i < starCount; i++) {
+      stars.push({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        size: Math.random() * 1.5 + 0.5,
+        speedX: Math.random() * 0.15 + 0.05,
+        speedY: (Math.random() - 0.5) * 0.04,
+        alpha: Math.random() * 0.4 + 0.2
+      });
+    }
+
+    function resize() {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+
+    function render() {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < stars.length; i++) {
+        const s = stars[i];
+        s.x += s.speedX;
+        s.y += s.speedY;
+
+        if (s.x > width) s.x = 0;
+        if (s.y > height) s.y = 0;
+        if (s.y < 0) s.y = height;
+
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(245, 243, 238, ${s.alpha})`;
+        ctx.fill();
+      }
+
+      requestAnimationFrame(render);
+    }
+    requestAnimationFrame(render);
+  })();
+
+  // Modal Open / Close Controller
+  function openModal(id) {
+    document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden'));
+    const target = document.getElementById(id);
+    if (target) {
+      target.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeModal(id) {
+    const target = document.getElementById(id);
+    if (target) {
+      target.classList.add('hidden');
+      document.body.style.overflow = 'auto';
+    }
+  }
+
+  function handleBackdropClick(event, id) {
+    if (event.target === document.getElementById(id)) {
+      closeModal(id);
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-backdrop').forEach(m => {
+        m.classList.add('hidden');
+      });
+      document.body.style.overflow = 'auto';
+    }
+  });
+
+  function selectMode(modeName) {
+    alert(`Initializing ${modeName}... Hand tracking ready.`);
+    closeModal('modeModal');
+  }
+</script>
+</body></html>

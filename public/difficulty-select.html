@@ -1,0 +1,1544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush — Select Difficulty</title>
+
+  <link rel="icon" type="image/png" href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+
+  <!-- Core Space-Arcade Design System -->
+  <link rel="stylesheet" href="css/main.css">
+
+  <style>
+    body {
+      background-color: var(--void);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-x: hidden;
+      font-family: var(--font-body);
+      user-select: none;
+      position: relative;
+    }
+
+    /* Fixed Cosmic Background Layer */
+    .cosmic-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Header */
+    .top-header {
+      width: 100%;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(7, 9, 14, 0.85);
+      border-bottom: 1px solid var(--border-dim);
+      backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+
+    .nav-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-dim);
+      background: rgba(17, 19, 29, 0.7);
+      transition: all 0.2s ease;
+    }
+
+    .nav-back-link:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: var(--card);
+      transform: translateX(-3px);
+    }
+
+    .header-branding {
+      font-family: var(--font-arcade);
+      font-size: 16px;
+      color: var(--text-main);
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    /* Main Container */
+    .difficulty-container {
+      width: 100%;
+      max-width: 1320px;
+      padding: 36px 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 10px;
+    }
+
+    .page-title {
+      font-family: var(--font-arcade);
+      font-size: clamp(24px, 4.5vw, 40px);
+      letter-spacing: 3px;
+      text-align: center;
+      color: var(--text-main);
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      margin-bottom: 10px;
+    }
+
+    .page-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 660px;
+      line-height: 1.6;
+      margin-bottom: 34px;
+    }
+
+    /* 4-Column Difficulty Cards Grid */
+    .difficulty-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      width: 100%;
+    }
+
+    .diff-card {
+      background: var(--card);
+      border: 1.5px solid var(--border-dim);
+      border-radius: 18px;
+      padding: 24px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(14px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .diff-card:hover {
+      transform: translateY(-5px);
+    }
+
+    .diff-card.diff-easy:hover {
+      border-color: var(--success);
+      box-shadow: 0 10px 30px rgba(52, 211, 153, 0.2);
+    }
+
+    .diff-card.diff-medium:hover {
+      border-color: var(--gold);
+      box-shadow: 0 10px 30px rgba(250, 204, 21, 0.2);
+    }
+
+    .diff-card.diff-hard:hover {
+      border-color: var(--danger);
+      box-shadow: 0 10px 30px rgba(248, 113, 113, 0.2);
+    }
+
+    .diff-card.diff-insane:hover {
+      border-color: #c084fc;
+      box-shadow: 0 10px 30px rgba(192, 132, 252, 0.25);
+    }
+
+    /* Locked state */
+    .diff-card.diff-locked {
+      opacity: 0.72;
+      border-style: dashed;
+    }
+
+    .diff-card.diff-locked:hover {
+      transform: none;
+      box-shadow: none;
+      border-color: var(--border-mid);
+    }
+
+    .diff-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .diff-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .diff-name {
+      font-family: var(--font-arcade);
+      font-size: 18px;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+
+    .diff-card.diff-easy .diff-name { color: var(--success); }
+    .diff-card.diff-medium .diff-name { color: var(--gold); }
+    .diff-card.diff-hard .diff-name { color: var(--danger); }
+    .diff-card.diff-insane .diff-name { color: #c084fc; }
+
+    .diff-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.55;
+      margin-bottom: 18px;
+      min-height: 48px;
+    }
+
+    /* Visual Object Preview Box (Player Friendly) */
+    .diff-preview-box {
+      background: rgba(17, 19, 29, 0.85);
+      border: 1px solid var(--border-dim);
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .preview-section-title {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .preview-pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .preview-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      font-weight: 600;
+    }
+
+    .chip-positive {
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--cyan);
+    }
+
+    .chip-gold {
+      background: rgba(250, 204, 21, 0.12);
+      border: 1px solid rgba(250, 204, 21, 0.3);
+      color: var(--gold);
+    }
+
+    .chip-hazard {
+      background: rgba(248, 113, 113, 0.12);
+      border: 1px solid rgba(248, 113, 113, 0.3);
+      color: var(--danger);
+    }
+
+    /* Challenge explanation box */
+    .diff-challenge-box {
+      background: rgba(22, 25, 38, 0.6);
+      border-left: 2px solid var(--border-dim);
+      padding: 8px 12px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .diff-card.diff-easy .diff-challenge-box { border-left-color: var(--success); }
+    .diff-card.diff-medium .diff-challenge-box { border-left-color: var(--gold); }
+    .diff-card.diff-hard .diff-challenge-box { border-left-color: var(--danger); }
+    .diff-card.diff-insane .diff-challenge-box { border-left-color: #c084fc; }
+
+    /* Play Action Buttons */
+    .diff-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 12px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      text-align: center;
+      text-decoration: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      border: 1.5px solid transparent;
+    }
+
+    .btn-easy {
+      background: rgba(52, 211, 153, 0.15);
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .btn-easy:hover {
+      background: var(--success);
+      color: var(--void);
+      transform: translateY(-2px);
+    }
+
+    .btn-medium {
+      background: rgba(250, 204, 21, 0.15);
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+    .btn-medium:hover {
+      background: var(--gold);
+      color: var(--void);
+      transform: translateY(-2px);
+    }
+
+    .btn-hard {
+      background: rgba(248, 113, 113, 0.15);
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .btn-hard:hover {
+      background: var(--danger);
+      color: var(--void);
+      transform: translateY(-2px);
+    }
+
+    .btn-insane {
+      background: rgba(192, 132, 252, 0.15);
+      border-color: #c084fc;
+      color: #e9d5ff;
+    }
+    .btn-insane:hover {
+      background: #c084fc;
+      color: var(--void);
+      transform: translateY(-2px);
+    }
+
+    .btn-locked {
+      background: rgba(30, 35, 50, 0.6) !important;
+      border-color: var(--border-mid) !important;
+      color: var(--text-muted) !important;
+      cursor: not-allowed;
+      box-shadow: none !important;
+    }
+    .btn-locked:hover {
+      transform: none !important;
+    }
+
+    /* Pre-Game Guide Modal */
+    .guide-modal-content {
+      width: min(620px, calc(100vw - 32px));
+      max-height: calc(100vh - 40px);
+      background: var(--popup);
+      border: 1.5px solid var(--border-mid);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(56, 189, 248, 0.15);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .guide-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border-dim);
+      background: rgba(25, 28, 43, 0.95);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .guide-body {
+      padding: 20px 24px;
+      overflow-y: auto;
+      max-height: calc(100vh - 180px);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .guide-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .guide-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 9px 14px;
+      border-radius: 10px;
+      background: rgba(22, 25, 38, 0.75);
+      border: 1px solid var(--border-dim);
+    }
+
+    .guide-item-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .guide-item-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 8px currentColor;
+      flex-shrink: 0;
+    }
+
+    .guide-item-dot svg {
+      width: 18px;
+      height: 18px;
+      filter: drop-shadow(0 0 3px currentColor);
+    }
+
+    .guide-item-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .guide-item-val {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .guide-footer {
+      padding: 14px 24px;
+      border-top: 1px solid var(--border-dim);
+      background: rgba(17, 19, 29, 0.6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .guide-footer-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 14px;
+      border: 1.5px solid var(--border-dim);
+      background: rgba(17, 19, 29, 0.85);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .guide-footer-btn:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: var(--card);
+      transform: translateY(-2px);
+    }
+
+    .guide-footer-btn.btn-continue {
+      border-color: var(--cyan);
+      background: linear-gradient(135deg, rgba(22, 25, 38, 0.95), rgba(17, 19, 29, 0.95));
+      color: var(--cyan);
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+    }
+
+    .guide-footer-btn.btn-continue:hover {
+      background: var(--cyan);
+      color: var(--void);
+      box-shadow: 0 0 30px rgba(56, 189, 248, 0.35);
+    }
+
+    .guide-footer-btn.btn-continue.launched {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+
+    /* Notification Toast */
+    .locked-toast {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: var(--popup);
+      border: 1.5px solid var(--gold);
+      color: var(--text-main);
+      padding: 14px 24px;
+      border-radius: 14px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.8), 0 0 20px rgba(250, 204, 21, 0.3);
+      font-family: var(--font-sans);
+      font-size: 13.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 100;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none;
+      max-width: 90vw;
+    }
+
+    .locked-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Footer */
+    .diff-footer {
+      width: 100%;
+      padding: 16px 24px;
+      background: rgba(7, 9, 14, 0.85);
+      border-top: 1px solid var(--border-dim);
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      font-size: 13px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .diff-footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .diff-footer a:hover {
+      color: var(--cyan);
+    }
+
+    @media (max-width: 1100px) {
+      .difficulty-grid {
+        grid-template-columns: repeat(2, 1fr);
+        max-width: 720px;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .difficulty-grid {
+        grid-template-columns: 1fr;
+        max-width: 360px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Cosmic Background Layer -->
+  <div class="cosmic-layer" id="starfield">
+    <canvas id="parallaxStarfieldCanvas" style="opacity: 0.35; width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
+    <div class="kinetic-wave"></div>
+    <div class="kinetic-wave delay-1"></div>
+    <div class="kinetic-wave delay-2"></div>
+  </div>
+
+  <!-- Top Navigation Header -->
+  <header class="top-header">
+    <a href="mode-select.html" class="nav-back-link" title="Return to Mode Selection">
+      &larr; Back to Modes
+    </a>
+    <div class="header-branding">MINDRUSH</div>
+    <div style="width: 110px;"></div>
+  </header>
+
+  <!-- Main Difficulty Container -->
+  <main class="difficulty-container">
+    <span class="page-eyebrow">Object Falling (Skyfall)</span>
+    <h1 class="page-title">SELECT DIFFICULTY</h1>
+    <p class="page-subtitle">
+      Choose your challenge level. Score 1,000+ points on Hard mode to permanently unlock the elite Insane tier.
+    </p>
+
+    <div class="difficulty-grid">
+
+      <!-- 1. Easy Card -->
+      <section class="diff-card diff-easy" aria-labelledby="easy-title">
+        <div>
+          <div class="diff-header">
+            <span class="diff-badge" style="background: rgba(52, 211, 153, 0.15); border: 1px solid var(--success); color: var(--success);">
+              Introductory
+            </span>
+            <span style="font-size: 20px;">🌱</span>
+          </div>
+
+          <h2 id="easy-title" class="diff-name">EASY</h2>
+          <p class="diff-desc" id="desc-easy">
+            Gentle pace designed for beginners to learn hand coordinates and collect starter celestial badges.
+          </p>
+
+          <!-- Representative Object Preview -->
+          <div class="diff-preview-box">
+            <div class="preview-section-title">Object Targets</div>
+            <div class="preview-pill-row" id="pills-easy">
+              <span class="preview-chip chip-positive">💧 Droplet +10</span>
+              <span class="preview-chip chip-positive">⬡ Hexagon +10</span>
+              <span class="preview-chip chip-gold">☀️ Sunburst +20</span>
+              <span class="preview-chip chip-hazard">🔴 Red Orb -1 Life</span>
+            </div>
+          </div>
+
+          <!-- Concise Challenge Explanation -->
+          <div class="diff-challenge-box" id="challenge-easy">
+            Dodge hazardous red orbs and reach 500 points to trigger advancement to Medium difficulty.
+          </div>
+        </div>
+
+        <div>
+          <button class="diff-btn btn-easy" id="btn-play-easy" onclick="openDifficultyGuide('easy')">
+            Play Easy
+          </button>
+        </div>
+      </section>
+
+      <!-- 2. Medium Card -->
+      <section class="diff-card diff-medium" aria-labelledby="medium-title">
+        <div>
+          <div class="diff-header">
+            <span class="diff-badge" style="background: rgba(250, 204, 21, 0.15); border: 1px solid var(--gold); color: var(--gold);">
+              Standard
+            </span>
+            <span style="font-size: 20px;">⚡</span>
+          </div>
+
+          <h2 id="medium-title" class="diff-name">MEDIUM</h2>
+          <p class="diff-desc" id="desc-medium">
+            Faster action with galaxy relics! Introduces 1UP bonus lives, Bronze Stars, and penalty shurikens.
+          </p>
+
+          <!-- Representative Object Preview -->
+          <div class="diff-preview-box">
+            <div class="preview-section-title">Object Targets</div>
+            <div class="preview-pill-row" id="pills-medium">
+              <span class="preview-chip chip-positive">🌀 Shell +25</span>
+              <span class="preview-chip chip-positive">🌙 Moon +20</span>
+              <span class="preview-chip chip-hazard">🔴 Red Orb -1</span>
+              <span class="preview-chip chip-hazard">💣 Spiky Mine -1</span>
+              <span class="preview-chip chip-gold">❤️ 1UP +1 Life</span>
+            </div>
+          </div>
+
+          <!-- Concise Challenge Explanation -->
+          <div class="diff-challenge-box" id="challenge-medium">
+            Catch bonus lives and balance high-value stars against trap shurikens and spiky mines to score 750+ points.
+          </div>
+        </div>
+
+        <div>
+          <button class="diff-btn btn-medium" id="btn-play-medium" onclick="openDifficultyGuide('medium')">
+            Play Medium
+          </button>
+        </div>
+      </section>
+
+      <!-- 3. Hard Card -->
+      <section class="diff-card diff-hard" aria-labelledby="hard-title">
+        <div>
+          <div class="diff-header">
+            <span class="diff-badge" style="background: rgba(248, 113, 113, 0.15); border: 1px solid var(--danger); color: var(--danger);">
+              Veteran
+            </span>
+            <span style="font-size: 20px;">🔥</span>
+          </div>
+
+          <h2 id="hard-title" class="diff-name">HARD</h2>
+          <p class="diff-desc" id="desc-hard">
+            High-velocity trial! Punishing trap penalties, blazing flames, and spiky mines test your reflexes.
+          </p>
+
+          <!-- Representative Object Preview -->
+          <div class="diff-preview-box">
+            <div class="preview-section-title">Object Targets</div>
+            <div class="preview-pill-row" id="pills-hard">
+              <span class="preview-chip chip-gold">⭐ Star +50</span>
+              <span class="preview-chip chip-positive">💎 Prism +50</span>
+              <span class="preview-chip chip-hazard">🔴 Red Orb -1</span>
+              <span class="preview-chip chip-hazard">💣 Spiky Mine -1</span>
+              <span class="preview-chip chip-hazard">🔥 Flame -1</span>
+            </div>
+          </div>
+
+          <!-- Concise Challenge Explanation -->
+          <div class="diff-challenge-box" id="challenge-hard">
+            Survive blazing flames and hazardous mines to score 1,000+ points and permanently unlock INSANE mode!
+          </div>
+        </div>
+
+        <div>
+          <button class="diff-btn btn-hard" id="btn-play-hard" onclick="openDifficultyGuide('hard')">
+            Play Hard
+          </button>
+        </div>
+      </section>
+
+      <!-- 4. Insane Card -->
+      <section class="diff-card diff-insane diff-locked" id="card-insane" aria-labelledby="insane-title">
+        <div>
+          <div class="diff-header">
+            <span class="diff-badge" id="badge-insane" style="background: rgba(168, 85, 247, 0.15); border: 1px solid #a855f7; color: #d8b4fe;">
+              Locked &bull; Beat Hard
+            </span>
+            <span id="icon-insane" style="font-size: 20px;">🔒</span>
+          </div>
+
+          <h2 id="insane-title" class="diff-name">INSANE</h2>
+          <p class="diff-desc" id="desc-insane">
+            Hyperspeed adrenaline overdrive! Extreme descent speed and the lethal 3-life hazard cross await.
+          </p>
+
+          <!-- Representative Object Preview -->
+          <div class="diff-preview-box">
+            <div class="preview-section-title">Object Targets</div>
+            <div class="preview-pill-row" id="pills-insane">
+              <span class="preview-chip chip-hazard">🔴 Red Orb -1</span>
+              <span class="preview-chip chip-hazard">💣 Spiky Mine -1</span>
+              <span class="preview-chip chip-hazard">🔥 Flame -1</span>
+              <span class="preview-chip chip-hazard">✖ Cross -3 Lives</span>
+            </div>
+          </div>
+
+          <!-- Concise Challenge Explanation -->
+          <div class="diff-challenge-box" id="challenge-insane">
+            The ultimate cosmic reflex gauntlet with lethal hazard crosses. Only the fastest Star Cadets can master Insane mode.
+          </div>
+        </div>
+
+        <div>
+          <button class="diff-btn btn-insane btn-locked" id="btn-play-insane" onclick="handleInsaneClick()">
+            🔒 Locked &bull; Beat Hard
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- PRE-GAME DIFFICULTY GUIDE & INSTRUCTIONS POPUP              -->
+  <!-- ============================================================ -->
+  <div class="modal-backdrop hidden" id="pregame-guide-modal" onclick="handleGuideBackdrop(event)">
+    <div class="guide-modal-content" onclick="event.stopPropagation()">
+      <!-- Sticky Header -->
+      <div class="guide-header">
+        <div>
+          <div style="font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--cyan); letter-spacing: 1.5px; text-transform: uppercase;">PRE-GAME FLIGHT BRIEFING</div>
+          <h2 id="guide-modal-title" style="font-family: var(--font-sans); font-size: 20px; font-weight: 700; color: var(--text-main); margin-top: 2px;">EASY MODE BRIEFING</h2>
+        </div>
+      </div>
+
+      <!-- Scrollable Body with Actual Object Artworks and Accurate Effects -->
+      <div class="guide-body">
+        <p id="guide-modal-intro" style="font-size: 13px; color: var(--text-muted); line-height: 1.5;">
+          Review the target objects and dangerous hazard traps that will spawn in this mission.
+        </p>
+
+        <!-- Section 1: Collectible Targets (Positive points & Extra Lives) -->
+        <div class="guide-section">
+          <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--cyan); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px;">
+            ★ COLLECTIBLE BADGES & RELICS (Catch for points & lives)
+          </div>
+          <div id="guide-positive-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Injected dynamically from existing game config -->
+          </div>
+        </div>
+
+        <!-- Section 2: Hazardous Traps (Point loss or Life penalties) -->
+        <div class="guide-section">
+          <div style="font-family: var(--font-mono); font-size: 11px; font-weight: 700; color: var(--danger); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px;">
+            ⚠️ HAZARDOUS TRAPS & BOMBS (Avoid with your paddle!)
+          </div>
+          <div id="guide-hazard-list" style="display: flex; flex-direction: column; gap: 8px;">
+            <!-- Injected dynamically from existing game config -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky Modal Footer with Back and Continue Buttons -->
+      <div class="guide-footer">
+        <button class="guide-footer-btn" id="btn-guide-back" onclick="closeDifficultyGuide()">
+          &larr; BACK
+        </button>
+        <a href="game.html?difficulty=easy" class="guide-footer-btn btn-continue" id="btn-guide-continue" onclick="handleContinueClick(event)">
+          CONTINUE TO GAME &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast -->
+  <div id="locked-toast" class="locked-toast" role="alert" aria-live="polite">
+    <span style="font-size: 20px;">⚠️</span>
+    <span id="locked-toast-msg">Insane mode is locked! Conquer Hard mode with 1,000+ points to unlock.</span>
+  </div>
+
+  <!-- Shared Footer -->
+  <footer class="diff-footer">
+    <a href="mode-select.html">Mode Select</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="about.html">About</a>
+    <a href="terms.html">Terms</a>
+    <a href="contact.html">Contact</a>
+  </footer>
+
+  <!-- Starfield Canvas Script -->
+  <script type="module" src="js/starfield.js"></script>
+
+  <!-- Pre-Game Guide and Difficulty Logic -->
+  <script type="module">
+    import { DIFFICULTIES, getDifficultyConfig, isInsaneUnlocked, setProgressionUserContext, isEduDifficultyUnlocked } from './js/game/difficulty.js?v=3';
+    import { getActiveUser, syncProgressFromServer } from './js/game/storage.js?v=3';
+
+    let currentSelectedTier = 'easy';
+
+    function showToast(message) {
+      const toast = document.getElementById('locked-toast');
+      const toastMsg = document.getElementById('locked-toast-msg');
+      if (!toast) return;
+      if (message && toastMsg) toastMsg.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3600);
+    }
+
+    /**
+     * Returns a compact inline SVG icon representing the badge shape.
+     * Falls back to a colored circle for unrecognized shapes.
+     */
+    function getBadgeSVG(shapeId, color) {
+      const [r, g, b] = color;
+      const fill = `rgb(${r},${g},${b})`;
+      const glow = `rgba(${r},${g},${b},0.6)`;
+      const svgStart = `<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">`;
+      const svgEnd = `</svg>`;
+
+      switch (shapeId) {
+        case 'water_droplet':
+          return `${svgStart}<path d="M12 2C12 2 5 10 5 15a7 7 0 0014 0C19 10 12 2 12 2z" fill="${fill}" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><ellipse cx="9" cy="14" rx="2" ry="3" fill="rgba(255,255,255,0.3)" transform="rotate(-15 9 14)"/>${svgEnd}`;
+
+        case 'golden_sunburst': {
+          let rays = '';
+          for (let i = 0; i < 10; i++) {
+            const a = (i * 36) * Math.PI / 180;
+            const r1 = 5, r2 = 10;
+            rays += `${12 + r2 * Math.cos(a)},${12 + r2 * Math.sin(a)} ${12 + r1 * Math.cos(a + Math.PI / 10)},${12 + r1 * Math.sin(a + Math.PI / 10)} `;
+          }
+          return `${svgStart}<polygon points="${rays}" fill="${fill}" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/><circle cx="12" cy="12" r="4" fill="rgba(255,255,255,0.4)"/>${svgEnd}`;
+        }
+
+        case 'green_crystal':
+          return `${svgStart}<path d="M12 2L20 12L12 22L4 12Z" fill="${fill}" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><path d="M12 2L14 12L12 22" fill="rgba(255,255,255,0.2)"/>${svgEnd}`;
+
+        case 'silver_hexagon': {
+          let hex = '';
+          for (let i = 0; i < 6; i++) {
+            const a = (i * 60 - 30) * Math.PI / 180;
+            hex += `${12 + 9 * Math.cos(a)},${12 + 9 * Math.sin(a)} `;
+          }
+          return `${svgStart}<polygon points="${hex}" fill="${fill}" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><polygon points="${(() => { let p = ''; for (let i = 0; i < 6; i++) { const a = (i * 60 - 30) * Math.PI / 180; p += `${12 + 5 * Math.cos(a)},${12 + 5 * Math.sin(a)} `; } return p; })()}" fill="rgba(255,255,255,0.15)"/>${svgEnd}`;
+        }
+
+        case 'star':
+          return `${svgStart}<polygon points="12,2 14.5,9 22,9 16,13.5 18,21 12,17 6,21 8,13.5 2,9 9.5,9" fill="${fill}" stroke="rgba(180,140,0,0.5)" stroke-width="0.8"/><polygon points="12,5 13.5,9.5 18,9.5 14.5,12.5 16,18 12,15 8,18 9.5,12.5 6,9.5 10.5,9.5" fill="rgba(255,255,255,0.3)"/>${svgEnd}`;
+
+        case 'golden_ring':
+          return `${svgStart}<circle cx="12" cy="12" r="9" fill="none" stroke="${fill}" stroke-width="3.5"/><circle cx="12" cy="12" r="9" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1.5" stroke-dasharray="4 4"/>${svgEnd}`;
+
+        case 'blue_spiral_shell':
+          return `${svgStart}<path d="M12 4c4.4 0 8 3.6 8 8s-3.6 8-8 8-8-3.6-8-8" fill="none" stroke="${fill}" stroke-width="2.5" stroke-linecap="round"/><path d="M12 8c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4" fill="none" stroke="${fill}" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="12" r="1.5" fill="${fill}"/>${svgEnd}`;
+
+        case 'crescent_moon':
+          return `${svgStart}<path d="M16 4A9 9 0 0 0 7 20a9 9 0 0 0 9-4A7 7 0 0 1 16 4z" fill="${fill}" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/><circle cx="10" cy="8" r="0.8" fill="rgba(255,255,255,0.5)"/>${svgEnd}`;
+
+        case 'bronze_star': {
+          let pts = '';
+          for (let i = 0; i < 8; i++) {
+            const a = (i * 45 - 90) * Math.PI / 180;
+            const r1 = 10, r2 = 5;
+            const rad = i % 2 === 0 ? r1 : r2;
+            pts += `${12 + rad * Math.cos(a)},${12 + rad * Math.sin(a)} `;
+          }
+          return `${svgStart}<polygon points="${pts}" fill="${fill}" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><circle cx="12" cy="12" r="3" fill="rgba(255,255,255,0.25)"/>${svgEnd}`;
+        }
+
+        case 'ice_crystal':
+          return `${svgStart}<path d="M12 2L16 8L22 12L16 16L12 22L8 16L2 12L8 8Z" fill="${fill}" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/><path d="M12 6L14 10L18 12L14 14L12 18L10 14L6 12L10 10Z" fill="rgba(255,255,255,0.35)"/>${svgEnd}`;
+
+        case 'heart':
+        case 'drawHeart':
+          return `${svgStart}<path d="M12 21s-7-5.5-7-10.5C5 7 7.5 4 10 4c1.7 0 2.5 1 2 1.5C12 5.5 12 4 14 4c2.5 0 5 3 5 6.5C19 15.5 12 21 12 21z" fill="${fill}" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/><ellipse cx="9" cy="9" rx="1.5" ry="2" fill="rgba(255,255,255,0.35)" transform="rotate(-30 9 9)"/>${svgEnd}`;
+
+        case 'pink_heart_diamond':
+          return `${svgStart}<path d="M12 21L3 12L6 6L12 3L18 6L21 12Z" fill="${fill}" stroke="rgba(0,0,0,0.2)" stroke-width="0.5"/><path d="M12 3L12 21M3 12L21 12" stroke="rgba(255,255,255,0.2)" stroke-width="0.5"/><path d="M12 17s-4-3.5-4-6.5C8 8.5 9 7 10.5 7c.8 0 1.5.5 1.5 1 0-.5.7-1 1.5-1C15 7 16 8.5 16 10.5c0 3-4 6.5-4 6.5z" fill="rgba(255,255,255,0.4)"/>${svgEnd}`;
+
+        // Hazard shapes
+        case 'regular_red_ball':
+          return `${svgStart}<circle cx="12" cy="12" r="9" fill="${fill}" stroke="rgba(60,10,15,0.8)" stroke-width="0.8"/><circle cx="12" cy="12" r="5.5" fill="none" stroke="rgba(80,10,18,0.5)" stroke-width="0.8"/><polygon points="12,8 15,13.5 9,13.5" fill="#ffd700"/><rect x="11.5" y="9.5" width="1" height="2" fill="#220508"/><circle cx="12" cy="12.3" r="0.6" fill="#220508"/><ellipse cx="9" cy="8" rx="2" ry="1.2" fill="rgba(255,255,255,0.4)" transform="rotate(-30 9 8)"/>${svgEnd}`;
+
+        case 'spiky_red_ball':
+        case 'red_ball': {
+          let spikes = '';
+          for (let i = 0; i < 8; i++) {
+            const a = i * 45 * Math.PI / 180;
+            const aL = (i * 45 - 15) * Math.PI / 180;
+            const aR = (i * 45 + 15) * Math.PI / 180;
+            spikes += `<polygon points="${12 + 10.5 * Math.cos(a)},${12 + 10.5 * Math.sin(a)} ${12 + 6 * Math.cos(aL)},${12 + 6 * Math.sin(aL)} ${12 + 6 * Math.cos(aR)},${12 + 6 * Math.sin(aR)}" fill="#220508"/>`;
+          }
+          return `${svgStart}${spikes}<circle cx="12" cy="12" r="7" fill="${fill}" stroke="#220508" stroke-width="0.8"/><circle cx="12" cy="12" r="4" fill="#220508"/><rect x="11.2" y="9.5" width="1.6" height="3" rx="0.5" fill="#ffd700"/><circle cx="12" cy="13.7" r="0.8" fill="#ffd700"/>${svgEnd}`;
+        }
+
+        case 'purple_shuriken':
+        case 'purple_spiked_emblem': {
+          let sp = '';
+          for (let i = 0; i < 6; i++) {
+            const a1 = (i * 60 - 90) * Math.PI / 180;
+            const a2 = ((i + 0.5) * 60 - 90) * Math.PI / 180;
+            sp += `${12 + 10 * Math.cos(a1)},${12 + 10 * Math.sin(a1)} ${12 + 4 * Math.cos(a2)},${12 + 4 * Math.sin(a2)} `;
+          }
+          return `${svgStart}<polygon points="${sp}" fill="${fill}" stroke="rgba(0,0,0,0.3)" stroke-width="0.8"/><circle cx="12" cy="12" r="2.5" fill="rgba(0,0,0,0.25)"/>${svgEnd}`;
+        }
+
+        case 'dark_triangular_emblem':
+          return `${svgStart}<polygon points="12,3 22,20 2,20" fill="${fill}" stroke="rgba(0,0,0,0.4)" stroke-width="1"/><polygon points="12,8 17,18 7,18" fill="rgba(0,0,0,0.2)"/><text x="12" y="17" text-anchor="middle" font-size="7" fill="rgba(255,255,255,0.6)" font-weight="bold">!</text>${svgEnd}`;
+
+        case 'flame':
+        case 'orange_flame':
+          return `${svgStart}<path d="M12 2c0 0-6 6-6 12a6 6 0 0012 0C18 8 12 2 12 2z" fill="${fill}" stroke="rgba(140,15,0,0.8)" stroke-width="0.6"/><path d="M12 8c0 0-3 3-3 7a3 3 0 006 0C15 11 12 8 12 8z" fill="rgba(255,180,0,0.85)"/><path d="M12 12c0 0-1.5 1.5-1.5 4a1.5 1.5 0 003 0C13.5 13.5 12 12 12 12z" fill="rgba(255,255,200,0.9)"/>${svgEnd}`;
+
+        case 'cross':
+        case 'hazard_cross': {
+          return `${svgStart}<rect x="8.5" y="2" width="7" height="20" rx="1.5" fill="${fill}" stroke="rgba(140,80,0,0.8)" stroke-width="0.8"/><rect x="2" y="8.5" width="20" height="7" rx="1.5" fill="${fill}" stroke="rgba(140,80,0,0.8)" stroke-width="0.8"/><circle cx="12" cy="12" r="2.8" fill="#ffd700"/><circle cx="12" cy="12" r="1.6" fill="#ff1e14"/>${svgEnd}`;
+        }
+
+        default:
+          return `${svgStart}<circle cx="12" cy="12" r="8" fill="${fill}"/>${svgEnd}`;
+      }
+    }
+
+    /**
+     * Maps a shape config entry to a recognized shape ID for SVG rendering
+     */
+    function resolveShapeIdForSVG(shape) {
+      if (shape.id) return shape.id;
+      if (shape.shape) return shape.shape;
+      return 'circle';
+    }
+
+    window.handleInsaneClick = function() {
+      const isEdu = (new URLSearchParams(window.location.search).get('mode') || '').toLowerCase().trim() === 'educational';
+      if (isEdu) {
+        if (isEduDifficultyUnlocked('insane')) {
+          openDifficultyGuide('insane');
+        } else {
+          showToast('🔒 Insane mode is locked! Complete Hard mode with >= 4/5 questions correct to unlock.');
+        }
+      } else {
+        if (isInsaneUnlocked()) {
+          openDifficultyGuide('insane');
+        } else {
+          showToast('🔒 Insane mode is locked! Conquer Hard mode with 1,000+ points to unlock.');
+        }
+      }
+    };
+
+    window.openDifficultyGuide = function(tierKey) {
+      const currentMode = (new URLSearchParams(window.location.search).get('mode') || '').toLowerCase().trim();
+      const isInvader = currentMode === 'invader' || currentMode === 'space-invader';
+      const isEdu = currentMode === 'educational' || currentMode === 'edu';
+
+      if (isEdu) {
+        if (!isEduDifficultyUnlocked(tierKey)) {
+          const prev = tierKey === 'medium' ? 'Easy' : tierKey === 'hard' ? 'Medium' : 'Hard';
+          showToast(`🔒 ${tierKey.toUpperCase()} mode is locked! Complete ${prev} mode with >= 4/5 correct to unlock.`);
+          return;
+        }
+      } else if (tierKey === 'insane' && !isInsaneUnlocked()) {
+        showToast('🔒 Insane mode is locked! Conquer Hard mode with 1,000+ points to unlock.');
+        return;
+      }
+
+      currentSelectedTier = tierKey;
+      const config = getDifficultyConfig(tierKey);
+      if (!config) return;
+
+      // Update Header
+      const titleEl = document.getElementById('guide-modal-title');
+      const introEl = document.getElementById('guide-modal-intro');
+      if (isEdu) {
+        if (titleEl) titleEl.textContent = `STD. 1 MATHS • ${tierKey.toUpperCase()} BRIEFING`;
+        if (introEl) {
+          introEl.textContent = tierKey === 'easy'
+            ? 'Easy Tier: 3 Lives, 30s timer per question. Roaming UFOs display candidate answers. Target and shoot the correct answer! No hostile fire.'
+            : tierKey === 'medium'
+            ? 'Medium Tier: 3 Lives, 25s timer per question. Hostile UFOs patrol overhead and shoot red lasers. Dodge plasma and shoot the correct answer!'
+            : tierKey === 'hard'
+            ? 'Hard Tier: 2 Lives, 20s timer per question. Hostile UFOs + Glider Mini-Boss (12 HP) throwing spinning axes! Destroy the boss for +30s EXTRA TIME!'
+            : 'Insane Tier: 1 Life only, 15s timer per question. Aggressive UFOs + Kraken Mini-Boss (20 HP) firing bubbles! Destroy the boss for +30s EXTRA TIME!';
+        }
+      } else if (isInvader) {
+        if (titleEl) titleEl.textContent = `SPACE INVADER • ${tierKey.toUpperCase()} BRIEFING`;
+        if (introEl) {
+          introEl.textContent = tierKey === 'easy'
+            ? 'Easy Sector: Peaceful alien UFO fleets roam the upper atmosphere. Practice your navigation and targeting! Hostile fire is disabled.'
+            : tierKey === 'medium'
+            ? 'Medium Sector: Hostile UFO fleets patrol overhead and fire charged red lasers. Dodge plasma attacks and eliminate alien vessels!'
+            : tierKey === 'hard'
+            ? 'Hard Sector: Heavy armada incursions with rapid laser bombardment. UFOs maneuver faster and Mini Boss gliders are deployed.'
+            : 'Insane Sector: Extreme alien invasion assault! Relentless red laser barrages and deep space Boss UFO armadas. Maximum reflex defense.';
+        }
+      } else {
+        if (titleEl) titleEl.textContent = `${config.name.toUpperCase()} MISSION BRIEFING`;
+        if (introEl) {
+          introEl.textContent = `Target object parameters for ${config.name} mode. Catch positive badges with your paddle and steer clear of hazard traps.`;
+        }
+      }
+
+      // Populate Positive Targets & Relics
+      const positiveContainer = document.getElementById('guide-positive-list');
+      if (positiveContainer) {
+        positiveContainer.innerHTML = '';
+
+        if (isEdu) {
+          const eduPositives = [
+            { name: 'Correct Answer UFO', val: tierKey === 'easy' ? '+100 PTS' : tierKey === 'medium' ? '+150 PTS' : tierKey === 'hard' ? '+200 PTS' : '+300 PTS', color: [52, 211, 153], icon: '🎉' },
+            { name: 'Confetti Burst Celebration', val: 'Visual Feedback', color: [250, 204, 21], icon: '✨' },
+            { name: 'Space Invader Laser', val: 'Space / K / Pinch', color: [56, 189, 248], icon: '⚡' }
+          ];
+          if (tierKey === 'hard') {
+            eduPositives.push({ name: 'Glider Mini-Boss (12 HP)', val: '+30s TIME BONUS ⏱️', color: [250, 204, 21], icon: '👾' });
+          } else if (tierKey === 'insane') {
+            eduPositives.push({ name: 'Kraken Mini-Boss (20 HP)', val: '+30s TIME BONUS ⏱️', color: [239, 68, 68], icon: '👑' });
+          }
+          eduPositives.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'guide-item-row';
+            row.innerHTML = `
+              <div class="guide-item-left">
+                <span class="guide-item-dot" style="background: rgba(${item.color.join(',')},0.15); font-size: 16px;">${item.icon}</span>
+                <span class="guide-item-name">${item.name}</span>
+              </div>
+              <span class="guide-item-val" style="color: var(--cyan);">${item.val}</span>
+            `;
+            positiveContainer.appendChild(row);
+          });
+        } else if (isInvader) {
+          const invaderPositives = [
+            { name: 'Regular UFO Vessel', val: tierKey === 'easy' ? '+50 PTS' : tierKey === 'medium' ? '+75 PTS' : tierKey === 'hard' ? '+100 PTS' : '+150 PTS', color: [56, 189, 248], icon: '🛸' },
+            { name: 'Plasma Cannon (Spacebar / Pinch)', val: 'Rapid Laser Fire', color: [96, 165, 250], icon: '⚡' },
+            { name: 'Lower Zone Maneuver', val: 'Keys / Hand Gestures', color: [52, 211, 153], icon: '🎮' }
+          ];
+          if (tierKey === 'hard' || tierKey === 'insane') {
+            invaderPositives.push({ name: 'Mini Boss Glider', val: '+300 PTS', color: [250, 204, 21], icon: '👾' });
+          }
+          if (tierKey === 'insane') {
+            invaderPositives.push({ name: 'Flagship Boss UFO', val: '+500 PTS', color: [239, 68, 68], icon: '👑' });
+          }
+          invaderPositives.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'guide-item-row';
+            row.innerHTML = `
+              <div class="guide-item-left">
+                <span class="guide-item-dot" style="background: rgba(${item.color.join(',')},0.15); font-size: 16px;">${item.icon}</span>
+                <span class="guide-item-name">${item.name}</span>
+              </div>
+              <span class="guide-item-val" style="color: var(--cyan);">${item.val}</span>
+            `;
+            positiveContainer.appendChild(row);
+          });
+        } else {
+          const positives = [];
+
+          // 1. Shapes in config
+          config.shapes.forEach(shape => {
+            if (shape.points > 0 || shape.lifeDelta > 0) {
+              positives.push({
+                name: shape.description ? shape.description.split('(')[0].trim() : shape.id,
+                val: shape.points > 0 ? `+${shape.points} PTS` : `+${shape.lifeDelta} LIFE ❤️`,
+                color: shape.color || [56, 189, 248],
+                shapeId: resolveShapeIdForSVG(shape),
+                points: shape.points,
+                lifeDelta: shape.lifeDelta
+              });
+            }
+          });
+
+          // 2. Special Star (Easy mode)
+          if (config.specialStar && config.specialStar.object) {
+            const sObj = config.specialStar.object;
+            positives.push({
+              name: 'Golden Lucky Star',
+              val: `+${sObj.points} PTS (Score 250+)`,
+              color: sObj.color || [255, 255, 0],
+              shapeId: 'star',
+              points: sObj.points,
+              lifeDelta: 0
+            });
+          }
+
+          // 3. Pink Heart Diamond bonus life
+          if (config.pinkDiamondConfig) {
+            positives.push({
+              name: 'Pink Heart-Diamond',
+              val: '+1 EXTRA LIFE 💖',
+              color: [255, 50, 150],
+              shapeId: 'pink_heart_diamond',
+              points: 0,
+              lifeDelta: 1
+            });
+          }
+
+          // 4. 1UP Heart
+          if (config.heartConfig) {
+            positives.push({
+              name: '1UP Extra Life Heart',
+              val: '+1 EXTRA LIFE ❤️',
+              color: [255, 25, 70],
+              shapeId: 'heart',
+              points: 0,
+              lifeDelta: 1
+            });
+          }
+
+          positives.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'guide-item-row';
+            const rgb = item.color.join(',');
+            const svgIcon = getBadgeSVG(item.shapeId || 'circle', item.color);
+            row.innerHTML = `
+              <div class="guide-item-left">
+                <span class="guide-item-dot" style="background: rgba(${rgb},0.15); color: rgb(${rgb});">${svgIcon}</span>
+                <span class="guide-item-name">${item.name}</span>
+              </div>
+              <span class="guide-item-val" style="color: ${item.lifeDelta > 0 ? 'var(--pink-neon)' : 'var(--cyan)'};">${item.val}</span>
+            `;
+            positiveContainer.appendChild(row);
+          });
+        }
+      }
+
+      // Populate Hazardous Traps
+      const hazardContainer = document.getElementById('guide-hazard-list');
+      if (hazardContainer) {
+        hazardContainer.innerHTML = '';
+
+        if (isEdu) {
+          const eduHazards = [
+            { name: 'Incorrect Answer Shot', val: '-1 LIFE 💔 (Grey Smoke)', color: [244, 63, 94], icon: '💨' },
+            { name: 'Question Clock Expiry', val: '-1 LIFE 💔', color: [239, 68, 68], icon: '⏱️' }
+          ];
+          if (tierKey !== 'easy') {
+            eduHazards.push({ name: 'Enemy Red Laser Plasma', val: '-1 LIFE 💔', color: [239, 68, 68], icon: '🔴' });
+          }
+          if (tierKey === 'hard') {
+            eduHazards.push({ name: 'Glider Spinning Axes', val: '-1 LIFE 💔', color: [250, 204, 21], icon: '🪓' });
+          } else if (tierKey === 'insane') {
+            eduHazards.push({ name: 'Kraken Bubble Volley', val: '-1 LIFE 💔', color: [168, 85, 247], icon: '🫧' });
+          }
+          eduHazards.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'guide-item-row';
+            row.innerHTML = `
+              <div class="guide-item-left">
+                <span class="guide-item-dot" style="background: rgba(${item.color.join(',')},0.15); font-size: 16px;">${item.icon}</span>
+                <span class="guide-item-name">${item.name}</span>
+              </div>
+              <span class="guide-item-val" style="color: var(--danger);">${item.val}</span>
+            `;
+            hazardContainer.appendChild(row);
+          });
+        } else if (isInvader) {
+          const invaderHazards = [];
+          if (tierKey !== 'easy') {
+            invaderHazards.push({ name: 'Alien Red Laser Plasma', val: '-1 LIFE 💔', color: [239, 68, 68], icon: '🔴' });
+          }
+          invaderHazards.push({ name: 'Direct UFO Hull Collision', val: '-1 LIFE 💔', color: [244, 63, 94], icon: '💥' });
+          if (tierKey === 'easy') {
+            invaderHazards.push({ name: 'Hostile Fire Status', val: 'DISABLED (Peaceful Practice)', color: [52, 211, 153], icon: '🛡️' });
+          }
+          invaderHazards.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'guide-item-row';
+            row.innerHTML = `
+              <div class="guide-item-left">
+                <span class="guide-item-dot" style="background: rgba(${item.color.join(',')},0.15); font-size: 16px;">${item.icon}</span>
+                <span class="guide-item-name">${item.name}</span>
+              </div>
+              <span class="guide-item-val" style="color: var(--danger);">${item.val}</span>
+            `;
+            hazardContainer.appendChild(row);
+          });
+        } else {
+          const hazards = [];
+
+          config.shapes.forEach(shape => {
+            if (shape.points < 0 || shape.lifeDelta < 0) {
+              let valText = '';
+              if (shape.lifeDelta < 0) {
+                valText = `${shape.lifeDelta} LIFE ${shape.lifeDelta <= -3 ? '💀' : '💔'}`;
+              } else {
+                valText = `${shape.points} PTS ⚠️`;
+              }
+
+              hazards.push({
+                name: shape.description ? shape.description.split('(')[0].trim() : shape.id,
+                val: valText,
+                color: shape.color || [248, 113, 113],
+                shapeId: resolveShapeIdForSVG(shape),
+                points: shape.points,
+                lifeDelta: shape.lifeDelta
+              });
+            }
+          });
+
+          hazards.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'guide-item-row';
+            const rgb = item.color.join(',');
+            const svgIcon = getBadgeSVG(item.shapeId || 'circle', item.color);
+            row.innerHTML = `
+              <div class="guide-item-left">
+                <span class="guide-item-dot" style="background: rgba(${rgb},0.15); color: rgb(${rgb});">${svgIcon}</span>
+                <span class="guide-item-name">${item.name}</span>
+              </div>
+              <span class="guide-item-val" style="color: var(--danger);">${item.val}</span>
+            `;
+            hazardContainer.appendChild(row);
+          });
+        }
+      }
+
+      // Update Continue Button link and reset launch guard
+      const continueBtn = document.getElementById('btn-guide-continue');
+      if (continueBtn) {
+        continueBtn.href = isEdu
+          ? `game.html?mode=educational&difficulty=${tierKey}`
+          : isInvader
+          ? `game.html?mode=invader&difficulty=${tierKey}`
+          : `game.html?difficulty=${tierKey}`;
+        continueBtn.classList.remove('launched');
+      }
+
+      // Open Modal
+      const modal = document.getElementById('pregame-guide-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    };
+
+    window.closeDifficultyGuide = function() {
+      const modal = document.getElementById('pregame-guide-modal');
+      if (modal) {
+        modal.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+      // Reset Continue button guard so reopening works
+      const continueBtn = document.getElementById('btn-guide-continue');
+      if (continueBtn) continueBtn.classList.remove('launched');
+    };
+
+    /**
+     * Prevents Continue button from launching the game more than once
+     */
+    window.handleContinueClick = function(event) {
+      const btn = event.currentTarget;
+      if (btn.classList.contains('launched')) {
+        event.preventDefault();
+        return;
+      }
+      btn.classList.add('launched');
+    };
+
+    window.handleGuideBackdrop = function(event) {
+      if (event.target === document.getElementById('pregame-guide-modal')) {
+        closeDifficultyGuide();
+      }
+    };
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeDifficultyGuide();
+      }
+    });
+
+    async function initDifficultyLocks(isEdu) {
+      if (isEdu) {
+        const tiers = [
+          { key: 'medium', card: 'card-medium', badge: 'badge-medium', btn: 'btn-play-medium' },
+          { key: 'hard', card: 'card-hard', badge: 'badge-hard', btn: 'btn-play-hard' },
+          { key: 'insane', card: 'card-insane', badge: 'badge-insane', btn: 'btn-play-insane' }
+        ];
+
+        tiers.forEach(t => {
+          const card = document.getElementById(t.card);
+          const badge = document.getElementById(t.badge);
+          const btn = document.getElementById(t.btn);
+          const unlocked = isEduDifficultyUnlocked(t.key);
+
+          if (unlocked) {
+            if (card) card.classList.remove('diff-locked');
+            if (badge) {
+              badge.style.background = 'rgba(56, 189, 248, 0.2)';
+              badge.style.borderColor = 'var(--cyan)';
+              badge.style.color = '#e0f2fe';
+              badge.innerHTML = 'Unlocked';
+            }
+            if (btn) {
+              btn.classList.remove('btn-locked');
+              btn.innerHTML = `Play ${t.key.charAt(0).toUpperCase() + t.key.slice(1)}`;
+            }
+          } else {
+            if (card) card.classList.add('diff-locked');
+            if (badge) {
+              badge.style.background = 'rgba(239, 68, 68, 0.2)';
+              badge.style.borderColor = '#ef4444';
+              badge.style.color = '#fee2e2';
+              badge.innerHTML = 'Locked';
+            }
+            if (btn) {
+              btn.classList.add('btn-locked');
+              btn.innerHTML = 'Locked';
+            }
+          }
+        });
+      } else {
+        initInsaneCard();
+      }
+    }
+
+    async function initInsaneCard() {
+      const cardInsane = document.getElementById('card-insane');
+      const badgeInsane = document.getElementById('badge-insane');
+      const iconInsane = document.getElementById('icon-insane');
+      const btnInsane = document.getElementById('btn-play-insane');
+
+      const unlocked = isInsaneUnlocked();
+
+      if (unlocked) {
+        if (cardInsane) cardInsane.classList.remove('diff-locked');
+        if (badgeInsane) {
+          badgeInsane.style.background = 'rgba(168, 85, 247, 0.25)';
+          badgeInsane.style.borderColor = '#c084fc';
+          badgeInsane.style.color = '#f3e8ff';
+          badgeInsane.innerHTML = 'Elite &bull; Unlocked';
+        }
+        if (iconInsane) iconInsane.textContent = '⚡';
+        if (btnInsane) {
+          btnInsane.classList.remove('btn-locked');
+          btnInsane.innerHTML = 'Play Insane';
+        }
+      } else {
+        if (cardInsane) cardInsane.classList.add('diff-locked');
+        if (badgeInsane) {
+          badgeInsane.style.background = 'rgba(239, 68, 68, 0.2)';
+          badgeInsane.style.borderColor = '#ef4444';
+          badgeInsane.style.color = '#fee2e2';
+          badgeInsane.innerHTML = 'Locked';
+        }
+        if (iconInsane) iconInsane.textContent = '🔒';
+        if (btnInsane) {
+          btnInsane.classList.add('btn-locked');
+          btnInsane.innerHTML = 'Locked';
+        }
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Check URL parameters for redirect notices
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentMode = (urlParams.get('mode') || '').toLowerCase().trim();
+      const isEdu = currentMode === 'educational' || currentMode === 'edu';
+      const isInvader = currentMode === 'invader' || currentMode === 'space-invader';
+
+      if (isEdu) {
+        document.title = 'MindRush — Educational Mode Difficulty';
+        const eyebrow = document.querySelector('.page-eyebrow');
+        if (eyebrow) eyebrow.textContent = 'EDUCATIONAL MODE • STD. 1 MATHS';
+        const title = document.querySelector('.page-title');
+        if (title) title.textContent = 'SELECT MATHS CHALLENGE TIER';
+        const subtitle = document.querySelector('.page-subtitle');
+        if (subtitle) subtitle.textContent = '100 Verified Olympiad Questions! Shoot the UFO carrying the correct answer. Complete each 5-question level with >= 4 correct to unlock the next difficulty.';
+        const backLink = document.querySelector('.nav-back-link');
+        if (backLink) {
+          backLink.href = 'mode-select.html';
+          backLink.innerHTML = '&larr; Back to Modes';
+        }
+
+        const descEasy = document.getElementById('desc-easy');
+        const pillsEasy = document.getElementById('pills-easy');
+        const challengeEasy = document.getElementById('challenge-easy');
+        if (descEasy) descEasy.textContent = 'Peaceful practice with Std. 1 Maths Olympiad questions! 3 Lives, 30s timer per question. Roaming UFOs display candidate answers. No enemy attacks.';
+        if (pillsEasy) pillsEasy.innerHTML = `
+          <span class="preview-chip chip-positive">🛸 4 Answer UFOs</span>
+          <span class="preview-chip chip-gold">🎉 Confetti Burst +100</span>
+          <span class="preview-chip chip-positive">⏱️ 30s Question Timer</span>
+          <span class="preview-chip chip-gold">🛡️ 3 Lives (Peaceful)</span>
+        `;
+        if (challengeEasy) challengeEasy.textContent = 'Answer >= 4 out of 5 questions correctly to complete Level 1 and unlock Medium difficulty!';
+
+        const descMedium = document.getElementById('desc-medium');
+        const pillsMedium = document.getElementById('pills-medium');
+        const challengeMedium = document.getElementById('challenge-medium');
+        if (descMedium) descMedium.textContent = 'Hostile alien UFOs retaliate with red laser fire! 3 Lives, 25s timer per question. Shoot the correct answer UFO while dodging alien lasers.';
+        if (pillsMedium) pillsMedium.innerHTML = `
+          <span class="preview-chip chip-positive">🛸 4 Answer UFOs +150</span>
+          <span class="preview-chip chip-hazard">🔴 Enemy Laser -1 Life</span>
+          <span class="preview-chip chip-positive">⏱️ 25s Question Timer</span>
+          <span class="preview-chip chip-hazard">💔 Wrong Answer -1 Life</span>
+        `;
+        if (challengeMedium) challengeMedium.textContent = 'Answer >= 4 out of 5 questions correctly to complete the level and unlock Hard difficulty!';
+
+        const descHard = document.getElementById('desc-hard');
+        const pillsHard = document.getElementById('pills-hard');
+        const challengeHard = document.getElementById('challenge-hard');
+        if (descHard) descHard.textContent = 'High-threat invasion with the Glider Mini-Boss! 2 Lives, 20s timer per question. Glider boss throws spinning axes (12 HP). Destroy boss for +30s extra time!';
+        if (pillsHard) pillsHard.innerHTML = `
+          <span class="preview-chip chip-gold">🛸 4 Answer UFOs +200</span>
+          <span class="preview-chip chip-gold">👾 Glider Boss (12 HP)</span>
+          <span class="preview-chip chip-hazard">🪓 Spinning Axes</span>
+          <span class="preview-chip chip-positive">⏱️ +30s Boss Defeat Bonus</span>
+        `;
+        if (challengeHard) challengeHard.textContent = 'Answer >= 4 out of 5 questions correctly to complete the level and unlock INSANE difficulty!';
+
+        const descInsane = document.getElementById('desc-insane');
+        const pillsInsane = document.getElementById('pills-insane');
+        const challengeInsane = document.getElementById('challenge-insane');
+        if (descInsane) descInsane.textContent = 'Extreme mathematical battle zone with the Kraken Flagship Mini-Boss! 1 Life only, 15s timer per question. Kraken fires bubbles (20 HP). Destroy boss for +30s extra time!';
+        if (pillsInsane) pillsInsane.innerHTML = `
+          <span class="preview-chip chip-gold">🛸 4 Answer UFOs +300</span>
+          <span class="preview-chip chip-gold">👑 Kraken Boss (20 HP)</span>
+          <span class="preview-chip chip-hazard">🫧 Bubble Attacks</span>
+          <span class="preview-chip chip-positive">⏱️ +30s Boss Defeat Bonus</span>
+        `;
+        if (challengeInsane) challengeInsane.textContent = 'The ultimate Std. 1 Maths challenge. 1 Life only! High speed calculation and boss destruction.';
+      } else if (isInvader) {
+        document.title = 'MindRush — Space Invader Difficulty';
+        const eyebrow = document.querySelector('.page-eyebrow');
+        if (eyebrow) eyebrow.textContent = 'FUN MODE • SPACE INVADER';
+        const title = document.querySelector('.page-title');
+        if (title) title.textContent = 'SELECT INVASION TIER';
+        const subtitle = document.querySelector('.page-subtitle');
+        if (subtitle) subtitle.textContent = 'Deploy your starfighter in the lower quadrant. Intercept descending UFO armadas using keyboard or hand gestures across four difficulty tiers.';
+        const backLink = document.querySelector('.nav-back-link');
+        if (backLink) {
+          backLink.href = 'mode-select.html';
+          backLink.innerHTML = '&larr; Back to Modes';
+        }
+
+        // Replace card descriptions and Object Target previews with Space Invader specific content
+        const descEasy = document.getElementById('desc-easy');
+        const pillsEasy = document.getElementById('pills-easy');
+        const challengeEasy = document.getElementById('challenge-easy');
+        if (descEasy) descEasy.textContent = 'Gentle target practice in upper orbit. Master horizontal and vertical thrusters, practice precision shooting, and eliminate alien scouts.';
+        if (pillsEasy) pillsEasy.innerHTML = `
+          <span class="preview-chip chip-positive">🛸 Scout UFO +50</span>
+          <span class="preview-chip chip-positive">⚡ Plasma Laser</span>
+          <span class="preview-chip chip-gold">🛡️ Peaceful Fleet</span>
+          <span class="preview-chip chip-gold">🎯 10 Target Goal</span>
+        `;
+        if (challengeEasy) challengeEasy.textContent = 'Destroy 10 peaceful UFO targets to complete Easy difficulty and unlock Medium mode.';
+
+        const descMedium = document.getElementById('desc-medium');
+        const pillsMedium = document.getElementById('pills-medium');
+        const challengeMedium = document.getElementById('challenge-medium');
+        if (descMedium) descMedium.textContent = 'Hostile UFO invasion armada! Alien ships now retaliate with charged plasma lasers and execute combat swoops.';
+        if (pillsMedium) pillsMedium.innerHTML = `
+          <span class="preview-chip chip-positive">🛸 Hostile UFO +75</span>
+          <span class="preview-chip chip-hazard">🔴 Enemy Laser -1 Life</span>
+          <span class="preview-chip chip-hazard">💥 Hull Collision -1 Life</span>
+          <span class="preview-chip chip-gold">⚡ Plasma Cannon</span>
+        `;
+        if (challengeMedium) challengeMedium.textContent = 'Dodge hostile red plasma fire and destroy alien invaders to advance toward Hard difficulty.';
+
+        const descHard = document.getElementById('desc-hard');
+        const pillsHard = document.getElementById('pills-hard');
+        const challengeHard = document.getElementById('challenge-hard');
+        if (descHard) descHard.textContent = 'High-threat armada incursion! Faster alien vessels, aggressive laser bombardment, and the armored Mini-Boss UFO.';
+        if (pillsHard) pillsHard.innerHTML = `
+          <span class="preview-chip chip-gold">🛸 Assault UFO +100</span>
+          <span class="preview-chip chip-gold">👾 Mini-Boss Glider</span>
+          <span class="preview-chip chip-hazard">🔴 Rapid Plasma -1 Life</span>
+          <span class="preview-chip chip-positive">🛡️ Armored Boss HP</span>
+        `;
+        if (challengeHard) challengeHard.textContent = 'Survive the relentless alien barrage, defeat the Mini-Boss, and score 1,000+ points to unlock INSANE mode!';
+
+        const descInsane = document.getElementById('desc-insane');
+        const pillsInsane = document.getElementById('pills-insane');
+        const challengeInsane = document.getElementById('challenge-insane');
+        if (descInsane) descInsane.textContent = 'Maximum cosmic war zone! Elite alien fleets, the lethal Mini-Boss, and the supreme Final Boss Lady with devastating lightning attacks.';
+        if (pillsInsane) pillsInsane.innerHTML = `
+          <span class="preview-chip chip-gold">🛸 Elite UFO +150</span>
+          <span class="preview-chip chip-gold">👾 Mini-Boss Glider</span>
+          <span class="preview-chip chip-gold">👑 Final Boss Lady</span>
+          <span class="preview-chip chip-hazard">⚡ Lightning Strike</span>
+        `;
+        if (challengeInsane) challengeInsane.textContent = 'The ultimate starfighter challenge. Overcome both bosses and master bullet-hell survival in the deep void.';
+      }
+
+      const lockedParam = urlParams.get('locked');
+      if (lockedParam) {
+        showToast(`⚠️ ${lockedParam.toUpperCase()} mode is locked! Complete the previous tier with >= 4/5 correct first.`);
+      }
+
+      // Establish active user context and sync from server before initializing difficulty locks
+      const active = getActiveUser();
+      if (active && (active.id || active.username)) {
+        setProgressionUserContext(active.id || active.username);
+      }
+
+      try {
+        const data = await syncProgressFromServer();
+        if (data && data.user) {
+          setProgressionUserContext(data.user.id || data.user.username);
+        }
+      } catch (e) {}
+
+      // Verified initialization of difficulty card locks
+      initDifficultyLocks(isEdu);
+    });
+  </script>
+</body>
+</html>

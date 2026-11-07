@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush — Choose Game Mode</title>
+
+  <link rel="icon" type="image/png" href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+
+  <!-- Core Space-Arcade Design System -->
+  <link rel="stylesheet" href="css/main.css">
+
+  <style>
+    body {
+      background-color: var(--void);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-x: hidden;
+      font-family: var(--font-body);
+      user-select: none;
+      position: relative;
+    }
+
+    /* Fixed Cosmic Background Layer */
+    .cosmic-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Header */
+    .top-header {
+      width: 100%;
+      padding: 18px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(7, 9, 14, 0.85);
+      border-bottom: 1px solid var(--border-dim);
+      backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+
+    .nav-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-decoration: none;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-dim);
+      background: rgba(17, 19, 29, 0.7);
+      transition: all 0.2s ease;
+    }
+
+    .nav-back-link:hover {
+      color: var(--cyan);
+      border-color: var(--cyan);
+      background: var(--card);
+      transform: translateX(-3px);
+    }
+
+    .header-branding {
+      font-family: var(--font-arcade);
+      font-size: 16px;
+      color: var(--text-main);
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    }
+
+    /* Main Container */
+    .mode-container {
+      width: 100%;
+      max-width: 1100px;
+      padding: 40px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 auto;
+      position: relative;
+      z-index: 10;
+    }
+
+    .page-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 10px;
+    }
+
+    .page-title {
+      font-family: var(--font-arcade);
+      font-size: clamp(24px, 4.5vw, 42px);
+      letter-spacing: 3px;
+      text-align: center;
+      color: var(--text-main);
+      text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      margin-bottom: 12px;
+    }
+
+    .page-subtitle {
+      font-size: 15px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 620px;
+      line-height: 1.6;
+      margin-bottom: 40px;
+    }
+
+    /* Modes 2-Column Grid */
+    .modes-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+      width: 100%;
+    }
+
+    .mode-card {
+      background: var(--card);
+      border: 1.5px solid var(--border-dim);
+      border-radius: 20px;
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(14px);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .mode-card.fun-card:hover {
+      border-color: var(--cyan);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 36px rgba(56, 189, 248, 0.2);
+    }
+
+    .mode-card.edu-card:hover {
+      border-color: var(--gold);
+      transform: translateY(-5px);
+      box-shadow: 0 12px 36px rgba(250, 204, 21, 0.2);
+    }
+
+    .card-top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .mode-badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .mode-card-title {
+      font-family: var(--font-sans);
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 8px;
+    }
+
+    .mode-card-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    /* Sub-game Selection Box */
+    .subgame-box {
+      background: rgba(17, 19, 29, 0.8);
+      border: 1px solid var(--border-dim);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .subgame-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: rgba(22, 25, 38, 0.6);
+      transition: all 0.2s;
+    }
+
+    .subgame-item.active-item {
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .subgame-item.active-edu {
+      border-color: rgba(250, 204, 21, 0.4);
+      background: rgba(250, 204, 21, 0.08);
+    }
+
+    .subgame-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .subgame-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .subgame-detail {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .feature-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 28px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .feature-list li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .feature-list li::before {
+      content: "✔";
+      font-weight: 700;
+      color: var(--cyan);
+    }
+
+    .mode-card.edu-card .feature-list li::before {
+      color: var(--gold);
+    }
+
+    /* Footer Navigation */
+    .mode-footer {
+      width: 100%;
+      padding: 16px 24px;
+      background: rgba(7, 9, 14, 0.85);
+      border-top: 1px solid var(--border-dim);
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      font-size: 13px;
+      position: relative;
+      z-index: 10;
+    }
+
+    .mode-footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .mode-footer a:hover {
+      color: var(--cyan);
+    }
+
+    @media (max-width: 860px) {
+      .modes-grid {
+        grid-template-columns: 1fr;
+        max-width: 540px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background Layer -->
+  <div class="cosmic-layer" id="starfield">
+    <canvas id="parallaxStarfieldCanvas" style="opacity: 0.35; width: 100%; height: 100%; position: absolute; top: 0; left: 0;"></canvas>
+    <div class="kinetic-wave"></div>
+    <div class="kinetic-wave delay-1"></div>
+    <div class="kinetic-wave delay-2"></div>
+  </div>
+
+  <!-- Header -->
+  <header class="top-header">
+    <a href="dashboard.html" class="nav-back-link" title="Return to Dashboard">
+      &larr; Back to Hub
+    </a>
+    <div class="header-branding">MINDRUSH</div>
+    <div style="width: 110px;"></div>
+  </header>
+
+  <!-- Mode Selection Main Content -->
+  <main class="mode-container">
+    <span class="page-eyebrow">Interactive Space Arcade</span>
+    <h1 class="page-title">CHOOSE GAME MODE</h1>
+    <p class="page-subtitle">
+      Select your mission experience. Dodge hazards and collect high-value badges in classic Fun Mode, or challenge mental reflexes in Olympiad Maths Space Invader.
+    </p>
+
+    <div class="modes-grid">
+      <!-- Card 1: Fun Mode -->
+      <section class="mode-card fun-card" aria-labelledby="fun-mode-title">
+        <div>
+          <div class="card-top-row">
+            <span style="font-size: 32px;">🎮</span>
+            <span class="mode-badge" style="background: rgba(56, 189, 248, 0.15); border: 1px solid var(--cyan); color: var(--cyan);">
+              ACTIVE • 4 TIERS
+            </span>
+          </div>
+
+          <h2 id="fun-mode-title" class="mode-card-title" style="color: var(--cyan);">Fun Mode</h2>
+          <p class="mode-card-desc">
+            High-octane reflex arcade action. Catch valuable falling star badges, avoid deadly naval mine traps, and advance across four difficulty tiers.
+          </p>
+
+          <!-- Fun Mode Sub-Games -->
+          <div class="subgame-box" role="radiogroup" aria-label="Fun Mode Subgames">
+            <!-- 1. Object Falling (Skyfall) -->
+            <div id="subgame-skyfall" class="subgame-item active-item" onclick="selectSubgame('skyfall')" role="radio" aria-checked="true" tabindex="0" style="cursor: pointer; transition: all 0.2s ease; border-color: rgba(56, 189, 248, 0.5); background: rgba(56, 189, 248, 0.12); box-shadow: 0 0 14px rgba(56, 189, 248, 0.25);">
+              <div class="subgame-icon" style="background: rgba(56, 189, 248, 0.2); color: var(--cyan);">
+                ⚡
+              </div>
+              <div style="flex: 1;">
+                <div class="subgame-name">Object Falling (Skyfall)</div>
+                <div class="subgame-detail">Fluid 60 FPS physics paddle dodging, 13 badges, 1UP hearts & Insane tier.</div>
+              </div>
+              <span id="badge-status-skyfall" style="font-family: var(--font-mono); font-size: 9px; color: var(--cyan); font-weight: 700; background: rgba(56, 189, 248, 0.2); padding: 2px 6px; border-radius: 4px;">SELECTED</span>
+            </div>
+
+            <!-- 2. Space Invader -->
+            <div id="subgame-space-invader" class="subgame-item" onclick="selectSubgame('invader')" role="radio" aria-checked="false" tabindex="0" style="cursor: pointer; transition: all 0.2s ease; border-color: transparent; background: rgba(22, 25, 38, 0.6);">
+              <div class="subgame-icon" style="background: rgba(168, 85, 247, 0.2); color: #c084fc;">
+                🛸
+              </div>
+              <div style="flex: 1;">
+                <div class="subgame-name" style="color: #c084fc;">Space Invader</div>
+                <div class="subgame-detail">Arcade starfighter vs UFO armada with hand gestures or keys across 4 tiers.</div>
+              </div>
+              <span id="badge-status-invader" style="font-family: var(--font-mono); font-size: 9px; color: #c084fc; font-weight: 700; background: rgba(168, 85, 247, 0.2); padding: 2px 6px; border-radius: 4px;">PLAYABLE</span>
+            </div>
+          </div>
+
+          <ul class="feature-list">
+            <li>Easy, Medium, Hard, and Insane difficulty levels</li>
+            <li>Consecutive hazard anti-flooding protection</li>
+            <li>Permanent progression: conquer Hard to unlock Insane</li>
+            <li>Smooth controls via Hand Gestures, Keyboard, and Mouse</li>
+          </ul>
+        </div>
+
+        <div>
+          <!-- Single Dynamic Play Button -->
+          <a href="difficulty-select.html?mode=skyfall" class="arcade-btn arcade-btn-primary" style="width: 100%; justify-content: center; padding: 16px; font-weight: 700; font-size: 16px; transition: all 0.2s ease;" id="btn-play-fun-mode">
+            <span id="fun-play-btn-label">Play Skyfall</span>
+            <span style="margin-left: 8px;">&rarr;</span>
+          </a>
+        </div>
+      </section>
+
+      <!-- Card 2: Educational Mode -->
+      <section class="mode-card edu-card" aria-labelledby="edu-mode-title">
+        <div>
+          <div class="card-top-row">
+            <span style="font-size: 32px;">📐</span>
+            <span class="mode-badge" style="background: rgba(250, 204, 21, 0.15); border: 1px solid var(--gold); color: var(--gold);">
+              MATHS INVADER • STD 1
+            </span>
+          </div>
+
+          <h2 id="edu-mode-title" class="mode-card-title" style="color: var(--gold);">Educational Mode</h2>
+          <p class="mode-card-desc">
+            Maths Space Invader — Std. 1 Olympiad arithmetic challenge. Battle alien invaders by targeting and capturing correct mathematical equations!
+          </p>
+
+          <!-- Educational Mode Sub-Game Breakdown -->
+          <div class="subgame-box">
+            <!-- Maths Space Invader -->
+            <div class="subgame-item active-edu">
+              <div class="subgame-icon" style="background: rgba(250, 204, 21, 0.2); color: var(--gold);">
+                👾
+              </div>
+              <div style="flex: 1;">
+                <div class="subgame-name" style="color: var(--gold);">Maths Space Invader</div>
+                <div class="subgame-detail">Solve addition, subtraction & comparison equations by destroying target invaders.</div>
+              </div>
+              <span style="font-family: var(--font-mono); font-size: 9px; color: var(--gold); font-weight: 700; background: rgba(250, 204, 21, 0.2); padding: 2px 6px; border-radius: 4px;">OLYMPIAD</span>
+            </div>
+
+            <!-- Curriculum Coverage -->
+            <div style="padding: 6px 12px; font-family: var(--font-mono); font-size: 11px; color: var(--text-muted); display: flex; justify-content: space-between; border-top: 1px solid var(--border-dim); margin-top: 4px;">
+              <span>Curriculum: <strong>Std. 1 Olympiad</strong></span>
+              <span style="color: var(--gold);">Ages 6–10</span>
+            </div>
+          </div>
+
+          <ul class="feature-list">
+            <li>Std. 1 Olympiad Math: Addition, Subtraction, Comparisons</li>
+            <li>Alien invaders display candidate answers in space combat</li>
+            <li>Monotonic randomized scoring schedule (Q1–Q20)</li>
+            <li>Immediate feedback, answer reveals, and streak multipliers</li>
+          </ul>
+        </div>
+
+        <div>
+          <a href="difficulty-select.html?mode=educational" class="arcade-btn" style="width: 100%; justify-content: center; padding: 16px; font-weight: 700; font-size: 16px; border-color: var(--gold); color: var(--gold);" id="btn-explore-edu-mode">
+            <span>Play Maths Space Invader</span>
+            <span style="margin-left: 8px;">&rarr;</span>
+          </a>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Footer Navigation -->
+  <footer class="mode-footer">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="difficulty-select.html">Difficulty Select</a>
+    <a href="about.html">About</a>
+    <a href="credits.html">Credits</a>
+    <a href="terms.html">Terms</a>
+    <a href="contact.html">Contact</a>
+  </footer>
+
+  <!-- Starfield Canvas Script -->
+  <script type="module" src="js/starfield.js"></script>
+
+  <!-- Interactive Subgame Dynamic Switcher -->
+  <script>
+    let selectedFunSubgame = 'skyfall';
+
+    function selectSubgame(mode) {
+      selectedFunSubgame = mode;
+      const skyfallItem = document.getElementById('subgame-skyfall');
+      const invaderItem = document.getElementById('subgame-space-invader');
+      const skyfallBadge = document.getElementById('badge-status-skyfall');
+      const invaderBadge = document.getElementById('badge-status-invader');
+      const playBtn = document.getElementById('btn-play-fun-mode');
+      const btnLabel = document.getElementById('fun-play-btn-label');
+
+      if (mode === 'invader') {
+        if (skyfallItem) {
+          skyfallItem.classList.remove('active-item');
+          skyfallItem.setAttribute('aria-checked', 'false');
+          skyfallItem.style.borderColor = 'transparent';
+          skyfallItem.style.background = 'rgba(22, 25, 38, 0.6)';
+          skyfallItem.style.boxShadow = 'none';
+        }
+        if (skyfallBadge) {
+          skyfallBadge.textContent = 'PLAYABLE';
+          skyfallBadge.style.background = 'rgba(148, 163, 184, 0.15)';
+          skyfallBadge.style.color = 'var(--text-muted)';
+        }
+
+        if (invaderItem) {
+          invaderItem.classList.add('active-item');
+          invaderItem.setAttribute('aria-checked', 'true');
+          invaderItem.style.borderColor = '#c084fc';
+          invaderItem.style.background = 'rgba(168, 85, 247, 0.15)';
+          invaderItem.style.boxShadow = '0 0 16px rgba(168, 85, 247, 0.3)';
+        }
+        if (invaderBadge) {
+          invaderBadge.textContent = 'SELECTED';
+          invaderBadge.style.background = 'rgba(168, 85, 247, 0.3)';
+          invaderBadge.style.color = '#f3e8ff';
+        }
+
+        if (playBtn) {
+          playBtn.href = 'difficulty-select.html?mode=invader';
+          playBtn.style.background = 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
+          playBtn.style.borderColor = '#a855f7';
+        }
+        if (btnLabel) btnLabel.textContent = 'Play Space Invader';
+      } else {
+        if (invaderItem) {
+          invaderItem.classList.remove('active-item');
+          invaderItem.setAttribute('aria-checked', 'false');
+          invaderItem.style.borderColor = 'transparent';
+          invaderItem.style.background = 'rgba(22, 25, 38, 0.6)';
+          invaderItem.style.boxShadow = 'none';
+        }
+        if (invaderBadge) {
+          invaderBadge.textContent = 'PLAYABLE';
+          invaderBadge.style.background = 'rgba(168, 85, 247, 0.2)';
+          invaderBadge.style.color = '#c084fc';
+        }
+
+        if (skyfallItem) {
+          skyfallItem.classList.add('active-item');
+          skyfallItem.setAttribute('aria-checked', 'true');
+          skyfallItem.style.borderColor = 'rgba(56, 189, 248, 0.5)';
+          skyfallItem.style.background = 'rgba(56, 189, 248, 0.12)';
+          skyfallItem.style.boxShadow = '0 0 16px rgba(56, 189, 248, 0.25)';
+        }
+        if (skyfallBadge) {
+          skyfallBadge.textContent = 'SELECTED';
+          skyfallBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+          skyfallBadge.style.color = 'var(--cyan)';
+        }
+
+        if (playBtn) {
+          playBtn.href = 'difficulty-select.html?mode=skyfall';
+          playBtn.style.background = '';
+          playBtn.style.borderColor = '';
+        }
+        if (btnLabel) btnLabel.textContent = 'Play Skyfall';
+      }
+    }
+    window.selectSubgame = selectSubgame;
+  </script>
+</body>
+</html>

@@ -1,0 +1,407 @@
+<!DOCTYPE html><html lang="en" style="width: 1280px; height: 1032px; overflow: hidden; position: relative;"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>MindRush - Create Cadet Account</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Press+Start+2P&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            pixel: ['"Press Start 2P"', 'monospace', 'cursive'],
+          },
+          colors: {
+            void: '#07090e',
+            surface: '#11131d',
+            card: '#161926',
+            popup: '#141828',
+            borderDim: '#2d334a',
+            borderMid: '#4b5578',
+            textMain: '#F5F8FF',
+            textMuted: '#9aa5c4',
+            gold: '#FACC15',
+            goldMuted: '#ca9e16',
+            cyan: '#38BDF8',
+            cyanNeon: '#00F2FE',
+            pinkNeon: '#F472B6',
+            success: '#34D399',
+            danger: '#F87171'
+          }
+        }
+      }
+    }
+</script>
+<style>
+    body {
+      background-color: #07090e;
+      color: #F5F8FF;
+      font-family: 'Space Grotesk', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    /* Starfield particle base styling */
+    .star {
+      position: absolute;
+      background-color: #ffffff;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .star.tiny { width: 1.5px; height: 1.5px; opacity: 0.4; }
+    .star.med { width: 3px; height: 3px; opacity: 0.7; }
+    .star.twinkle {
+      animation: twinkle 3.5s ease-in-out infinite alternate;
+    }
+    .star.four-point {
+      width: 6px;
+      height: 6px;
+      background: #FACC15;
+      clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
+      opacity: 0.85;
+      filter: drop-shadow(0 0 6px rgba(250, 204, 21, 0.6));
+    }
+    @keyframes twinkle {
+      0% { opacity: 0.25; transform: scale(0.85); }
+      50% { opacity: 0.9; transform: scale(1.2); }
+      100% { opacity: 0.35; transform: scale(0.9); }
+    }
+
+    /* Primary glowing arcade button */
+    .arcade-btn-primary {
+      transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+      border: 1.5px solid #38BDF8;
+      box-shadow: 0 5px 0 #0284c7, 0 0 25px rgba(56, 189, 248, 0.3);
+    }
+    .arcade-btn-primary:hover {
+      border-color: #FACC15;
+      box-shadow: 0 7px 0 #0284c7, 0 0 32px rgba(250, 204, 21, 0.38);
+      transform: translateY(-2px);
+    }
+    .arcade-btn-primary:active {
+      transform: translateY(2px);
+      box-shadow: 0 2px 0 #0284c7;
+    }
+
+    /* Concentric Radar Rings */
+    @keyframes cosmicRadar {
+      0% { transform: translate(-50%, -50%) scale(0.7); opacity: 0.35; }
+      50% { opacity: 0.55; }
+      100% { transform: translate(-50%, -50%) scale(1.35); opacity: 0; }
+    }
+    .kinetic-wave {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      border: 1.5px dashed rgba(56, 189, 248, 0.2);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: cosmicRadar 12s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    .kinetic-wave.delay-1 {
+      animation-delay: 4s;
+      border-style: dotted;
+      border-color: rgba(250, 204, 21, 0.22);
+    }
+
+    /* Floating Math Equations */
+    .constellation-glyph {
+      position: absolute;
+      pointer-events: none;
+      animation: glyphFloat 9s ease-in-out infinite alternate;
+      z-index: 1;
+    }
+    @keyframes glyphFloat {
+      0% { transform: translateY(0px) rotate(0deg); opacity: 0.55; }
+      50% { transform: translateY(-8px) rotate(1.5deg); opacity: 0.85; }
+      100% { transform: translateY(5px) rotate(-1.5deg); opacity: 0.6; }
+    }
+
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0d1220;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2d334a;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #38BDF8;
+    }
+</style>
+</head>
+<body class="min-h-screen relative flex flex-col justify-between selection:bg-cyan/30 selection:text-cyan">
+<!-- ============================================================ -->
+<!-- COSMIC BACKGROUND LAYER (Strictly aligned with Screen 12)    -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" id="cosmic-bg">
+<div class="absolute inset-0 bg-[#07090e] bg-[radial-gradient(ellipse_80%_80%_at_50%_-15%,rgba(56,189,248,0.12),rgba(0,0,0,0))]"></div>
+<div class="kinetic-wave"></div>
+<div class="kinetic-wave delay-1"></div>
+<!-- Cosmic Spark Vector Line -->
+<svg class="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-[320px] pointer-events-none opacity-20" preserveAspectRatio="none" viewBox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+<path d="M0,160 Q180,158 280,160 T420,160 L450,130 L470,200 L490,105 L515,215 L535,160 L620,160 Q720,160 840,160 L870,135 L885,190 L900,115 L920,205 L935,160 Q1050,160 1440,160" fill="none" stroke="#38BDF8" stroke-dasharray="8 6" stroke-width="1.6"></path>
+<path d="M0,160 C320,185 480,135 720,160 C960,185 1120,135 1440,160" fill="none" opacity="0.25" stroke="#FACC15" stroke-dasharray="4 8" stroke-width="1"></path>
+</svg>
+<!-- Glowing Subtle Math Equations -->
+<div class="constellation-glyph pointer-events-none select-none hidden md:block" style="top: 18%; right: 9%; opacity: 0.35;">
+<div class="flex items-center gap-2 px-3 py-1 rounded-full border border-borderDim bg-surface/70 backdrop-blur-sm text-xs font-mono text-textMuted">
+<span class="">15 + 27 = 42</span>
+</div>
+</div>
+<div class="constellation-glyph pointer-events-none select-none hidden md:block" style="top: 75%; left: 7%; opacity: 0.35;">
+<div class="flex items-center gap-2 px-3 py-1 rounded-full border border-borderDim bg-surface/70 backdrop-blur-sm text-xs font-mono text-textMuted">
+<span class="">7 × 7 = 49</span>
+</div>
+</div>
+<div class="constellation-glyph pointer-events-none select-none hidden lg:block" style="top: 48%; left: 4%; opacity: 0.3;">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded border border-borderDim bg-surface/50 text-xs font-mono text-cyan">
+<span class="">5 × ? = 35</span>
+</div>
+</div>
+<div class="constellation-glyph pointer-events-none select-none hidden lg:block" style="top: 36%; right: 5%; opacity: 0.3;">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded border border-borderDim bg-surface/50 text-xs font-mono text-textMuted">
+<span class="">120 ÷ 4 = 30</span>
+</div>
+</div>
+<!-- Twinkling Star Points -->
+<div class="star four-point twinkle" style="top: 14%; left: 12%; animation-delay: 0s;"></div>
+<div class="star four-point twinkle" style="top: 24%; left: 86%; animation-delay: 1.4s;"></div>
+<div class="star four-point twinkle" style="top: 72%; left: 14%; animation-delay: 2.1s;"></div>
+<div class="star four-point twinkle" style="top: 80%; left: 88%; animation-delay: 0.9s;"></div>
+<div class="star med" style="top: 10%; left: 36%;"></div>
+<div class="star tiny" style="top: 28%; left: 24%;"></div>
+<div class="star med twinkle" style="top: 15%; left: 72%; animation-delay: 1s;"></div>
+<div class="star tiny" style="top: 55%; left: 8%;"></div>
+<div class="star med" style="top: 62%; left: 32%;"></div>
+<div class="star tiny twinkle" style="top: 66%; left: 82%; animation-delay: 2.4s;"></div>
+<div class="star tiny" style="top: 84%; left: 50%;"></div>
+</div>
+<!-- ============================================================ -->
+<!-- TOP HEADER HUD (Matching Screen 12 Header Style)            -->
+<!-- ============================================================ -->
+<header class="relative z-20 w-full px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between border-b border-borderDim/40 bg-void/60 backdrop-blur-md">
+<!-- Cadet / Return Badge -->
+<a class="group flex items-center gap-2.5 px-3.5 py-2 rounded-xl border border-borderDim bg-surface/80 hover:border-gold hover:bg-card transition-all text-textMain focus:outline-none focus:ring-2 focus:ring-gold/50 shadow-md backdrop-blur-sm" data-path="landing" href="#" title="Back to Homepage">
+<div class="w-5 h-5 text-gold flex items-center justify-center">
+<svg class="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
+</div>
+<div class="flex flex-col text-left">
+<span class="text-[10px] font-mono tracking-widest text-gold font-bold uppercase">STAR CADET</span>
+<span class="text-xs font-sans font-semibold text-textMain group-hover:text-gold transition-colors">Back to Homepage</span>
+</div>
+</a>
+<!-- Center subtle system status indicator -->
+<div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/80 border border-borderDim text-xs font-mono text-textMuted">
+<span class="w-2 h-2 rounded-full bg-cyan inline-block animate-pulse"></span>
+<span class="text-[11px] uppercase tracking-wider text-textMain">REGISTRATION PORTAL</span>
+</div>
+<!-- Right Actions: Login & Close -->
+<div class="flex items-center gap-2.5">
+
+<a aria-label="Close sign up modal and return to homepage" class="w-9 h-9 rounded-xl border border-borderDim bg-surface/80 hover:bg-card hover:border-pinkNeon text-textMuted hover:text-pinkNeon flex items-center justify-center transition-all group focus:outline-none" data-path="landing" href="#">
+<svg class="w-4 h-4 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><line x1="18" x2="6" y1="6" y2="18"></line><line x1="6" x2="18" y1="6" y2="18"></line></svg>
+</a>
+</div>
+</header>
+<!-- ============================================================ -->
+<!-- MAIN CONTENT AREA: Cosmic HUD Modal Container               -->
+<!-- ============================================================ -->
+<main class="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 py-6 sm:py-8 backdrop-blur-md">
+<div class="w-full max-w-[560px] bg-popup/95 border border-borderMid/80 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.85)] backdrop-blur-xl relative overflow-hidden flex flex-col">
+<!-- Top subtle neon decorative border highlight -->
+<div class="h-1 w-full bg-gradient-to-r from-cyan/60 via-gold/80 to-pinkNeon/60"></div>
+<div class="p-5 sm:p-7 relative z-10">
+<!-- Arcade Header Section -->
+<div class="mb-6 text-center select-none">
+<div class="flex items-center justify-center gap-2 mb-2">
+
+<h1 class="text-2xl sm:text-3xl font-bold tracking-wider text-textMain" style="font-family: 'Press Start 2P', monospace, cursive; text-shadow: 0 0 16px rgba(56, 189, 248, 0.45), 0 3px 0 #07090e;">
+            MINDRUSH
+          </h1>
+</div>
+<p class="text-xs sm:text-sm text-gold font-bold tracking-widest uppercase font-sans">
+          THINK FAST. WAVE YOUR HANDS. JOIN THE SQUAD!
+        </p>
+</div>
+<!-- Registration Form -->
+<form class="space-y-4" id="signup-form" novalidate="">
+<!-- 1. Full Name -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase flex items-center justify-between" for="fullName">
+<span class="">FULL NAME</span>
+<span class="text-danger font-mono text-[10px] hidden" id="fullname-error">REQUIRED</span>
+</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">badge</span>
+<input class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-4 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50" id="fullName" name="fullName" placeholder="Enter cadet full name" required="" type="text" style="background-color: rgba(14, 23, 38, 0.85); color: rgb(245, 248, 255); border: 1px solid rgba(56, 189, 248, 0.35); outline: none;">
+</div>
+</div>
+<!-- 2. Username -->
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase" for="username">CADET USERNAME</label>
+<span class="hidden items-center gap-1 text-[11px] font-mono text-cyan" id="username-status">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+<span class="">Available</span>
+</span>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">alternate_email</span>
+<input class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-4 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50" id="username" maxlength="16" name="username" placeholder="e.g. StarVoyager_09" required="" type="text" style="background-color: rgba(14, 23, 38, 0.85); color: rgb(245, 248, 255); border: 1px solid rgba(56, 189, 248, 0.35); outline: none;">
+</div>
+<p class="text-[11px] font-mono text-textMuted/70">3–16 characters: letters, numbers, or _</p>
+</div>
+<!-- 3. Mobile Number -->
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">Mobile number</label>
+<div class="grid grid-cols-[108px_1fr] gap-2">
+<div class="relative">
+<select class="w-full bg-void/90 text-textMain pl-3 pr-7 py-2.5 rounded-xl font-mono text-xs transition-all focus:outline-none border border-borderDim focus:border-cyan appearance-none cursor-pointer" id="countryCode" name="countryCode" style="background-color: rgba(14, 23, 38, 0.85); color: rgb(245, 248, 255); border: 1px solid rgba(56, 189, 248, 0.35); outline: none;">
+<option value="+1">+1 (US)</option>
+<option value="+44">+44 (UK)</option>
+<option value="+91">+91 (IN)</option>
+<option value="+49">+49 (DE)</option>
+<option value="+81">+81 (JP)</option>
+<option value="+61">+61 (AU)</option>
+</select>
+<span class="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none text-[16px]">expand_more</span>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">call</span>
+<input class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-4 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50" id="phone" name="phone" placeholder="Enter mobile number" type="tel" style="background-color: rgba(14, 23, 38, 0.85); color: rgb(245, 248, 255); border: 1px solid rgba(56, 189, 248, 0.35); outline: none;">
+</div>
+</div>
+</div>
+<!-- 4. Date of Birth & Roblox-Style Gender Selection -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase" for="dob">DATE OF BIRTH</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">calendar_today</span>
+<input class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-3 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50 [color-scheme:dark] h-11" id="dob" name="dob" required="" type="date" style="background-color: rgba(14, 23, 38, 0.85); color: rgb(245, 248, 255); border: 1px solid rgba(56, 189, 248, 0.35); color-scheme: dark; outline: none;">
+</div>
+
+</div>
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase">PILOT AVATAR (Gender)</label>
+<input id="gender" name="gender" type="hidden" value="male">
+<div aria-label="Select Gender" class="grid grid-cols-2 gap-2 h-11" role="radiogroup"><button aria-checked="true" aria-label="Male" class="flex items-center justify-center gap-1.5 h-11 px-2.5 rounded-xl border transition-all duration-200 hover:bg-cyan/25 focus:outline-none group shadow-sm border-cyan bg-cyan/15 text-cyan" id="btn-gender-male" onclick="document.getElementById('gender').value='male'; this.classList.add('border-cyan', 'bg-cyan/15', 'text-cyan'); this.classList.remove('border-borderDim', 'bg-void/90', 'text-textMuted'); const f=document.getElementById('btn-gender-female'); f.classList.remove('border-cyan', 'bg-cyan/15', 'text-cyan'); f.classList.add('border-borderDim', 'bg-void/90', 'text-textMuted');" role="radio" type="button"><svg class="w-5 h-5 flex-shrink-0 stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M11 9.5C11 6.5 13.2 4.5 16 4.5C18.8 4.5 21 6.5 21 9.5C21 11.5 20.8 13.5 20.2 14.8C19.2 16.8 17.5 17.5 16 17.5C14.5 17.5 12.8 16.8 11.8 14.8C11.2 13.5 11 11.5 11 9.5Z"></path><path d="M11.2 7C12.5 5.5 14.5 5.2 16 5.2C18 5.2 19.8 6 20.5 7.8"></path><path d="M10.5 10.5C9.8 10.5 9.2 11.2 9.2 12C9.2 12.8 9.8 13.2 10.5 13.2"></path><path d="M21.5 10.5C22.2 10.5 22.8 11.2 22.8 12C22.8 12.8 22.2 13.2 21.5 13.2"></path><path d="M14 17.2V19.5"></path><path d="M18 17.2V19.5"></path><path d="M7 27.5C7.2 23.5 10 21 13.5 20.5L16 23.5L18.5 20.5C22 21 24.8 23.5 25 27.5"></path><path d="M13.5 20.5L16 26L18.5 20.5"></path></svg><span class="text-[10px] font-mono font-bold tracking-wider uppercase">MALE</span></button><button aria-checked="false" aria-label="Female" class="flex items-center justify-center gap-1.5 h-11 px-2.5 rounded-xl border transition-all duration-200 hover:bg-card hover:text-textMain focus:outline-none group shadow-sm border-borderDim bg-void/90 text-textMuted" id="btn-gender-female" onclick="document.getElementById('gender').value='female'; this.classList.add('border-cyan', 'bg-cyan/15', 'text-cyan'); this.classList.remove('border-borderDim', 'bg-void/90', 'text-textMuted'); const m=document.getElementById('btn-gender-male'); m.classList.remove('border-cyan', 'bg-cyan/15', 'text-cyan'); m.classList.add('border-borderDim', 'bg-void/90', 'text-textMuted');" role="radio" type="button"><svg class="w-5 h-5 flex-shrink-0 stroke-current fill-none" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg"><path d="M12.2 11.5C12.2 9 13.8 6.5 16 6.5C18.2 6.5 19.8 9 19.8 11.5C19.8 14 18.2 16.5 16 16.5C13.8 16.5 12.2 14 12.2 11.5Z"></path><path d="M10.5 13.5C9.8 11 10.2 6.5 13.5 4.5C15 3.5 17 3.5 18.5 4.5C21.8 6.5 22.2 11 21.5 13.5"></path><path d="M10.2 12C9.5 14.5 9 17.5 10 20C10.5 21.2 11.5 21.8 12.5 21"></path><path d="M21.8 12C22.5 14.5 23 17.5 22 20C21.5 21.2 20.5 21.8 19.5 21"></path><path d="M14.5 16.5V19.2"></path><path d="M17.5 16.5V19.2"></path><path d="M7 27.5C7.2 23.5 10 21 13.5 20.2C14.3 21.5 15.1 22 16 22C16.9 22 17.7 21.5 18.5 20.2C22 21 24.8 23.5 25 27.5"></path></svg><span class="text-[10px] font-mono font-bold tracking-wider uppercase">FEMALE</span></button></div>
+</div>
+</div>
+<!-- 5. Password & Confirm Password -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+<div class="flex flex-col gap-1.5">
+<label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase" for="password">CREATE PASSWORD</label>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">lock</span>
+<input class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-10 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50" id="password" name="password" placeholder="Min. 8 characters" required="" type="password" style="background-color: rgba(14, 23, 38, 0.85); color: rgb(245, 248, 255); border: 1px solid rgba(56, 189, 248, 0.35); outline: none;">
+<button aria-label="Toggle password visibility" class="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textMain transition-colors p-1" id="toggle-password" onclick="const p=document.getElementById('password'); const icon=document.getElementById('password-eye-icon'); if(p.type==='password'){p.type='text'; icon.textContent='visibility_off';}else{p.type='password'; icon.textContent='visibility';}" type="button">
+<span class="material-symbols-outlined text-[18px]" id="password-eye-icon">visibility</span>
+</button>
+</div>
+<!-- Password Strength Bar -->
+<div class="space-y-1 mt-0.5">
+<div class="w-full h-1 bg-card rounded-full overflow-hidden flex gap-0.5">
+<div class="h-full flex-1 bg-cyan/60 rounded-full"></div>
+<div class="h-full flex-1 bg-cyan/60 rounded-full"></div>
+<div class="h-full flex-1 bg-borderDim rounded-full"></div>
+</div>
+<div class="flex justify-between items-center text-[10px] font-mono text-textMuted">
+<span class="">Min 8 chars, 1 number</span>
+<span class="text-cyan font-bold uppercase">GOOD</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between">
+<label class="text-xs font-mono font-semibold tracking-wider text-textMuted uppercase" for="confirmPassword">CONFIRM PASSWORD</label>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-textMuted/70 text-[18px]">lock_reset</span>
+<input class="w-full bg-void/90 text-textMain placeholder:text-textMuted/50 pl-11 pr-10 py-2.5 rounded-xl font-sans text-sm transition-all focus:outline-none border border-borderDim focus:border-cyan focus:ring-1 focus:ring-cyan/50" id="confirmPassword" name="confirmPassword" placeholder="Re-enter password" required="" type="password" style="background-color: rgba(14, 23, 38, 0.85); color: rgb(245, 248, 255); border: 1px solid rgba(56, 189, 248, 0.35); outline: none;">
+<button aria-label="Toggle confirm password visibility" class="absolute right-3 top-1/2 -translate-y-1/2 text-textMuted hover:text-textMain transition-colors p-1" id="toggle-confirm" onclick="const p=document.getElementById('confirmPassword'); const icon=document.getElementById('confirm-eye-icon'); if(p.type==='password'){p.type='text'; icon.textContent='visibility_off';}else{p.type='password'; icon.textContent='visibility';}" type="button">
+<span class="material-symbols-outlined text-[18px]" id="confirm-eye-icon">visibility</span>
+</button>
+</div>
+<p class="text-[11px] font-mono text-textMuted/70">Must match password above</p>
+</div>
+</div>
+<!-- Terms & Marketing Checkboxes -->
+<div class="space-y-2 pt-1 text-xs">
+<label class="flex items-start gap-2.5 cursor-pointer select-none group">
+<input class="mt-0.5 w-4 h-4 rounded border-borderDim bg-void text-cyan focus:ring-cyan focus:ring-offset-void cursor-pointer accent-cyan" id="terms" required="" type="checkbox">
+<span class="text-textMuted leading-tight font-sans">
+              I agree to the <a class="text-cyan underline hover:text-cyanNeon" href="#">Terms of Flight</a> and <a class="text-cyan underline hover:text-cyanNeon" href="#">Privacy Protocol</a>.
+            </span>
+</label>
+<label class="flex items-start gap-2.5 cursor-pointer select-none group">
+<input class="mt-0.5 w-4 h-4 rounded border-borderDim bg-void text-cyan focus:ring-cyan focus:ring-offset-void cursor-pointer accent-cyan" id="marketing" type="checkbox">
+<span class="text-textMuted leading-tight font-sans">
+              Receive star tournament notifications and weekly math challenge briefings.
+            </span>
+</label>
+</div>
+<!-- PRIMARY CTA BUTTON (Matching Play Now Button from Screen 12) -->
+<button class="arcade-btn-primary w-full h-[76px] sm:h-[82px] rounded-2xl flex items-center justify-between px-5 sm:px-6 bg-gradient-to-r from-card via-[#172033] to-surface text-textMain font-bold tracking-wide focus:outline-none group backdrop-blur-md relative overflow-hidden mt-2" id="submit-btn" type="submit">
+<div class="flex items-center gap-3.5 text-left">
+<!-- Neon Cyan Play Icon Box -->
+<div class="w-11 h-11 rounded-xl bg-cyan/15 border border-cyan/50 flex items-center justify-center text-cyan group-hover:bg-cyan group-hover:text-void transition-colors shadow-md flex-shrink-0">
+<svg class="w-5 h-5 ml-0.5 fill-current" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"></polygon></svg>
+</div>
+<div>
+<div class="text-lg sm:text-xl font-sans font-bold tracking-tight text-textMain group-hover:text-cyan transition-colors flex items-center gap-2">
+<span class="">CREATE ACCOUNT</span>
+</div>
+<div class="text-xs font-sans text-gold font-medium mt-0.5 flex items-center gap-1.5">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+<span class="">COMMENCE STAR CADET REGISTRATION</span>
+</div>
+</div>
+</div>
+<!-- Arrow Indicator -->
+<svg class="w-6 h-6 text-cyan group-hover:translate-x-1.5 transition-transform flex-shrink-0" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewBox="0 0 24 24">
+<line x1="5" x2="19" y1="12" y2="12"></line>
+<polyline points="12 5 19 12 12 19"></polyline>
+</svg>
+</button>
+</form>
+<!-- Footer navigation link -->
+<div class="mt-5 pt-4 text-center border-t border-borderDim/50">
+<p class="text-xs sm:text-sm font-sans text-textMuted">
+          Already have an account?
+          <a class="text-gold hover:text-yellow-300 font-bold ml-1 transition-colors underline" data-path="login" href="#">Log in</a>
+</p>
+</div>
+</div>
+</div>
+</main>
+<!-- ============================================================ -->
+<!-- BOTTOM TELEMETRY FOOTER (Strictly Matching Screen 12)        -->
+<!-- ============================================================ -->
+
+<script>
+  // Simple form validation handler
+  document.getElementById('signup-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const fullName = document.getElementById('fullName').value.trim();
+    if (!fullName) {
+      document.getElementById('fullname-error').classList.remove('hidden');
+      return;
+    }
+    alert('🚀 Welcome aboard Cadet! Your MindRush account has been initialized.');
+  });
+</script>
+
+
+</body></html>

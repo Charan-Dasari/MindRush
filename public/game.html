@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush — Game</title>
+  <link rel="icon" type="image/png" href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+
+  <!-- Space-Arcade Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/game.css">
+
+  <!-- p5.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+
+  <!-- MediaPipe Hands & Camera Utils for Spatial Gesture Tracking -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+  <!-- Centered Space-Arcade Loading Screen -->
+  <div id="p5_loading" class="p5_loading_screen">
+    <div class="loading-box">
+      <div class="loading-orbit-spinner">
+        <div class="orbit-ring"></div>
+        <div class="orbit-core">🛸</div>
+      </div>
+      <div class="loading-title">INITIALIZING MINDRUSH...</div>
+      <div class="loading-subtitle">MOUNTING FLIGHT SYSTEMS & RETRO GFX</div>
+    </div>
+  </div>
+
+  <!-- Canvas mount container -->
+  <div id="canvas-container"></div>
+
+  <!-- Consistent Gameplay HUD Topbar Overlay (Top Row Only) -->
+  <header id="hud-header" class="hud-topbar" aria-label="Game HUD">
+    <div class="hud-left-group">
+      <a href="difficulty-select.html" class="hud-btn-nav" id="hud-btn-exit" title="Exit to Difficulty Selection">
+        &larr; Exit
+      </a>
+      <div class="hud-mode-pill" id="hud-difficulty-tag">
+        <span class="hud-indicator-dot"></span>
+        <span id="hud-diff-name">OBJECT FALLING</span>
+      </div>
+      <div class="hud-mode-pill hidden" id="hud-progress-tag" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35);">
+        <span style="color: var(--cyan); font-weight: 700; font-family: var(--font-mono, monospace);">PROGRESS:</span>
+        <span id="hud-progress-val" style="font-family: var(--font-arcade, monospace); color: #fff; margin-left: 4px;">LVL 1 • Q 1/5</span>
+      </div>
+      <div class="hud-mode-pill" id="hud-score-tag" style="background: rgba(250, 204, 21, 0.12); border: 1px solid rgba(250, 204, 21, 0.35);">
+        <span style="color: var(--gold, #FACC15); font-weight: 700; font-family: var(--font-mono, monospace);">SCORE:</span>
+        <span id="hud-score-val" style="font-family: var(--font-arcade, monospace); color: #fff; margin-left: 4px;">0</span>
+      </div>
+    </div>
+
+    <div class="hud-right-group">
+      <!-- Camera Gesture Sensor Status Feedback -->
+      <div class="hud-sensor-status" id="hud-sensor-feedback" title="Hand tracking readiness">
+        <span class="sensor-pulse-dot"></span>
+        <span class="sensor-label">CAMERA: STANDBY (KEYBOARD/MOUSE)</span>
+      </div>
+
+      <button id="btn-pause-header" class="pause-btn" title="Pause Game (Esc)">⏸ PAUSE</button>
+    </div>
+  </header>
+
+  <!-- Educational Mode Dedicated Question & Timer Panel (Prominent, centered below topbar) -->
+  <section id="edu-hud-container" class="edu-question-area hidden" aria-label="Current Question">
+    <div class="edu-question-card glass-panel">
+      <div class="edu-question-header">
+        <span id="edu-topic-badge" class="edu-topic-pill">MATHS</span>
+        <div class="edu-lives-indicator" id="edu-lives-hearts">❤️❤️❤️</div>
+      </div>
+      <div id="edu-hud-question-text" class="edu-question-display">
+        Question text loading...
+      </div>
+      <div class="edu-timer-wrapper">
+        <div class="edu-timer-track">
+          <div id="edu-hud-timer-bar" class="edu-timer-bar-fill"></div>
+        </div>
+        <span id="edu-timer-label" class="edu-timer-text">⏱️ 30s</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Achievement Toast Notification -->
+  <div id="achievement-toast" role="alert" aria-live="polite">
+    <div class="achievement-icon">🏆</div>
+    <div class="achievement-text">
+      <div class="achievement-text-title">ACHIEVEMENT UNLOCKED</div>
+      <div class="achievement-text-name" id="achievement-toast-name">First Space Flight</div>
+    </div>
+  </div>
+
+  <!-- Pause Modal Overlay -->
+  <div id="pause-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+    <div class="modal-content glass-panel">
+      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">MISSION PAUSED</div>
+      <h2 id="pause-title" class="modal-title" style="color: var(--cyan);">GAME PAUSED</h2>
+      <p class="modal-subtitle">Press ESC or click Resume to return to the mission</p>
+      <div class="modal-actions">
+        <button id="btn-pause-resume" class="btn-game btn-primary">RESUME FLIGHT</button>
+        <button id="btn-pause-restart" class="btn-game">RESTART MISSION</button>
+        <button id="btn-pause-exit" class="btn-game btn-danger">EXIT TO HUB</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal Overlay -->
+  <div id="game-over-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
+    <div class="modal-content glass-panel">
+      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--danger); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">MISSION TERMINATED</div>
+      <h2 id="gameover-title" class="modal-title" style="color: var(--danger);">GAME OVER</h2>
+      <div class="modal-score">FINAL SCORE: <span id="final-score-val">0</span></div>
+      <div class="modal-actions">
+        <button id="btn-gameover-restart" class="btn-game btn-primary">PLAY AGAIN</button>
+        <button id="btn-gameover-exit" class="btn-game btn-danger">EXIT TO HUB</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Next Level Modal Overlay -->
+  <div id="next-level-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="nextlevel-title">
+    <div class="modal-content glass-panel">
+      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">VICTORY MILESTONE</div>
+      <h2 id="nextlevel-title" class="modal-title" style="color: var(--gold);">MILESTONE REACHED!</h2>
+      <p id="next-level-message" class="modal-subtitle">Congratulations! Do you want to proceed to the next difficulty?</p>
+      <div class="modal-actions">
+        <button id="btn-nextlevel-yes" class="btn-game btn-accent" style="background: var(--gold); color: var(--void); border-color: var(--gold);">YES, NEXT LEVEL</button>
+        <button id="btn-nextlevel-no" class="btn-game">KEEP PLAYING</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ES Modules Application Entry Point -->
+  <script type="module" src="js/app.js?v=2"></script>
+</body>
+</html>

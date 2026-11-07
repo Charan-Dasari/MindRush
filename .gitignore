@@ -1,0 +1,46 @@
+# OS & Environment
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node / Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+env/
+venv/
+.venv/
+
+# Firebase
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+# IDE & Local Tooling
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.user
+*.swp
+
+# Environment & Credentials
+.env
+.env.*
+!.env.example
+*.local
+*.key
+*.pem
+*.sql
+database/*.sql
+
+# Scratch & Temporary Testing
+scratch/
+test_*.tmp

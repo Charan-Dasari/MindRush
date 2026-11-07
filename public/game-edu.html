@@ -1,0 +1,122 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush - Educational Mode</title>
+  <meta name="description" content="MindRush Educational Mode - Learn by catching correct answers in a fast-paced arcade game">
+  <link rel="icon" type="image/png" href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@600;800&family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/game.css">
+
+  <!-- p5.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+</head>
+<body>
+  <!-- Canvas mount container -->
+  <div id="canvas-container"></div>
+
+  <!-- Header Quick Controls -->
+  <header id="hud-header">
+    <button id="btn-pause-header" class="pause-btn" title="Pause Game (Esc)">&#9208; PAUSE</button>
+  </header>
+
+  <!-- Pause Modal Overlay -->
+  <div id="edu-pause-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="edu-pause-title">
+    <div class="modal-content glass-panel">
+      <h2 id="edu-pause-title" class="modal-title">GAME PAUSED</h2>
+      <p class="modal-subtitle">Press ESC or click Resume to continue</p>
+      <div class="modal-actions">
+        <button id="edu-btn-resume" class="btn-game btn-primary">RESUME</button>
+        <button id="edu-btn-restart" class="btn-game">RESTART</button>
+        <button id="edu-btn-exit" class="btn-game btn-danger">EXIT TO CATEGORIES</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Session Results Modal -->
+  <div id="edu-results-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="edu-results-title">
+    <div class="modal-content glass-panel">
+      <h2 id="edu-results-title" class="modal-title" style="color: var(--color-accent-cyan, #00f0ff);">SESSION COMPLETE!</h2>
+      <div class="edu-results-grid">
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">FINAL SCORE</span>
+          <span class="edu-stat-value" id="edu-final-score">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">QUESTIONS</span>
+          <span class="edu-stat-value" id="edu-total-answered">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">CORRECT</span>
+          <span class="edu-stat-value edu-stat-correct" id="edu-total-correct">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">WRONG</span>
+          <span class="edu-stat-value edu-stat-wrong" id="edu-total-wrong">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">MISSED</span>
+          <span class="edu-stat-value edu-stat-missed" id="edu-total-missed">0</span>
+        </div>
+        <div class="edu-stat-item edu-stat-wide">
+          <span class="edu-stat-label">ACCURACY</span>
+          <span class="edu-stat-value edu-stat-accent" id="edu-accuracy">0%</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="edu-btn-play-again" class="btn-game btn-primary">PLAY AGAIN</button>
+        <button id="edu-btn-results-exit" class="btn-game btn-danger">EXIT TO CATEGORIES</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Over Modal (lost all lives) -->
+  <div id="edu-gameover-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="edu-gameover-title">
+    <div class="modal-content glass-panel">
+      <h2 id="edu-gameover-title" class="modal-title" style="color: var(--color-danger, #ff3b3b);">GAME OVER</h2>
+      <div class="edu-results-grid">
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">FINAL SCORE</span>
+          <span class="edu-stat-value" id="edu-go-score">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">QUESTIONS</span>
+          <span class="edu-stat-value" id="edu-go-answered">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">CORRECT</span>
+          <span class="edu-stat-value edu-stat-correct" id="edu-go-correct">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">WRONG</span>
+          <span class="edu-stat-value edu-stat-wrong" id="edu-go-wrong">0</span>
+        </div>
+        <div class="edu-stat-item">
+          <span class="edu-stat-label">MISSED</span>
+          <span class="edu-stat-value edu-stat-missed" id="edu-go-missed">0</span>
+        </div>
+        <div class="edu-stat-item edu-stat-wide">
+          <span class="edu-stat-label">ACCURACY</span>
+          <span class="edu-stat-value edu-stat-accent" id="edu-go-accuracy">0%</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="edu-btn-go-restart" class="btn-game btn-primary">TRY AGAIN</button>
+        <button id="edu-btn-go-exit" class="btn-game btn-danger">EXIT TO CATEGORIES</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Educational Mode Entry Point -->
+  <script type="module" src="js/edu-app.js"></script>
+</body>
+</html>
+

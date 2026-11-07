@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+
+<html lang="en" style=""><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>MindRush - Minimalist Arcade &amp; Learning</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/><link class="" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            void: '#050505',
+            surface: '#111111',
+            card: '#151515',
+            popup: '#1B1B1B',
+            borderDim: '#303030',
+            borderMid: '#555555',
+            textMain: '#F5F3EE',
+            textMuted: '#A6A6A6',
+            gold: '#C6A66B',
+            goldMuted: '#9B8150',
+            success: '#4E885B',
+            danger: '#A84C4C'
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    body {
+      background-color: #050505;
+      color: #F5F3EE;
+      overflow-x: hidden;
+      font-family: 'Space Grotesk', sans-serif;
+      user-select: none;
+    }
+    
+    /* Starfield particle base styling */
+    .star {
+      position: absolute;
+      background-color: #ffffff;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .star.tiny { width: 1.5px; height: 1.5px; opacity: 0.35; }
+    .star.med { width: 2.5px; height: 2.5px; opacity: 0.6; }
+    .star.twinkle {
+      animation: twinkle 4s ease-in-out infinite alternate;
+    }
+    .star.four-point {
+      width: 4px;
+      height: 4px;
+      background: #F5F3EE;
+      clip-path: polygon(50% 0%, 65% 35%, 100% 50%, 65% 65%, 50% 100%, 35% 65%, 0% 50%, 35% 35%);
+      opacity: 0.8;
+    }
+    @keyframes twinkle {
+      0% { opacity: 0.2; transform: scale(0.85); }
+      50% { opacity: 0.75; transform: scale(1.1); }
+      100% { opacity: 0.3; transform: scale(0.9); }
+    }
+
+    /* Modal transition */
+    .modal-backdrop {
+      background: rgba(5, 5, 5, 0.78);
+      backdrop-filter: blur(4px);
+    }
+
+    /* Interactive button states with refined subtle elevation and press */
+    .arcade-btn {
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 1px solid #555555;
+    }
+    .arcade-btn:hover {
+      background-color: #171717;
+      border-color: #A6A6A6;
+      transform: translateY(-2px);
+    }
+    .arcade-btn:active {
+      transform: translateY(1px);
+      background-color: #111111;
+      border-color: #555555;
+    }
+
+    /* Mode panel selectable hover */
+    .mode-card {
+      transition: all 0.16s ease;
+      border: 1px solid #303030;
+      background: #151515;
+    }
+    .mode-card:hover {
+      background: #1E1E1E;
+      border-color: #555555;
+      transform: translateY(-1px);
+    }
+    .mode-card:active {
+      transform: translateY(0);
+      border-color: #C6A66B;
+    }
+
+    /* Subtle custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #111111;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #303030;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555555;
+    }
+
+    /* ========================================================= */
+    /* COSMIC NEURAL, SYNAPSE, EQUATION GLYPH & KINETIC PULSES   */
+    /* ========================================================= */
+    /* Floating Celestial Equation Glyphs */
+    .constellation-glyph {
+      position: absolute;
+      font-family: 'JetBrains Mono', monospace;
+      color: rgba(245, 243, 238, 0.22);
+      pointer-events: none;
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 12px rgba(198, 166, 107, 0.18);
+      transition: opacity 1.5s ease;
+      animation: glyphFloat 12s ease-in-out infinite alternate;
+    }
+    @keyframes glyphFloat {
+      0% { transform: translateY(0px) rotate(0deg); opacity: 0.16; }
+      50% { transform: translateY(-8px) rotate(0.8deg); opacity: 0.35; color: rgba(198, 166, 107, 0.38); }
+      100% { transform: translateY(4px) rotate(-0.5deg); opacity: 0.18; }
+    }
+
+    /* Subtle optical reflex kinetic wave in background */
+    @keyframes kineticPulseRings {
+      0% {
+        transform: translate(-50%, -50%) scale(0.65);
+        opacity: 0.22;
+      }
+      50% {
+        opacity: 0.45;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(1.4);
+        opacity: 0;
+      }
+    }
+    .kinetic-wave {
+      position: absolute;
+      top: 52%;
+      left: 50%;
+      width: 520px;
+      height: 520px;
+      border-radius: 50%;
+      border: 1px dashed rgba(198, 166, 107, 0.15);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      animation: kineticPulseRings 14s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+    }
+    .kinetic-wave.delay-1 {
+      animation-delay: 4.8s;
+      border-style: dotted;
+      border-color: rgba(245, 243, 238, 0.12);
+    }
+    .kinetic-wave.delay-2 {
+      animation-delay: 9.6s;
+      border-style: solid;
+      border-width: 0.75px;
+      border-color: rgba(198, 166, 107, 0.18);
+    }
+
+    /* Brainwave / Synapse ECG horizon line */
+    .synapse-wave-path {
+      stroke-dasharray: 8 6;
+      animation: dashScroll 35s linear infinite;
+    }
+    @keyframes dashScroll {
+      to {
+        stroke-dashoffset: -1000;
+      }
+    }
+
+    /* ========================================= */
+    /* COSMIC ANIMATIONS: Spaceship, Rocket, UFO */
+    /* ========================================= */
+    
+    /* 1. Flying Pixel/Vector Spaceship (smooth horizontal glide across screen, starting off-screen left) */
+    @keyframes spaceshipFlight {
+      0% {
+        transform: translate3d(-180px, 0, 0) rotate(2deg);
+        opacity: 0;
+      }
+      3% {
+        opacity: 0.85;
+      }
+      35% {
+        transform: translate3d(calc(100vw + 200px), -35px, 0) rotate(3deg);
+        opacity: 0.85;
+      }
+      36%, 100% {
+        transform: translate3d(calc(100vw + 200px), -35px, 0) rotate(3deg);
+        opacity: 0;
+      }
+    }
+    .cosmic-spaceship {
+      position: absolute;
+      top: 24%;
+      left: 0;
+      opacity: 0;
+      animation: spaceshipFlight 30s linear infinite;
+      animation-delay: 2s;
+      pointer-events: none;
+      filter: drop-shadow(0 0 10px rgba(198, 166, 107, 0.35));
+      will-change: transform, opacity;
+    }
+    .engine-trail-flicker {
+      animation: enginePulse 0.35s ease-in-out infinite alternate;
+    }
+    @keyframes enginePulse {
+      0% { opacity: 0.45; transform: scaleX(0.85); }
+      100% { opacity: 1; transform: scaleX(1.3); }
+    }
+
+    /* 2. Cruising Rocket (diagonally upwards from bottom-left to top-right off-screen) */
+    @keyframes rocketCruise {
+      0% {
+        transform: translate3d(-160px, calc(100vh + 100px), 0) rotate(-42deg);
+        opacity: 0;
+      }
+      3% {
+        opacity: 0.85;
+      }
+      40% {
+        transform: translate3d(calc(100vw + 160px), -180px, 0) rotate(-40deg);
+        opacity: 0.85;
+      }
+      41%, 100% {
+        transform: translate3d(calc(100vw + 160px), -180px, 0) rotate(-40deg);
+        opacity: 0;
+      }
+    }
+    .cosmic-rocket {
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      animation: rocketCruise 36s linear infinite;
+      animation-delay: 10s;
+      pointer-events: none;
+      filter: drop-shadow(0 0 12px rgba(245, 243, 238, 0.25));
+      will-change: transform, opacity;
+    }
+
+    /* 3. Hovering UFO (smooth drifting flight path across top-mid with bobbing & scanner) */
+    @keyframes ufoDrift {
+      0% {
+        transform: translate3d(-180px, 0, 0);
+        opacity: 0;
+      }
+      4% {
+        opacity: 0.85;
+      }
+      45% {
+        transform: translate3d(calc(100vw + 200px), 18px, 0);
+        opacity: 0.85;
+      }
+      46%, 100% {
+        transform: translate3d(calc(100vw + 200px), 18px, 0);
+        opacity: 0;
+      }
+    }
+    @keyframes ufoHoverBob {
+      0%, 100% {
+        transform: translateY(0px) rotate(-1.5deg);
+      }
+      50% {
+        transform: translateY(-15px) rotate(2deg);
+      }
+    }
+    @keyframes ufoBeamScan {
+      0%, 100% {
+        opacity: 0.16;
+        transform: scaleX(0.92);
+      }
+      50% {
+        opacity: 0.45;
+        transform: scaleX(1.1);
+      }
+    }
+    @keyframes ufoCabinBlink {
+      0%, 100% { fill: #C6A66B; opacity: 0.95; }
+      50% { fill: #F5F3EE; opacity: 0.5; }
+    }
+    .cosmic-ufo-track {
+      position: absolute;
+      top: 11%;
+      left: 0;
+      opacity: 0;
+      animation: ufoDrift 40s ease-in-out infinite;
+      animation-delay: 18s;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    .cosmic-ufo-craft {
+      animation: ufoHoverBob 4.2s ease-in-out infinite;
+      filter: drop-shadow(0 0 14px rgba(198, 166, 107, 0.25));
+    }
+    .ufo-beam {
+      animation: ufoBeamScan 2.4s ease-in-out infinite;
+      transform-origin: top center;
+    }
+    .ufo-light-pulsar {
+      animation: ufoCabinBlink 1.2s ease-in-out infinite;
+    }
+
+    /* Respect reduced motion setting */
+    @media (prefers-reduced-motion: reduce) {
+      .star.twinkle, .cosmic-spaceship, .cosmic-rocket, .cosmic-ufo-track, .cosmic-ufo-craft, .engine-trail-flicker, .ufo-beam, .constellation-glyph, .kinetic-wave, .synapse-wave-path {
+        animation: none !important;
+      }
+      .cosmic-spaceship, .cosmic-rocket, .cosmic-ufo-track {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen relative flex flex-col justify-between selection:bg-gold/20 selection:text-gold" style="overflow: auto;">
+<!-- ============================================================ -->
+<!-- BACKGROUND LAYER: Moving Parallax Stars + Cosmic Elements   -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" id="starfield">
+<!-- 60FPS Parallax & Neural Constellation Canvas (Stars, Synapse Lines, Brainwave Impulses) -->
+<canvas class="absolute inset-0 w-full h-full pointer-events-none" id="parallaxStarfieldCanvas" style="opacity: 0.9;"></canvas>
+<!-- Subtle Ambient Kinetic Reflex Waves (Symbolizing Physical Hand Gestures & 'Rush') -->
+<div class="kinetic-wave"></div>
+<div class="kinetic-wave delay-1"></div>
+<div class="kinetic-wave delay-2"></div>
+<!-- Delicate Brainwave / Synaptic Vector Horizon Overlay (Subtle SVG in muted charcoal & gold) -->
+<svg class="absolute inset-x-0 top-1/2 -translate-y-1/2 w-full h-[320px] pointer-events-none opacity-20" preserveaspectratio="none" viewbox="0 0 1440 320" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<lineargradient id="synapseGlow" x1="0" x2="1" y1="0" y2="0">
+<stop offset="0%" stop-color="#C6A66B" stop-opacity="0"></stop>
+<stop offset="30%" stop-color="#C6A66B" stop-opacity="0.35"></stop>
+<stop offset="50%" stop-color="#F5F3EE" stop-opacity="0.65"></stop>
+<stop offset="70%" stop-color="#C6A66B" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#C6A66B" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Synaptic EEG impulse waves -->
+<path class="synapse-wave-path" d="M0,160 Q180,158 280,160 T420,160 L450,135 L470,195 L490,110 L515,210 L535,160 L620,160 Q720,160 840,160 L870,140 L885,185 L900,120 L920,200 L935,160 Q1050,160 1440,160" fill="none" stroke="url(#synapseGlow)" stroke-width="1.2"></path>
+<!-- Secondary harmonic wave -->
+<path d="M0,160 C320,185 480,135 720,160 C960,185 1120,135 1440,160" fill="none" opacity="0.4" stroke="#444444" stroke-dasharray="3 7" stroke-width="0.8"></path>
+</svg>
+<!-- Celestial Mathematical & Mental Reflex Glyphs (Discreet star constellations representing 'Mind' & 'Rush') -->
+<div class="constellation-glyph text-xs" style="top: 18%; left: 16%; animation-delay: 0s;">
+<span>8 × 7 = 56</span>
+<span class="block text-[10px] opacity-60 text-gold/80 font-mono tracking-widest mt-0.5">· CONSTELLATION α ·</span>
+</div>
+<div class="constellation-glyph text-xs" style="top: 22%; right: 18%; animation-delay: 2.5s;">
+<span>12 × 4 = 48</span>
+<span class="block text-[10px] opacity-60 text-gold/80 font-mono tracking-widest mt-0.5">· EQUATION NODE β ·</span>
+</div>
+<div class="constellation-glyph text-[11px]" style="top: 76%; left: 13%; animation-delay: 1.2s;">
+<span class="text-gold/90 font-mono">Δt &lt; 15ms</span>
+<span class="block text-[9px] opacity-50 tracking-widest mt-0.5">REFLEX THRESHOLD</span>
+</div>
+<div class="constellation-glyph text-[11px]" style="top: 73%; right: 15%; animation-delay: 3.8s;">
+<span>∫ f(x) · dt → RUSH</span>
+<span class="block text-[9px] opacity-50 text-gold/70 tracking-widest mt-0.5">COGNITIVE FLOW</span>
+</div>
+<div class="constellation-glyph text-sm opacity-25" style="top: 36%; left: 6%; animation-delay: 4.5s;">
+<span>∑ λ_k</span>
+</div>
+<div class="constellation-glyph text-sm opacity-25" style="top: 40%; right: 8%; animation-delay: 5.2s;">
+<span>π ≈ 3.14159</span>
+</div>
+<!-- Static astronomical twinkling starburst anchors -->
+<div class="star four-point twinkle" style="top: 14%; left: 12%; animation-delay: 0s;"></div>
+<div class="star four-point twinkle" style="top: 28%; left: 88%; animation-delay: 1.5s;"></div>
+<div class="star four-point twinkle" style="top: 68%; left: 7%; animation-delay: 2.2s;"></div>
+<div class="star four-point twinkle" style="top: 84%; left: 82%; animation-delay: 0.8s;"></div>
+<div class="star four-point twinkle" style="top: 38%; left: 45%; animation-delay: 3s; opacity: 0.5;"></div>
+<div class="star med" style="top: 8%; left: 32%;"></div>
+<div class="star tiny" style="top: 18%; left: 62%;"></div>
+<div class="star tiny" style="top: 24%; left: 21%;"></div>
+<div class="star med twinkle" style="top: 11%; left: 76%; animation-delay: 1s;"></div>
+<div class="star tiny" style="top: 35%; left: 9%;"></div>
+<div class="star tiny" style="top: 42%; left: 94%;"></div>
+<div class="star med" style="top: 52%; left: 28%;"></div>
+<div class="star tiny twinkle" style="top: 58%; left: 74%; animation-delay: 2.5s;"></div>
+<div class="star tiny" style="top: 64%; left: 39%;"></div>
+<div class="star med" style="top: 72%; left: 91%;"></div>
+<div class="star tiny" style="top: 79%; left: 18%;"></div>
+<div class="star tiny twinkle" style="top: 88%; left: 54%; animation-delay: 1.8s;"></div>
+<div class="star med" style="top: 92%; left: 33%;"></div>
+<div class="star tiny" style="top: 6%; left: 92%;"></div>
+<div class="star tiny" style="top: 95%; left: 68%;"></div>
+<div class="star tiny" style="top: 48%; left: 82%;"></div>
+<div class="star tiny" style="top: 22%; left: 50%;"></div>
+<!-- 1. FLYING SPACESHIP (Gliding horizontally with subtle angle & exhaust across the neural cosmos) -->
+<div aria-hidden="true" class="cosmic-spaceship">
+<svg fill="none" height="28" viewbox="0 0 74 28" width="74" xmlns="http://www.w3.org/2000/svg">
+<!-- Exhaust Plume / Trail -->
+<g class="engine-trail-flicker" transform-origin="18 14">
+<path d="M0 14L16 11V17L0 14Z" fill="url(#shipExhaustGrad)" opacity="0.8"></path>
+<line stroke="#C6A66B" stroke-dasharray="2 3" stroke-width="1.5" x1="2" x2="18" y1="14" y2="14"></line>
+</g>
+<!-- Spaceship Pixel/Vector Body -->
+<polygon fill="#151515" points="18,14 26,6 48,9 66,13 72,14 66,15 48,19 26,22" stroke="#555555" stroke-width="1.2"></polygon>
+<!-- Wing Fins -->
+<polygon fill="#222222" points="30,6 22,2 34,7" stroke="#444444" stroke-width="0.8"></polygon>
+<polygon fill="#222222" points="30,22 22,26 34,21" stroke="#444444" stroke-width="0.8"></polygon>
+<!-- Cockpit Glass Window (Subtle Gold Glow) -->
+<polygon fill="#C6A66B" opacity="0.85" points="46,12 56,12.5 58,14 56,15.5 46,16"></polygon>
+<!-- Armor Segment Panel Lines -->
+<line stroke="#303030" stroke-width="1" x1="36" x2="36" y1="9" y2="19"></line>
+<line stroke="#303030" stroke-width="1" x1="48" x2="48" y1="10" y2="18"></line>
+<!-- Engine Core Dot -->
+<circle cx="19" cy="14" fill="#C6A66B" r="1.5"></circle>
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="shipExhaustGrad" x1="0" x2="16" y1="14" y2="14">
+<stop stop-color="#C6A66B" stop-opacity="0"></stop>
+<stop offset="0.7" stop-color="#C6A66B" stop-opacity="0.5"></stop>
+<stop offset="1" stop-color="#F5F3EE" stop-opacity="0.9"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+<!-- 2. CRUISING ROCKET (Classic retro-futuristic arcade rocket cruising diagonally) -->
+<div aria-hidden="true" class="cosmic-rocket">
+<svg fill="none" height="34" viewbox="0 0 86 34" width="86" xmlns="http://www.w3.org/2000/svg">
+<!-- Exhaust Plume with trailing particle sparks -->
+<g class="engine-trail-flicker">
+<polygon fill="url(#rocketExhaustGrad)" points="0,17 22,11 22,23"></polygon>
+<circle cx="5" cy="17" fill="#C6A66B" opacity="0.6" r="1.2"></circle>
+<circle cx="11" cy="14" fill="#F5F3EE" opacity="0.7" r="1.5"></circle>
+<circle cx="13" cy="20" fill="#C6A66B" opacity="0.5" r="1"></circle>
+</g>
+<!-- Rocket Fuselage Body -->
+<path d="M22 13C22 13 32 9 52 10C68 11 78 17 84 17C78 17 68 23 52 24C32 25 22 21 22 21V13Z" fill="#181818" stroke="#555555" stroke-width="1.2"></path>
+<!-- Nosecone -->
+<path d="M72 13.5C77 15 84 17 84 17C84 17 77 19 72 20.5V13.5Z" fill="#C6A66B" opacity="0.9"></path>
+<!-- Fins Top & Bottom -->
+<polygon fill="#242424" points="24,13 14,3 32,10" stroke="#444444" stroke-width="1"></polygon>
+<polygon fill="#242424" points="24,21 14,31 32,24" stroke="#444444" stroke-width="1"></polygon>
+<!-- Center Fin Ridge -->
+<line stroke="#3A3A3A" stroke-width="1.2" x1="22" x2="42" y1="17" y2="17"></line>
+<!-- Porthole Window -->
+<circle cx="50" cy="17" fill="#0A0A0A" r="3.2" stroke="#C6A66B" stroke-width="1.2"></circle>
+<circle cx="51" cy="16" fill="#F5F3EE" opacity="0.75" r="1"></circle>
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="rocketExhaustGrad" x1="0" x2="22" y1="17" y2="17">
+<stop stop-color="#C6A66B" stop-opacity="0"></stop>
+<stop offset="0.6" stop-color="#C6A66B" stop-opacity="0.45"></stop>
+<stop offset="1" stop-color="#F5F3EE" stop-opacity="0.95"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+<!-- 3. HOVERING UFO (Flying saucer with gentle wobble & scanner beam) -->
+<div aria-hidden="true" class="cosmic-ufo-track">
+<div class="cosmic-ufo-craft flex flex-col items-center">
+<!-- Saucer Body -->
+<svg fill="none" height="26" viewbox="0 0 68 26" width="68" xmlns="http://www.w3.org/2000/svg">
+<!-- Glass Cockpit Dome -->
+<ellipse cx="34" cy="9" fill="#1C1C1C" rx="10" ry="7" stroke="#777777" stroke-width="1"></ellipse>
+<ellipse class="ufo-light-pulsar" cx="34" cy="8" rx="6" ry="4"></ellipse>
+<circle cx="36" cy="6" fill="#FFFFFF" opacity="0.9" r="1"></circle>
+<!-- Main Saucer Disk Body -->
+<ellipse cx="34" cy="15" fill="#141414" rx="30" ry="6.5" stroke="#555555" stroke-width="1.2"></ellipse>
+<!-- Disk Rim Highlight -->
+<ellipse cx="34" cy="15" fill="none" rx="27" ry="4" stroke="#2B2B2B" stroke-width="0.8"></ellipse>
+<!-- Saucer Bottom Emitter -->
+<ellipse cx="34" cy="18" fill="#202020" rx="8" ry="2.5" stroke="#C6A66B" stroke-width="0.8"></ellipse>
+<!-- Under-belly lights -->
+<circle cx="16" cy="15" fill="#C6A66B" opacity="0.85" r="1.3"></circle>
+<circle cx="25" cy="17" fill="#F5F3EE" opacity="0.75" r="1.3"></circle>
+<circle cx="34" cy="18" fill="#C6A66B" r="1.5"></circle>
+<circle cx="43" cy="17" fill="#F5F3EE" opacity="0.75" r="1.3"></circle>
+<circle cx="52" cy="15" fill="#C6A66B" opacity="0.85" r="1.3"></circle>
+</svg>
+<!-- Downward Scanner Light Cone / Beam -->
+<svg class="ufo-beam -mt-1" fill="none" height="96" viewbox="0 0 90 96" width="90" xmlns="http://www.w3.org/2000/svg">
+<polygon fill="url(#ufoBeamGrad)" points="37,0 53,0 86,96 4,96"></polygon>
+<ellipse cx="45" cy="95" fill="#C6A66B" opacity="0.3" rx="41" ry="1"></ellipse>
+<defs>
+<lineargradient gradientunits="userSpaceOnUse" id="ufoBeamGrad" x1="45" x2="45" y1="0" y2="96">
+<stop stop-color="#C6A66B" stop-opacity="0.32"></stop>
+<stop offset="0.4" stop-color="#C6A66B" stop-opacity="0.15"></stop>
+<stop offset="1" stop-color="#C6A66B" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+</svg>
+</div>
+</div>
+</div>
+<!-- TOP BAR: Navigation Controls -->
+<header class="relative z-10 w-full px-8 py-6 flex items-center justify-between">
+<!-- Top-Left: Achievements Trophy Button -->
+<button aria-label="Achievements" class="group flex items-center gap-2 p-2 rounded-lg border border-transparent hover:border-borderDim hover:bg-surface/50 transition-all text-textMuted hover:text-textMain focus:outline-none focus:ring-1 focus:ring-borderMid" onclick="openModal('achievementsModal')" title="View Achievements">
+<!-- Minimalist Arcade Trophy Icon with subdued gold fill -->
+<svg class="transition-transform group-hover:scale-105" fill="none" height="24" viewbox="0 0 24 24" width="24">
+<path d="M6 3H18V9C18 12.3137 15.3137 15 12 15C8.68629 15 6 12.3137 6 9V3Z" stroke="#C6A66B" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+<path d="M6 6H3C2.44772 6 2 6.44772 2 7V8C2 9.65685 3.34315 11 5 11H6.15" stroke="#C6A66B" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+<path d="M18 6H21C21.5523 6 22 6.44772 22 7V8C22 9.65685 20.6569 11 19 11H17.85" stroke="#C6A66B" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75"></path>
+<path d="M12 15V19" stroke="#C6A66B" stroke-linecap="round" stroke-width="1.75"></path>
+<path d="M8 21H16" stroke="#C6A66B" stroke-linecap="round" stroke-width="1.75"></path>
+</svg>
+<span class="text-xs font-mono tracking-wider text-textMuted group-hover:text-gold transition-colors hidden sm:inline">14 / 28</span>
+</button>
+<!-- Top-Right: Instructions (Book) & Profile Icons -->
+<div class="flex items-center gap-3">
+<!-- How to play / instructions icon -->
+<button aria-label="How to Play" class="group p-2.5 rounded-lg border border-transparent hover:border-borderDim hover:bg-surface/50 transition-all text-textMuted hover:text-textMain focus:outline-none focus:ring-1 focus:ring-borderMid" onclick="openModal('instructionsModal')" title="How to Play">
+<svg fill="none" height="20" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" viewbox="0 0 24 24" width="20">
+<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+<line x1="8" x2="16" y1="7" y2="7"></line>
+<line x1="8" x2="14" y1="11" y2="11"></line>
+</svg>
+</button>
+<!-- Profile icon -->
+<button aria-label="Player Profile" class="group p-2.5 rounded-lg border border-transparent hover:border-borderDim hover:bg-surface/50 transition-all text-textMuted hover:text-textMain focus:outline-none focus:ring-1 focus:ring-borderMid flex items-center gap-2" onclick="openModal('profileModal')" title="Player Profile">
+<div class="w-6 h-6 rounded-full border border-borderMid flex items-center justify-center bg-card">
+<svg fill="none" height="14" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" viewbox="0 0 24 24" width="14">
+<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+<circle cx="12" cy="7" r="4"></circle>
+</svg>
+</div>
+<span class="text-xs font-mono text-textMuted group-hover:text-textMain hidden md:inline">PILOT_01</span>
+</button>
+</div>
+</header>
+<!-- CENTER AREA: Distinctive Title & 2x2 Clean Menu Grid -->
+<main class="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-8">
+<div class="text-center max-w-4xl w-full flex flex-col items-center">
+<!-- Homepage Wordmark & Tagline -->
+<div class="mb-14 sm:mb-16 flex flex-col items-center select-none">
+<h1 class="text-5xl sm:text-7xl md:text-8xl font-bold tracking-tight text-textMain leading-none" style='font-family: "Press Start 2P", monospace, cursive; letter-spacing: 0.05em; line-height: 1.1;'>
+          MINDRUSH
+        </h1>
+<p class="mt-4 text-sm sm:text-base md:text-lg text-textMuted font-light tracking-[0.25em] uppercase">
+          Think. React. Learn.
+        </p>
+</div>
+<!-- Main Menu Buttons: 2x2 Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 w-full max-w-[780px]">
+<!-- PLAY BUTTON (Opens Mode Selection Modal) -->
+<button class="arcade-btn w-full h-[76px] sm:h-[84px] rounded-xl flex items-center justify-center bg-void/60 text-textMain font-semibold text-lg sm:text-xl tracking-wider focus:outline-none focus:ring-1 focus:ring-textMuted group backdrop-blur-sm" id="btnPlay" onclick="openModal('modeModal')">
+<span class="flex items-center gap-3">
+<svg class="w-5 h-5 text-textMuted group-hover:text-gold transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<polygon points="5 3 19 12 5 21 5 3"></polygon>
+</svg>
+<span class="">PLAY</span>
+</span>
+</button>
+<!-- LEADERBOARD BUTTON (Opens Leaderboard Modal) -->
+<button class="arcade-btn w-full h-[76px] sm:h-[84px] rounded-xl flex items-center justify-center bg-void/60 text-textMain font-semibold text-lg sm:text-xl tracking-wider focus:outline-none focus:ring-1 focus:ring-textMuted group backdrop-blur-sm" id="btnLeaderboard" onclick="openModal('leaderboardModal')">
+<span class="flex items-center gap-3">
+<svg class="w-5 h-5 text-textMuted group-hover:text-textMain transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="18" y1="20" y2="10"></line>
+<line x1="12" x2="12" y1="20" y2="4"></line>
+<line x1="6" x2="6" y1="20" y2="14"></line>
+</svg>
+<span class="">LEADERBOARD</span>
+</span>
+</button>
+<!-- ACHIEVEMENTS BUTTON (Opens Achievements Modal) -->
+<button class="arcade-btn w-full h-[76px] sm:h-[84px] rounded-xl flex items-center justify-center bg-void/60 text-textMain font-semibold text-lg sm:text-xl tracking-wider focus:outline-none focus:ring-1 focus:ring-textMuted group backdrop-blur-sm" id="btnAchievements" onclick="openModal('achievementsModal')">
+<span class="flex items-center gap-3">
+<svg class="w-5 h-5 text-textMuted group-hover:text-gold transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="8" r="7"></circle>
+<polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+</svg>
+<span class="">ACHIEVEMENTS</span>
+</span>
+</button>
+<!-- SETTINGS BUTTON (Opens Settings Modal) -->
+<button class="arcade-btn w-full h-[76px] sm:h-[84px] rounded-xl flex items-center justify-center bg-void/60 text-textMain font-semibold text-lg sm:text-xl tracking-wider focus:outline-none focus:ring-1 focus:ring-textMuted group backdrop-blur-sm" id="btnSettings" onclick="openModal('settingsModal')">
+<span class="flex items-center gap-3">
+<svg class="w-5 h-5 text-textMuted group-hover:text-textMain transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="3"></circle>
+<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+</svg>
+<span class="">SETTINGS</span>
+</span>
+</button>
+</div>
+</div>
+</main>
+<!-- FOOTER: Atmospheric status, subtle gesture hint -->
+<footer class="relative z-10 w-full px-8 py-5 flex flex-col sm:flex-row items-center justify-between text-xs text-textMuted font-mono border-t border-borderDim/40">
+<div class="flex items-center gap-4 mb-2 sm:mb-0">
+<span class="flex items-center gap-1.5 text-textMuted">
+<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"></path>
+<path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"></path>
+<path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"></path>
+<path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path>
+</svg>
+<span class="">STAND 2-3 FT FROM WEBCAM</span>
+</span>
+<span class="text-borderDim">•</span>
+<span class="">LATENCY: 12ms</span>
+</div>
+<div class="text-[11px] text-textMuted/70">
+<span class="">MINDRUSH LABS © 2025</span>
+</div>
+</footer>
+<!-- ============================================================ -->
+<!-- MODAL 1: MODE SELECTION POPUP (Triggered by PLAY) -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="modeModal" onclick="handleBackdropClick(event, 'modeModal')">
+<div class="bg-popup border border-borderMid rounded-2xl w-full max-w-2xl p-6 sm:p-8 relative shadow-2xl transition-all" onclick="event.stopPropagation()">
+<!-- Modal Header -->
+<div class="flex items-start justify-between pb-6 border-b border-borderDim">
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-textMain">CHOOSE YOUR MODE</h2>
+<p class="text-sm text-textMuted mt-1">How do you want to play today?</p>
+</div>
+<button aria-label="Close modal" class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-surface border border-transparent hover:border-borderDim transition-all" onclick="closeModal('modeModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<!-- Mode Cards (2x2 Grid) -->
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+<!-- Option 1: FUN MODE -->
+<div class="mode-card rounded-xl p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Fun Mode')">
+<div>
+<div class="flex items-center justify-between mb-3">
+<!-- Game Controller Icon -->
+<div class="w-10 h-10 rounded-lg bg-surface border border-borderDim flex items-center justify-center text-textMain group-hover:border-borderMid">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<line x1="6" x2="10" y1="12" y2="12"></line>
+<line x1="8" x2="8" y1="10" y2="14"></line>
+<line x1="15" x2="15.01" y1="13" y2="13"></line>
+<line x1="18" x2="18.01" y1="11" y2="11"></line>
+<rect height="12" rx="4" width="20" x="2" y="6"></rect>
+</svg>
+</div>
+<span class="text-[11px] font-mono text-textMuted uppercase tracking-wider">Reflex</span>
+</div>
+<h3 class="text-lg font-semibold text-textMain group-hover:text-gold transition-colors">Fun Mode</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              React fast. Chase your high score. Dodge obstacles and swat kinetic targets.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/50 flex items-center justify-between text-xs font-mono text-textMuted">
+<span class="">BEST: 48,250 PTS</span>
+<span class="group-hover:translate-x-1 transition-transform text-textMain">→</span>
+</div>
+</div>
+<!-- Option 2: EDUCATIONAL MODE -->
+<div class="mode-card rounded-xl p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Educational Mode')">
+<div>
+<div class="flex items-center justify-between mb-3">
+<!-- Book / Math Symbol Icon -->
+<div class="w-10 h-10 rounded-lg bg-surface border border-borderDim flex items-center justify-center text-textMain group-hover:border-borderMid">
+<svg class="w-5 h-5 text-gold" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+<path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+</svg>
+</div>
+<span class="text-[11px] font-mono text-gold bg-gold/10 px-2 py-0.5 rounded border border-gold/30 uppercase tracking-wider">Core Focus</span>
+</div>
+<h3 class="text-lg font-semibold text-textMain group-hover:text-gold transition-colors">Educational Mode</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              Play your way to smarter thinking. Catch falling correct answers, evade cognitive traps.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/50 flex items-center justify-between text-xs font-mono text-textMuted">
+<span class="">MASTERY: 98.2%</span>
+<span class="group-hover:translate-x-1 transition-transform text-gold">→</span>
+</div>
+</div>
+<!-- Option 3: DAILY CHALLENGE -->
+<div class="mode-card rounded-xl p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Daily Challenge')">
+<div>
+<div class="flex items-center justify-between mb-3">
+<!-- Calendar / Target Icon -->
+<div class="w-10 h-10 rounded-lg bg-surface border border-borderDim flex items-center justify-center text-textMain group-hover:border-borderMid">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+<line x1="16" x2="16" y1="2" y2="6"></line>
+<line x1="8" x2="8" y1="2" y2="6"></line>
+<line x1="3" x2="21" y1="10" y2="10"></line>
+</svg>
+</div>
+<span class="text-[11px] font-mono text-textMuted uppercase tracking-wider">RESETS IN 4H</span>
+</div>
+<h3 class="text-lg font-semibold text-textMain group-hover:text-gold transition-colors">Daily Challenge</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              A new challenge awaits: answer 15 arithmetic questions in under 45s without faults.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/50 flex items-center justify-between text-xs font-mono text-textMuted">
+<span class="">REWARD: +150 XP</span>
+<span class="group-hover:translate-x-1 transition-transform text-textMain">→</span>
+</div>
+</div>
+<!-- Option 4: PRACTICE -->
+<div class="mode-card rounded-xl p-5 cursor-pointer flex flex-col justify-between group" onclick="selectMode('Practice')">
+<div>
+<div class="flex items-center justify-between mb-3">
+<!-- Target / Circular Arrow Icon -->
+<div class="w-10 h-10 rounded-lg bg-surface border border-borderDim flex items-center justify-center text-textMain group-hover:border-borderMid">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<polyline points="1 4 1 10 7 10"></polyline>
+<path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+</svg>
+</div>
+<span class="text-[11px] font-mono text-textMuted uppercase tracking-wider">UNTYMED</span>
+</div>
+<h3 class="text-lg font-semibold text-textMain group-hover:text-gold transition-colors">Practice</h3>
+<p class="text-xs text-textMuted mt-1 leading-relaxed">
+              Train at your own pace. Zero timer pressure, free hand tracking calibration.
+            </p>
+</div>
+<div class="mt-4 pt-3 border-t border-borderDim/50 flex items-center justify-between text-xs font-mono text-textMuted">
+<span class="">FREE PLAY</span>
+<span class="group-hover:translate-x-1 transition-transform text-textMain">→</span>
+</div>
+</div>
+</div>
+<!-- Mode selection footer info -->
+<div class="mt-6 pt-4 border-t border-borderDim flex items-center justify-between text-xs text-textMuted">
+<span class="">Press <kbd class="px-1.5 py-0.5 rounded bg-surface border border-borderDim font-mono text-textMain">ESC</kbd> to return</span>
+<span class="text-textMuted">Webcam permission active</span>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 2: ACHIEVEMENTS POPUP (Trophy button) -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="achievementsModal" onclick="handleBackdropClick(event, 'achievementsModal')">
+<div class="bg-popup border border-borderMid rounded-2xl w-full max-w-xl p-6 sm:p-8 relative shadow-2xl max-h-[85vh] flex flex-col" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between pb-5 border-b border-borderDim">
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-textMain">ACHIEVEMENTS</h2>
+<p class="text-sm text-textMuted mt-1">14 of 28 milestones completed</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-surface border border-transparent hover:border-borderDim transition-all" onclick="closeModal('achievementsModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<!-- Scrollable list of achievement cards -->
+<div class="overflow-y-auto space-y-3 my-5 pr-1 flex-1">
+<!-- Unlocked Achievement 1 -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface/50 flex items-start gap-4">
+<div class="w-10 h-10 rounded-lg bg-gold/10 border border-gold/40 flex items-center justify-center text-gold flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+</svg>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">First Step</h4>
+<span class="text-[11px] font-mono text-gold font-medium">UNLOCKED</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Complete your first game run.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-gold h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Unlocked Achievement 2 -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface/50 flex items-start gap-4">
+<div class="w-10 h-10 rounded-lg bg-gold/10 border border-gold/40 flex items-center justify-center text-gold flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+</svg>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">Quick Mind</h4>
+<span class="text-[11px] font-mono text-gold font-medium">UNLOCKED</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Answer 10 arithmetic questions correctly in a row.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-gold h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- Unlocked Achievement 3 -->
+<div class="p-4 rounded-xl border border-borderDim bg-surface/50 flex items-start gap-4">
+<div class="w-10 h-10 rounded-lg bg-gold/10 border border-gold/40 flex items-center justify-center text-gold flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<circle cx="12" cy="12" r="10"></circle>
+<polyline points="12 6 12 12 16 14"></polyline>
+</svg>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">Sharp Reflexes</h4>
+<span class="text-[11px] font-mono text-gold font-medium">UNLOCKED</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Reach a sub-220ms gesture reaction latency score.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-gold h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</div>
+<!-- In-Progress Achievement -->
+<div class="p-4 rounded-xl border border-borderDim bg-card/60 flex items-start gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface border border-borderDim flex items-center justify-center text-textMuted flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path>
+</svg>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMain">On Fire</h4>
+<span class="text-[11px] font-mono text-textMuted">4 / 5 STREAK</span>
+</div>
+<p class="text-xs text-textMuted mt-0.5">Achieve a five-game streak without losing a life.</p>
+<div class="w-full bg-borderDim h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-textMuted h-full rounded-full" style="width: 80%;"></div>
+</div>
+</div>
+</div>
+<!-- Locked Achievement -->
+<div class="p-4 rounded-xl border border-borderDim/50 bg-card/40 opacity-60 flex items-start gap-4">
+<div class="w-10 h-10 rounded-lg bg-surface border border-borderDim/40 flex items-center justify-center text-textMuted/60 flex-shrink-0">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.75" viewbox="0 0 24 24">
+<rect height="11" rx="2" ry="2" width="18" x="3" y="11"></rect>
+<path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+</svg>
+</div>
+<div class="flex-1">
+<div class="flex items-center justify-between">
+<h4 class="text-sm font-semibold text-textMuted">Mind Master</h4>
+<span class="text-[11px] font-mono text-textMuted/60">LOCKED</span>
+</div>
+<p class="text-xs text-textMuted/70 mt-0.5">Complete an advanced tier-3 algebraic gauntlet with 100% precision.</p>
+<div class="w-full bg-borderDim/50 h-1.5 rounded-full mt-2 overflow-hidden">
+<div class="bg-borderMid h-full rounded-full" style="width: 0%;"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="pt-3 border-t border-borderDim flex justify-end">
+<button class="px-4 py-2 rounded-lg bg-surface border border-borderDim hover:border-borderMid text-xs font-mono text-textMain" onclick="closeModal('achievementsModal')">CLOSE</button>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 3: LEADERBOARD SCREEN -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="leaderboardModal" onclick="handleBackdropClick(event, 'leaderboardModal')">
+<div class="bg-popup border border-borderMid rounded-2xl w-full max-w-2xl p-6 sm:p-8 relative shadow-2xl max-h-[85vh] flex flex-col" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between pb-5 border-b border-borderDim">
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-textMain">LEADERBOARD</h2>
+<p class="text-sm text-textMuted mt-1">Verified optical gesture standings</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-surface border border-transparent hover:border-borderDim transition-all" onclick="closeModal('leaderboardModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<!-- Leaderboard Tabs -->
+<div class="flex gap-2 mt-4 pb-2 border-b border-borderDim/60 text-xs font-mono">
+<button class="px-3 py-1.5 rounded-md bg-surface text-gold border border-borderDim font-semibold">GLOBAL</button>
+<button class="px-3 py-1.5 rounded-md text-textMuted hover:text-textMain hover:bg-surface/50 transition-colors">WEEKLY</button>
+<button class="px-3 py-1.5 rounded-md text-textMuted hover:text-textMain hover:bg-surface/50 transition-colors">FRIENDS</button>
+</div>
+<!-- Table Header & List -->
+<div class="overflow-y-auto flex-1 my-3 divide-y divide-borderDim/40">
+<div class="grid grid-cols-12 text-[11px] font-mono text-textMuted uppercase py-2 px-3 tracking-wider">
+<span class="col-span-2">Rank</span>
+<span class="col-span-6">Pilot</span>
+<span class="col-span-2 text-right">Level</span>
+<span class="col-span-2 text-right">Score</span>
+</div>
+<!-- Rank 1 (Gold Accent) -->
+<div class="grid grid-cols-12 items-center py-3 px-3 text-sm hover:bg-surface/40 transition-colors rounded-lg">
+<span class="col-span-2 font-mono text-gold font-bold flex items-center gap-1">#01</span>
+<div class="col-span-6 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-card border border-gold flex items-center justify-center text-[10px] text-gold font-mono">NX</div>
+<span class="text-textMain font-medium">NexusNova</span>
+</div>
+<span class="col-span-2 text-right font-mono text-textMuted text-xs">LV 24</span>
+<span class="col-span-2 text-right font-mono text-gold font-bold">148,920</span>
+</div>
+<!-- Rank 2 -->
+<div class="grid grid-cols-12 items-center py-3 px-3 text-sm hover:bg-surface/40 transition-colors rounded-lg">
+<span class="col-span-2 font-mono text-textMain flex items-center gap-1">#02</span>
+<div class="col-span-6 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-card border border-borderDim flex items-center justify-center text-[10px] text-textMuted font-mono">CR</div>
+<span class="text-textMain">CyberRanger</span>
+</div>
+<span class="col-span-2 text-right font-mono text-textMuted text-xs">LV 21</span>
+<span class="col-span-2 text-right font-mono text-textMain">134,250</span>
+</div>
+<!-- Rank 3 -->
+<div class="grid grid-cols-12 items-center py-3 px-3 text-sm hover:bg-surface/40 transition-colors rounded-lg">
+<span class="col-span-2 font-mono text-textMain flex items-center gap-1">#03</span>
+<div class="col-span-6 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-card border border-borderDim flex items-center justify-center text-[10px] text-textMuted font-mono">VL</div>
+<span class="text-textMain">ValkyriePulse</span>
+</div>
+<span class="col-span-2 text-right font-mono text-textMuted text-xs">LV 19</span>
+<span class="col-span-2 text-right font-mono text-textMain">122,800</span>
+</div>
+<!-- Current Player Subtle Highlight -->
+<div class="grid grid-cols-12 items-center py-3 px-3 text-sm bg-surface/80 border border-borderDim rounded-lg my-1">
+<span class="col-span-2 font-mono text-textMain font-semibold">#14</span>
+<div class="col-span-6 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-gold/20 border border-gold flex items-center justify-center text-[10px] text-gold font-mono">P1</div>
+<span class="text-textMain font-semibold">PILOT_01 <span class="text-[10px] font-mono text-gold ml-1">(YOU)</span></span>
+</div>
+<span class="col-span-2 text-right font-mono text-textMuted text-xs">LV 14</span>
+<span class="col-span-2 text-right font-mono text-textMain font-semibold">48,250</span>
+</div>
+<!-- Rank 15 -->
+<div class="grid grid-cols-12 items-center py-3 px-3 text-sm hover:bg-surface/40 transition-colors rounded-lg">
+<span class="col-span-2 font-mono text-textMuted flex items-center gap-1">#15</span>
+<div class="col-span-6 flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-card border border-borderDim flex items-center justify-center text-[10px] text-textMuted font-mono">ST</div>
+<span class="text-textMuted">StarChaser</span>
+</div>
+<span class="col-span-2 text-right font-mono text-textMuted text-xs">LV 13</span>
+<span class="col-span-2 text-right font-mono text-textMuted">46,110</span>
+</div>
+</div>
+<!-- Player summary bar -->
+<div class="pt-4 border-t border-borderDim flex items-center justify-between text-xs font-mono text-textMuted">
+<div class="">YOUR RANK: <span class="text-textMain font-bold">#14</span> / 84,120</div>
+<div class="">BEST RUN: <span class="text-gold font-bold">48,250 PTS</span></div>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 4: SETTINGS SCREEN -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="settingsModal" onclick="handleBackdropClick(event, 'settingsModal')">
+<div class="bg-popup border border-borderMid rounded-2xl w-full max-w-xl p-6 sm:p-8 relative shadow-2xl max-h-[85vh] flex flex-col" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between pb-5 border-b border-borderDim">
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-textMain">SETTINGS</h2>
+<p class="text-sm text-textMuted mt-1">Calibration and user preferences</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-surface border border-transparent hover:border-borderDim transition-all" onclick="closeModal('settingsModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<!-- Settings Sections -->
+<div class="overflow-y-auto flex-1 my-4 space-y-6 pr-1 divide-y divide-borderDim/50">
+<!-- Gameplay Section -->
+<div class="space-y-4 pt-2">
+<h3 class="text-xs font-mono uppercase text-textMuted tracking-wider">Gameplay &amp; Sensors</h3>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Gesture Sensitivity</div>
+<div class="text-xs text-textMuted">Adjust hand motion smoothing</div>
+</div>
+<input class="w-32 accent-textMain cursor-pointer" max="5" min="1" type="range" value="3"/>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Default Difficulty</div>
+<div class="text-xs text-textMuted">Starting speed of falling objects</div>
+</div>
+<select class="bg-surface border border-borderDim rounded-md px-2 py-1 text-xs text-textMain font-mono focus:outline-none">
+<option>Casual (0.8x)</option>
+<option selected="">Rush (1.0x)</option>
+<option>Overdrive (1.5x)</option>
+</select>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Show Hand Reticle</div>
+<div class="text-xs text-textMuted">Display active landmark dots on screen</div>
+</div>
+<input checked="" class="w-4 h-4 accent-gold cursor-pointer" type="checkbox"/>
+</div>
+</div>
+<!-- Audio Section -->
+<div class="space-y-4 pt-4">
+<h3 class="text-xs font-mono uppercase text-textMuted tracking-wider">Audio</h3>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Sound Effects</div>
+<div class="text-xs text-textMuted">Subtle tactile click on target swat</div>
+</div>
+<input checked="" class="w-4 h-4 accent-gold cursor-pointer" type="checkbox"/>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Atmospheric Ambient Audio</div>
+<div class="text-xs text-textMuted">Gentle low drone during gameplay</div>
+</div>
+<input class="w-4 h-4 accent-gold cursor-pointer" type="checkbox"/>
+</div>
+</div>
+<!-- Accessibility Section -->
+<div class="space-y-4 pt-4">
+<h3 class="text-xs font-mono uppercase text-textMuted tracking-wider">Accessibility</h3>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">Reduced Motion</div>
+<div class="text-xs text-textMuted">Disables background star twinkles</div>
+</div>
+<input class="w-4 h-4 accent-gold cursor-pointer" type="checkbox"/>
+</div>
+<div class="flex items-center justify-between">
+<div>
+<div class="text-sm text-textMain font-medium">High Contrast Numbers</div>
+<div class="text-xs text-textMuted">Maximizes equation readability</div>
+</div>
+<input checked="" class="w-4 h-4 accent-gold cursor-pointer" type="checkbox"/>
+</div>
+</div>
+<!-- Account Section -->
+<div class="space-y-4 pt-4">
+<h3 class="text-xs font-mono uppercase text-textMuted tracking-wider">Account</h3>
+<div class="flex items-center justify-between">
+<span class="text-xs text-textMuted">Pilot Session: <code class="text-textMain font-mono">PILOT_01</code></span>
+<button class="px-3 py-1 rounded bg-surface border border-borderDim hover:border-danger hover:text-danger text-xs font-mono transition-colors">LOGOUT</button>
+</div>
+</div>
+</div>
+<div class="pt-3 border-t border-borderDim flex justify-end">
+<button class="px-4 py-2 rounded-lg bg-surface border border-borderDim hover:border-borderMid text-xs font-mono text-textMain" onclick="closeModal('settingsModal')">DONE</button>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 5: HOW TO PLAY / INSTRUCTIONS (Book button) -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="instructionsModal" onclick="handleBackdropClick(event, 'instructionsModal')">
+<div class="bg-popup border border-borderMid rounded-2xl w-full max-w-xl p-6 sm:p-8 relative shadow-2xl max-h-[85vh] flex flex-col" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between pb-5 border-b border-borderDim">
+<div>
+<h2 class="text-2xl font-bold tracking-tight text-textMain">HOW TO PLAY</h2>
+<p class="text-sm text-textMuted mt-1">Camera gestures &amp; gameplay mechanics</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-surface border border-transparent hover:border-borderDim transition-all" onclick="closeModal('instructionsModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<div class="overflow-y-auto flex-1 my-4 space-y-4 pr-1 text-sm text-textMuted leading-relaxed">
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface/40">
+<div class="flex items-center gap-2 text-textMain font-semibold mb-1">
+<span class="w-5 h-5 rounded-full bg-borderDim text-[11px] font-mono flex items-center justify-center text-textMain">1</span>
+<span class="">Positioning &amp; Camera</span>
+</div>
+<p class="text-xs pl-7">Stand or sit 2 to 3 feet in front of your webcam in normal lighting. Keep your palms within the video frame.</p>
+</div>
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface/40">
+<div class="flex items-center gap-2 text-textMain font-semibold mb-1">
+<span class="w-5 h-5 rounded-full bg-borderDim text-[11px] font-mono flex items-center justify-center text-textMain">2</span>
+<span class="">Educational Mode Rules</span>
+</div>
+<p class="text-xs pl-7">Read the math problem (e.g. <span class="font-mono text-textMain">12 × 8 = ?</span>). Move your hand to hover over the correct falling orb (<span class="font-mono text-gold font-bold">96</span>) and pinch or hold to catch it before it crosses the bottom boundary. Avoid incorrect decoy answers.</p>
+</div>
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface/40">
+<div class="flex items-center gap-2 text-textMain font-semibold mb-1">
+<span class="w-5 h-5 rounded-full bg-borderDim text-[11px] font-mono flex items-center justify-center text-textMain">3</span>
+<span class="">Fun Mode Reflex Rules</span>
+</div>
+<p class="text-xs pl-7">Swat away descending debris, catch kinetic multipliers, and maintain your combo streak with fast palm reactions.</p>
+</div>
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface/40">
+<div class="flex items-center gap-2 text-textMain font-semibold mb-1">
+<span class="w-5 h-5 rounded-full bg-borderDim text-[11px] font-mono flex items-center justify-center text-textMain">4</span>
+<span class="">Controls &amp; Pause</span>
+</div>
+<p class="text-xs pl-7">Mouse or keyboard controls are also fully supported at any time. Press <kbd class="px-1 py-0.5 rounded bg-surface border border-borderDim font-mono text-textMain">SPACE</kbd> or <kbd class="px-1 py-0.5 rounded bg-surface border border-borderDim font-mono text-textMain">ESC</kbd> to pause.</p>
+</div>
+</div>
+<div class="pt-3 border-t border-borderDim flex justify-end">
+<button class="px-4 py-2 rounded-lg bg-surface border border-borderDim hover:border-borderMid text-xs font-mono text-textMain" onclick="closeModal('instructionsModal')">GOT IT</button>
+</div>
+</div>
+</div>
+<!-- ============================================================ -->
+<!-- MODAL 6: PROFILE POPUP (User icon) -->
+<!-- ============================================================ -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 modal-backdrop hidden" id="profileModal" onclick="handleBackdropClick(event, 'profileModal')">
+<div class="bg-popup border border-borderMid rounded-2xl w-full max-w-md p-6 sm:p-8 relative shadow-2xl" onclick="event.stopPropagation()">
+<div class="flex items-start justify-between pb-5 border-b border-borderDim">
+<div>
+<h2 class="text-xl font-bold tracking-tight text-textMain">PILOT PROFILE</h2>
+<p class="text-xs text-textMuted font-mono mt-0.5">LOCAL RECORD</p>
+</div>
+<button class="p-2 rounded-lg text-textMuted hover:text-textMain hover:bg-surface border border-transparent hover:border-borderDim transition-all" onclick="closeModal('profileModal')">
+<svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewbox="0 0 24 24">
+<line x1="18" x2="6" y1="6" y2="18"></line>
+<line x1="6" x2="18" y1="6" y2="18"></line>
+</svg>
+</button>
+</div>
+<div class="my-5 space-y-4">
+<!-- Avatar & Level -->
+<div class="flex items-center gap-4">
+<div class="w-14 h-14 rounded-full bg-card border border-borderMid flex items-center justify-center text-textMain text-lg font-bold font-mono">
+            P1
+          </div>
+<div>
+<h3 class="text-base font-bold text-textMain">PILOT_01</h3>
+<div class="text-xs text-textMuted font-mono">Level 14 • Cadet Reflex</div>
+</div>
+</div>
+<!-- Level Progress Bar -->
+<div class="p-3.5 rounded-xl border border-borderDim bg-surface/50">
+<div class="flex items-center justify-between text-xs font-mono mb-1.5">
+<span class="text-textMuted">XP to Level 15</span>
+<span class="text-textMain">740 / 1,000 XP</span>
+</div>
+<div class="w-full bg-borderDim h-2 rounded-full overflow-hidden">
+<div class="bg-textMain h-full rounded-full" style="width: 74%;"></div>
+</div>
+</div>
+<!-- Quick Stats Grid -->
+<div class="grid grid-cols-2 gap-3 text-xs font-mono">
+<div class="p-3 rounded-xl border border-borderDim bg-surface/30">
+<div class="text-textMuted">GAMES PLAYED</div>
+<div class="text-lg font-bold text-textMain mt-1">42</div>
+</div>
+<div class="p-3 rounded-xl border border-borderDim bg-surface/30">
+<div class="text-textMuted">BEST SCORE</div>
+<div class="text-lg font-bold text-gold mt-1">48,250</div>
+</div>
+<div class="p-3 rounded-xl border border-borderDim bg-surface/30">
+<div class="text-textMuted">ACCURACY</div>
+<div class="text-lg font-bold text-textMain mt-1">94.2%</div>
+</div>
+<div class="p-3 rounded-xl border border-borderDim bg-surface/30">
+<div class="text-textMuted">CURRENT STREAK</div>
+<div class="text-lg font-bold text-textMain mt-1">5 DAYS</div>
+</div>
+</div>
+</div>
+<div class="pt-3 border-t border-borderDim flex justify-end">
+<button class="px-4 py-2 rounded-lg bg-surface border border-borderDim hover:border-borderMid text-xs font-mono text-textMain" onclick="closeModal('profileModal')">CLOSE</button>
+</div>
+</div>
+</div>
+<!-- JavaScript for Modals & Interactive Flow & Canvas Stars & Neural Synapse Constellation -->
+<script>
+    // Smooth Canvas Particle Starfield with Neural Synapse Constellations & Drifting Stars
+    (function initStarfield() {
+      const canvas = document.getElementById('parallaxStarfieldCanvas');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let width = canvas.width = window.innerWidth;
+      let height = canvas.height = window.innerHeight;
+
+      const starCount = 135;
+      const stars = [];
+
+      for (let i = 0; i < starCount; i++) {
+        // depth layer 1 (far/slow), 2 (mid), 3 (closer/faster)
+        const depth = Math.random() < 0.60 ? 1 : (Math.random() < 0.85 ? 2 : 3);
+        const baseSpeed = depth === 1 ? 0.07 : (depth === 2 ? 0.18 : 0.36);
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          size: depth === 1 ? Math.random() * 1.0 + 0.6 : (depth === 2 ? Math.random() * 1.4 + 1.0 : Math.random() * 1.8 + 1.3),
+          speedX: baseSpeed * (Math.random() * 0.4 + 0.8),
+          speedY: (Math.random() * 0.04 - 0.02) * depth,
+          baseAlpha: depth === 1 ? Math.random() * 0.35 + 0.18 : (depth === 2 ? Math.random() * 0.4 + 0.3 : Math.random() * 0.4 + 0.5),
+          twinkleSpeed: Math.random() * 0.025 + 0.01,
+          twinkleOffset: Math.random() * Math.PI * 2,
+          isGold: Math.random() > 0.84,
+          isNeuralNode: i < 38 // subset of stars act as conscious brain synapse constellation nodes
+        });
+      }
+
+      function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+      }
+      window.addEventListener('resize', resize);
+
+      let animId;
+      function render(timestamp) {
+        ctx.clearRect(0, 0, width, height);
+
+        // 1. NEURAL SYNAPSE NETWORK (Delicate subtle lines between close stars representing mental nodes)
+        const neuralNodes = stars.filter(s => s.isNeuralNode);
+        const maxSynapseDistance = 145;
+
+        for (let i = 0; i < neuralNodes.length; i++) {
+          for (let j = i + 1; j < neuralNodes.length; j++) {
+            const p1 = neuralNodes[i];
+            const p2 = neuralNodes[j];
+            const dx = p1.x - p2.x;
+            const dy = p1.y - p2.y;
+            const distSq = dx * dx + dy * dy;
+
+            if (distSq < maxSynapseDistance * maxSynapseDistance) {
+              const dist = Math.sqrt(distSq);
+              const proximityFactor = 1 - (dist / maxSynapseDistance);
+              
+              // Pulsing synapse electrical transmission
+              const pulse = 0.5 + 0.5 * Math.sin(timestamp * 0.0025 + (p1.x * 0.01));
+              const lineAlpha = proximityFactor * 0.16 * pulse;
+
+              ctx.beginPath();
+              ctx.moveTo(p1.x, p1.y);
+              ctx.lineTo(p2.x, p2.y);
+              
+              if (p1.isGold || p2.isGold) {
+                ctx.strokeStyle = `rgba(198, 166, 107, ${lineAlpha * 1.5})`;
+                ctx.lineWidth = 0.8;
+              } else {
+                ctx.strokeStyle = `rgba(245, 243, 238, ${lineAlpha})`;
+                ctx.lineWidth = 0.6;
+              }
+              ctx.stroke();
+
+              // Sporadic minute synaptic spark travelling across line
+              if (pulse > 0.88 && dist > 40) {
+                const sparkPos = (Math.sin(timestamp * 0.003 + i) + 1) / 2;
+                const sparkX = p1.x + (p2.x - p1.x) * sparkPos;
+                const sparkY = p1.y + (p2.y - p1.y) * sparkPos;
+                ctx.beginPath();
+                ctx.arc(sparkX, sparkY, 1.2, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(198, 166, 107, ${lineAlpha * 2.5})`;
+                ctx.fill();
+              }
+            }
+          }
+        }
+
+        // 2. STARS AND SYNAPSE NODES
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          s.x += s.speedX;
+          s.y += s.speedY;
+
+          // Seamless screen edge wrap
+          if (s.x > width + 6) s.x = -6;
+          if (s.y > height + 6) s.y = -6;
+          if (s.y < -6) s.y = height + 6;
+
+          const alpha = s.baseAlpha + Math.sin(timestamp * s.twinkleSpeed + s.twinkleOffset) * 0.22;
+          const clampedAlpha = Math.max(0.12, Math.min(0.92, alpha));
+
+          // If node, subtle outer halo ring on low opacity
+          if (s.isNeuralNode && s.isGold) {
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, s.size * 2.8, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(198, 166, 107, ${clampedAlpha * 0.15})`;
+            ctx.fill();
+          }
+
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+          ctx.fillStyle = s.isGold 
+            ? `rgba(198, 166, 107, ${clampedAlpha})` 
+            : `rgba(245, 243, 238, ${clampedAlpha})`;
+          ctx.fill();
+        }
+
+        animId = requestAnimationFrame(render);
+      }
+      animId = requestAnimationFrame(render);
+    })();
+
+    function openModal(id) {
+      document.querySelectorAll('.modal-backdrop').forEach(m => m.classList.add('hidden'));
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      }
+    }
+
+    function closeModal(id) {
+      const target = document.getElementById(id);
+      if (target) {
+        target.classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    function handleBackdropClick(event, id) {
+      if (event.target === document.getElementById(id)) {
+        closeModal(id);
+      }
+    }
+
+    // Escape key closes any active modal
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-backdrop').forEach(m => {
+          m.classList.add('hidden');
+        });
+        document.body.style.overflow = 'auto';
+      }
+    });
+
+    function selectMode(modeName) {
+      // Visual feedback on mode card click
+      alert(`Launching ${modeName}... Initializing camera gesture tracking.`);
+      closeModal('modeModal');
+    }
+  </script>
+</body></html>

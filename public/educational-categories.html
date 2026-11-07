@@ -1,0 +1,599 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush â€” Educational Categories</title>
+
+  <link rel="icon" type="image/png" href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+
+  <!-- Core Design System -->
+  <link rel="stylesheet" href="css/main.css">
+
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, rgba(6, 9, 19, 0.94), rgba(13, 21, 39, 0.94)),
+                  url('assets/images/CoarseBothInvisiblerail.webp') center/cover no-repeat fixed;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0;
+      color: var(--text-primary);
+    }
+
+    /* Top Navigation Header */
+    .top-header {
+      width: 100%;
+      padding: 20px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(6, 9, 19, 0.85);
+      border-bottom: 1px solid var(--border-subtle);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 20;
+    }
+
+    .nav-back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-decoration: none;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: rgba(15, 23, 42, 0.6);
+      transition: all var(--transition-base);
+    }
+
+    .nav-back-link:hover {
+      color: var(--accent-cyan);
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 14px var(--accent-cyan-glow);
+      transform: translateX(-3px);
+    }
+
+    .header-branding {
+      font-family: var(--font-arcade);
+      font-size: 18px;
+      color: var(--text-primary);
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px var(--accent-cyan-glow);
+    }
+
+    /* Main Container */
+    .categories-container {
+      width: 100%;
+      max-width: 1140px;
+      padding: 48px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .page-eyebrow {
+      font-family: var(--font-display);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--accent-purple-light);
+      margin-bottom: 12px;
+    }
+
+    .page-title {
+      font-family: var(--font-arcade);
+      font-size: clamp(22px, 3.8vw, 38px);
+      letter-spacing: 3px;
+      text-align: center;
+      color: var(--text-primary);
+      text-shadow: 0 0 20px var(--accent-purple-glow);
+      margin-bottom: 12px;
+    }
+
+    .page-subtitle {
+      font-size: 16px;
+      color: var(--text-muted);
+      text-align: center;
+      max-width: 650px;
+      margin-bottom: 32px;
+    }
+
+    /* Disclaimer Notice Banner */
+    .disclaimer-banner {
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid var(--border-purple);
+      border-radius: var(--radius-md);
+      padding: 16px 24px;
+      max-width: 820px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 44px;
+      box-shadow: 0 0 20px rgba(139, 92, 246, 0.15);
+    }
+
+    .disclaimer-icon {
+      font-size: 26px;
+      color: var(--accent-gold);
+    }
+
+    .disclaimer-text {
+      font-size: 13.5px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .disclaimer-text strong {
+      color: var(--accent-purple-light);
+      font-family: var(--font-display);
+      letter-spacing: 0.5px;
+    }
+
+    /* Categories Grid */
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      width: 100%;
+    }
+
+    .cat-card {
+      background: var(--bg-navy-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+    }
+
+    .cat-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--accent-purple);
+      box-shadow: var(--shadow-lg), 0 0 28px var(--accent-purple-glow);
+    }
+
+    .cat-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .cat-icon-orb {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid var(--border-purple);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      box-shadow: 0 0 16px var(--accent-purple-glow-subtle);
+    }
+
+    .cat-name {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .cat-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 24px;
+      min-height: 68px;
+    }
+
+    /* Topics Pills */
+    .cat-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+
+    .topic-pill {
+      font-family: var(--font-display);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-muted);
+    }
+
+    .cat-btn {
+      width: 100%;
+      padding: 14px 20px;
+      font-family: var(--font-display);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-purple);
+      background: rgba(139, 92, 246, 0.15);
+      color: var(--accent-purple-light);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .cat-btn:hover {
+      background: var(--accent-purple);
+      border-color: var(--accent-purple-light);
+      color: #ffffff;
+      box-shadow: 0 0 20px var(--accent-purple-glow);
+      transform: translateY(-2px);
+    }
+
+    /* Modal Overlay (Coming Soon Dialog) */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(4, 7, 16, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--transition-base);
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .proto-modal-content {
+      background: var(--bg-navy-modal);
+      border: 1px solid var(--border-purple);
+      border-radius: var(--radius-lg);
+      padding: 36px 40px;
+      max-width: 520px;
+      width: 90%;
+      text-align: center;
+      box-shadow: var(--shadow-lg), 0 0 35px var(--accent-purple-glow);
+      transform: scale(0.92);
+      transition: transform var(--transition-smooth);
+      position: relative;
+    }
+
+    .modal-overlay.active .proto-modal-content {
+      transform: scale(1);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 26px;
+      color: var(--text-muted);
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: color var(--transition-fast);
+      line-height: 1;
+    }
+
+    .modal-close-btn:hover {
+      color: var(--accent-cyan);
+    }
+
+    .proto-badge {
+      display: inline-block;
+      margin-bottom: 14px;
+    }
+
+    .proto-title {
+      font-family: var(--font-display);
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent-gold);
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+      text-shadow: 0 0 12px var(--accent-gold-glow);
+    }
+
+    .proto-message {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 28px;
+    }
+
+    .proto-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Responsive */
+    @media (max-width: 960px) {
+      .categories-grid {
+        grid-template-columns: 1fr;
+        max-width: 480px;
+      }
+      .cat-desc {
+        min-height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header class="top-header">
+    <a href="mode-select.html" class="nav-back-link" title="Return to Mode Selection">
+      &larr; Back to Mode Selection
+    </a>
+    <div class="header-branding">MINDRUSH</div>
+    <a href="dashboard.html" class="nav-back-link" title="Dashboard">
+      Dashboard
+    </a>
+  </header>
+
+  <!-- Educational Categories Main Area -->
+  <main class="categories-container">
+    <span class="page-eyebrow">Educational Mode</span>
+    <h1 class="page-title">EDUCATIONAL CATEGORIES</h1>
+    <p class="page-subtitle">Choose a category below to test your knowledge! Catch the correct answer badges while dodging hazards.</p>
+
+    <!-- Clear Prototype Disclaimer -->
+    <div class="disclaimer-banner" role="region" aria-label="Prototype Notice">
+      <div class="disclaimer-icon">&#128712;</div>
+      <div class="disclaimer-text">
+        <strong>SAMPLE QUESTIONS:</strong> This version uses a temporary sample question bank with placeholder categories (TYPE_1-TYPE_4). The final curriculum questions will be integrated in a future update. Full arcade gameplay is available in <strong>Fun Mode</strong>.
+      </div>
+    </div>
+
+    <!-- Category Cards Grid -->
+    <div class="categories-grid">
+
+      <!-- Mathematics -->
+      <section class="cat-card" aria-labelledby="cat-math-title">
+        <div>
+          <div class="cat-card-header">
+            <div class="cat-icon-orb" style="color: var(--accent-cyan); font-family: var(--font-display); font-weight: 800;">
+              &sum;
+            </div>
+            <span class="badge badge-purple">Curriculum</span>
+          </div>
+
+          <h2 id="cat-math-title" class="cat-name">Mathematics</h2>
+          <p class="cat-desc">
+            Sharpen mental arithmetic, algebraic calculations, and geometry problem-solving reflexes by catching correct answers in real-time.
+          </p>
+
+          <div class="cat-topics">
+            <span class="topic-pill">Speed Arithmetic</span>
+            <span class="topic-pill">Algebra Basics</span>
+            <span class="topic-pill">Fractions & Decimals</span>
+            <span class="topic-pill">Quick Geometry</span>
+          </div>
+        </div>
+
+        <div>
+          <button class="cat-btn" onclick="launchCategory('TYPE_1', 'Mathematics')">
+            Play Mathematics &rarr;
+          </button>
+        </div>
+      </section>
+
+      <!-- Science -->
+      <section class="cat-card" aria-labelledby="cat-science-title">
+        <div>
+          <div class="cat-card-header">
+            <div class="cat-icon-orb" style="color: var(--accent-purple-light); font-size: 28px;">
+              &#9883;
+            </div>
+            <span class="badge badge-purple">Curriculum</span>
+          </div>
+
+          <h2 id="cat-science-title" class="cat-name">Science</h2>
+          <p class="cat-desc">
+            Explore core concepts across physics laws, chemical element symbols, formulas, and cellular biology facts in rapid-fire arcade rounds.
+          </p>
+
+          <div class="cat-topics">
+            <span class="topic-pill">Physics & Motion</span>
+            <span class="topic-pill">Periodic Table</span>
+            <span class="topic-pill">Living Systems</span>
+            <span class="topic-pill">Space & Planets</span>
+          </div>
+        </div>
+
+        <div>
+          <button class="cat-btn" onclick="launchCategory('TYPE_2', 'Science')">
+            Play Science &rarr;
+          </button>
+        </div>
+      </section>
+
+      <!-- General Knowledge -->
+      <section class="cat-card" aria-labelledby="cat-gk-title">
+        <div>
+          <div class="cat-card-header">
+            <div class="cat-icon-orb" style="color: var(--accent-gold); font-size: 26px;">
+              &#127758;
+            </div>
+            <span class="badge badge-purple">Curriculum</span>
+          </div>
+
+          <h2 id="cat-gk-title" class="cat-name">General Knowledge</h2>
+          <p class="cat-desc">
+            Challenge your trivia acumen with fast-paced questions covering world geography, historical milestones, technology, and culture.
+          </p>
+
+          <div class="cat-topics">
+            <span class="topic-pill">World Geography</span>
+            <span class="topic-pill">World History</span>
+            <span class="topic-pill">Tech & Computing</span>
+            <span class="topic-pill">Famous Inventions</span>
+          </div>
+        </div>
+
+        <div>
+          <button class="cat-btn" onclick="launchCategory('TYPE_3', 'General Knowledge')">
+            Play General Knowledge &rarr;
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Prototype Notice Modal -->
+  <div id="proto-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-category-name">
+    <div class="proto-modal-content">
+      <button class="modal-close-btn" onclick="closePrototypeModal()" aria-label="Close dialog">&times;</button>
+      
+      <div class="proto-badge">
+        <span class="badge badge-gold">Prototype Preview</span>
+      </div>
+
+      <h2 id="modal-category-name" class="proto-title">Mathematics Subject Selected</h2>
+      
+      <p class="proto-message" id="modal-category-desc">
+        The interactive question engine for this subject is currently in architectural design for Phase 3.<br><br>
+        In the full release, questions will be presented at the top of the canvas, and you will guide your paddle to catch the orb with the correct answer while dodging misleading incorrect answers.
+      </p>
+
+      <div class="proto-actions">
+        <button class="btn btn-primary" onclick="closePrototypeModal()">
+          Choose Another Category
+        </button>
+        <a href="difficulty-select.html" class="btn btn-secondary">
+          Play Fun Mode Instead &rarr;
+        </a>
+        <a href="dashboard.html" class="btn btn-ghost">
+          Return to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Footer -->
+  <footer class="footer-nav">
+    <a href="mode-select.html">Mode Select</a>
+    <a href="difficulty-select.html">Difficulty Select</a>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="about.html">About</a>
+    <a href="terms.html">Terms</a>
+    <a href="contact.html">Contact</a>
+  </footer>
+
+  <script>
+    // -- Technology & Computing Category Card (added for Phase 2.3) --
+    (function() {
+      var grid = document.querySelector('.categories-grid');
+      if (grid && !document.getElementById('cat-tech-title')) {
+        var techCard = document.createElement('section');
+        techCard.className = 'cat-card';
+        techCard.setAttribute('aria-labelledby', 'cat-tech-title');
+        techCard.innerHTML = '<div>' +
+          '<div class="cat-card-header">' +
+            '<div class="cat-icon-orb" style="color: var(--accent-cyan); font-size: 26px;">&#128187;</div>' +
+            '<span class="badge badge-purple">Curriculum</span>' +
+          '</div>' +
+          '<h2 id="cat-tech-title" class="cat-name">Technology & Computing</h2>' +
+          '<p class="cat-desc">Explore computing fundamentals, hardware, software concepts, and the pioneers who shaped modern technology.</p>' +
+          '<div class="cat-topics">' +
+            '<span class="topic-pill">Hardware Basics</span>' +
+            '<span class="topic-pill">Programming</span>' +
+            '<span class="topic-pill">Internet & Web</span>' +
+            '<span class="topic-pill">Tech Pioneers</span>' +
+          '</div>' +
+        '</div>' +
+        '<div><button class="cat-btn" onclick="launchCategory(\'TYPE_4\', \'Technology & Computing\')">Play Technology &rarr;</button></div>';
+        grid.appendChild(techCard);
+      }
+    })();
+
+    function launchCategory(typeId, categoryName) {
+      window.location.href = 'game-edu.html?type=' + encodeURIComponent(typeId);
+    }
+
+    function openPrototypeModal(categoryName) {
+      const modal = document.getElementById('proto-modal');
+      const titleEl = document.getElementById('modal-category-name');
+      const descEl = document.getElementById('modal-category-desc');
+
+      if (titleEl) {
+        titleEl.textContent = categoryName + ' (Prototype)';
+      }
+
+      if (descEl) {
+        descEl.innerHTML = 'You selected <strong>' + categoryName + '</strong>!<br><br>' +
+          'Educational Mode question generation and real-time answer verification will be implemented in Phase 3.<br><br>' +
+          'Would you like to play classic <strong>Fun Mode</strong> with existing badge gameplay now?';
+      }
+
+      if (modal) {
+        modal.classList.add('active');
+      }
+    }
+
+    function closePrototypeModal() {
+      const modal = document.getElementById('proto-modal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    }
+
+    // Close on Escape
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        closePrototypeModal();
+      }
+    });
+
+    // Close on backdrop click
+    const modalOverlay = document.getElementById('proto-modal');
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', function(e) {
+        if (e.target === modalOverlay) {
+          closePrototypeModal();
+        }
+      });
+    }
+  </script>
+
+</body>
+</html>
+
+
