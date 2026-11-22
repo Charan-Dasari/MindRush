@@ -10,6 +10,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import progressRoutes from './routes/progress.js';
+import adminRoutes from './routes/admin.js';
+import questionRoutes from './routes/questions.js';
 import { getSessionStore } from './db.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -61,6 +63,12 @@ export function createApp() {
 
   // Mount Authentication API routes
   app.use('/api/auth', authRoutes);
+
+  // Mount Admin API routes
+  app.use('/api/admin', adminRoutes);
+
+  // Mount Question Delivery API routes
+  app.use('/api/questions', questionRoutes);
 
   // Mount Progress & Leaderboard API routes
   app.use('/api', progressRoutes);

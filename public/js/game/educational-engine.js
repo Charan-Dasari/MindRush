@@ -1,4 +1,4 @@
-﻿/**
+/**
  * MindRush — Educational Mode Game Engine
  * Extends the base arcade engine with question-answer falling-object gameplay.
  *
@@ -52,7 +52,72 @@ export class EducationalEngine {
    * @param {string} categoryName - display name for HUD
    */
   constructor(questions, categoryName) {
-    this.questions = questions;
+    if (!Array.isArray(questions)) {
+      throw new Error('EducationalEngine requires an array of questions');
+    }
+
+    // Tightened, backward-compatible constructor normalizer (T036)
+    this.questions = questions.map((q, qIndex) => {
+      if (!q || typeof q !== 'object') {
+        throw new Error(`INVALID_QUESTION: Question at index ${qIndex} is not an object`);
+      }
+
+      // Assert options is an array with length >= 2
+      if (!Array.isArray(q.options) || q.options.length < 2) {
+        throw new Error(`INVALID_OPTIONS: Question ${q.id || qIndex} options must be an array of length >= 2`);
+      }
+
+      // Explicitly reject undefined, null, empty string "", or whitespace-only correctAnswer
+      if (q.correctAnswer === undefined || q.correctAnswer === null) {
+        throw new Error(`INVALID_CORRECT_ANSWER: Question ${q.id || qIndex} has undefined/null correctAnswer`);
+      }
+
+      const rawAnswerStr = String(q.correctAnswer).trim();
+      if (rawAnswerStr.length === 0) {
+        throw new Error(`INVALID_CORRECT_ANSWER: Question ${q.id || qIndex} has empty/whitespace correctAnswer`);
+      }
+
+      const targetAnswer = rawAnswerStr;
+
+      // Find all matching indices where String(opt).trim() === targetAnswer
+      const matchingIndices = [];
+      q.options.forEach((opt, idx) => {
+        if (opt !== undefined && opt !== null && String(opt).trim() === targetAnswer) {
+          matchingIndices.push(idx);
+        }
+      });
+
+      if (matchingIndices.length === 0) {
+        throw new Error(`ANSWER_NOT_IN_OPTIONS: Question ${q.id || qIndex} correctAnswer "${targetAnswer}" not found in options`);
+      }
+
+      if (matchingIndices.length > 1) {
+        throw new Error(`AMBIGUOUS_OPTIONS: Question ${q.id || qIndex} has multiple options matching correctAnswer "${targetAnswer}"`);
+      }
+
+      const resolvedIndex = matchingIndices[0];
+
+      // If correctIndex is specified, validate integer, bounds, and consistency
+      if (q.correctIndex !== undefined) {
+        if (!Number.isInteger(q.correctIndex)) {
+          throw new Error(`INVALID_CORRECT_INDEX: Question ${q.id || qIndex} correctIndex must be an integer`);
+        }
+        if (q.correctIndex < 0 || q.correctIndex >= q.options.length) {
+          throw new Error(`OUT_OF_BOUNDS_CORRECT_INDEX: Question ${q.id || qIndex} correctIndex is out of bounds`);
+        }
+        if (q.correctIndex !== resolvedIndex) {
+          throw new Error(`CONFLICTING_CORRECT_INDEX: Question ${q.id || qIndex} correctIndex (${q.correctIndex}) conflicts with resolved index (${resolvedIndex})`);
+        }
+      }
+
+      return {
+        ...q,
+        questionText: q.questionText || q.question || '',
+        correctAnswer: targetAnswer,
+        correctIndex: resolvedIndex
+      };
+    });
+
     this.categoryName = categoryName || 'Educational';
 
     // Core systems
@@ -104,11 +169,13 @@ export class EducationalEngine {
       this.togglePause();
     });
 
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden && this.state.isPlaying()) {
-        this.pause();
-      }
-    });
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && this.state.isPlaying()) {
+          this.pause();
+        }
+      });
+    }
   }
 
   /**

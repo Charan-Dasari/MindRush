@@ -3,7 +3,9 @@
  * 100 Verified Questions extracted from Class_1_Maths_Olympiad_100_Questions_Updated.xlsx
  */
 
-export const EDUCATIONAL_QUESTIONS = [
+import { PUBLISHED_QUESTIONS } from './educational-questions-published.js';
+
+const ORIGINAL_QUESTIONS = [
   {
     "id": 1,
     "question": "Which number is shown by 4 tens and 7 ones?",
@@ -1205,6 +1207,8 @@ export const EDUCATIONAL_QUESTIONS = [
     "topic": "Olympiad Challenge"
   }
 ];
+
+export const EDUCATIONAL_QUESTIONS = [...ORIGINAL_QUESTIONS, ...(PUBLISHED_QUESTIONS || [])];
 
 export const TOPICS = Array.from(new Set(EDUCATIONAL_QUESTIONS.map(q => q.topic)));
 

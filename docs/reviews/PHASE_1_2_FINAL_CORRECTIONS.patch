@@ -1,0 +1,890 @@
+# MindRush Feature 001 - Phase 1 & Phase 2 Final Review Corrections Patch
+# Scope: Final Review Corrections for Tasks T001-T012
+
+diff --git a/server/models/AuditLog.js b/server/models/AuditLog.js
+index 1111111..2222222 100644
+--- a/server/models/AuditLog.js
++++ b/server/models/AuditLog.js
+@@ -25,7 +25,9 @@
+       'QUESTION_APPROVE',
+       'QUESTION_REJECT',
+       'QUESTION_PUBLISH',
+-      'QUESTION_DISABLE'
++      'QUESTION_DISABLE',
++      'ADMIN_CREATE',
++      'ADMIN_ROLE_ELEVATE'
+     ]
+   },
+   target_collection: {
+@@ -54,19 +56,46 @@
+ auditLogSchema.index({ actor_id: 1, createdAt: -1 });
+ auditLogSchema.index({ target_id: 1 });
+ 
+-// Application-level append-only enforcement: block update and delete queries
++// Application-level append-only enforcement:
++// Blocks all Mongoose query mutations, document mutations, and bulk write updates/deletes.
++// (Note: Direct raw MongoDB driver queries or administrative DBA access bypass Mongoose hooks,
++// so application-level append-only semantics do not claim raw database-level immutability).
+ const blockMutation = function() {
+   throw new Error('AuditLog documents are append-only and cannot be modified or deleted at the application layer.');
+ };
+ 
++// Query-level mutation blocks
+ auditLogSchema.pre('updateOne', blockMutation);
+ auditLogSchema.pre('updateMany', blockMutation);
+ auditLogSchema.pre('findOneAndUpdate', blockMutation);
++auditLogSchema.pre('replaceOne', blockMutation);
++auditLogSchema.pre('findOneAndReplace', blockMutation);
+ auditLogSchema.pre('deleteOne', blockMutation);
+ auditLogSchema.pre('deleteMany', blockMutation);
+ auditLogSchema.pre('findOneAndDelete', blockMutation);
+ 
++// Document-level mutation blocks
++auditLogSchema.pre('save', function() {
++  if (!this.isNew) {
++    throw new Error('AuditLog documents are append-only and cannot be modified or deleted at the application layer.');
++  }
++});
++auditLogSchema.pre('deleteOne', { document: true, query: false }, blockMutation);
++
+ export const MongoAuditLogModel = mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);
++
++// Intercept bulkWrite to prevent bulk update, replace, or delete operations
++const originalBulkWrite = MongoAuditLogModel.bulkWrite.bind(MongoAuditLogModel);
++MongoAuditLogModel.bulkWrite = async function(ops, options) {
++  if (Array.isArray(ops)) {
++    for (const op of ops) {
++      if (op.updateOne || op.updateMany || op.replaceOne || op.deleteOne || op.deleteMany) {
++        throw new Error('AuditLog documents are append-only and cannot be modified or deleted via bulkWrite.');
++      }
++    }
++  }
++  return originalBulkWrite(ops, options);
++};
+ 
+ class MemoryAuditLogStore {
+   constructor() {
+diff --git a/server/scripts/create-admin.js b/server/scripts/create-admin.js
+index 1111111..2222222 100644
+--- a/server/scripts/create-admin.js
++++ b/server/scripts/create-admin.js
+@@ -21,6 +21,7 @@
+ import mongoose from 'mongoose';
+ import { connectDB } from '../db.js';
+ import { User, MongoUserModel } from '../models/User.js';
++import { AuditLog } from '../models/AuditLog.js';
+ import { hashPassword } from '../utils/auth.js';
+ 
+ const __dirname = path.dirname(fileURLToPath(import.meta.url));
+@@ -37,8 +38,8 @@
+   return args;
+ }
+ 
+-function promptQuestion(rl, query, isHidden = false) {
+-  return new Promise(resolve => {
++export function promptQuestion(rl, query, isHidden = false) {
++  return new Promise((resolve, reject) => {
+     if (!isHidden || !process.stdin.isTTY) {
+       rl.question(query, answer => resolve(answer.trim()));
+       return;
+@@ -59,6 +60,7 @@
+       if (char === '\n' || char === '\r' || char === '\u0004') {
+         if (process.stdin.setRawMode) process.stdin.setRawMode(wasRaw);
+         process.stdin.removeListener('data', onData);
++        process.stdin.pause();
+         process.stdout.write('\n');
+         resolve(input.trim());
+       } else if (char === '\u0008' || char === '\u007f') { // Backspace
+@@ -69,7 +71,11 @@
+       } else if (char === '\u0003') { // Ctrl+C
+         if (process.stdin.setRawMode) process.stdin.setRawMode(wasRaw);
+         process.stdin.removeListener('data', onData);
+-        process.exit(1);
++        process.stdin.pause();
++        process.stdout.write('\n');
++        const err = new Error('PROVISIONING_CANCELLED');
++        err.code = 'USER_CANCELLED';
++        reject(err);
+       } else {
+         input += char;
+         process.stdout.write('*');
+@@ -84,18 +90,35 @@
+   if (!dobString || typeof dobString !== 'string') {
+     throw new Error('Date of birth is required.');
+   }
+-  const parsed = new Date(dobString);
+-  if (isNaN(parsed.getTime())) {
++  const match = dobString.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
++  if (!match) {
+     throw new Error('Invalid date of birth format. Use YYYY-MM-DD.');
+   }
++  const year = parseInt(match[1], 10);
++  const month = parseInt(match[2], 10);
++  const day = parseInt(match[3], 10);
++
++  if (month < 1 || month > 12 || day < 1 || day > 31) {
++    throw new Error('Invalid calendar date for date of birth.');
++  }
++
++  const utcDate = new Date(Date.UTC(year, month - 1, day));
++  if (
++    utcDate.getUTCFullYear() !== year ||
++    utcDate.getUTCMonth() !== month - 1 ||
++    utcDate.getUTCDate() !== day
++  ) {
++    throw new Error('Invalid calendar date for date of birth (e.g. non-existent day in month).');
++  }
++
+   const now = new Date();
+-  if (parsed > now) {
++  if (utcDate > now) {
+     throw new Error('Date of birth cannot be in the future.');
+   }
+-  if (parsed.getFullYear() < 1900) {
++  if (year < 1900) {
+     throw new Error('Date of birth year must be >= 1900.');
+   }
+-  return parsed;
++  return utcDate;
+ }
+ 
+ export function validateGender(genderString) {
+@@ -151,6 +174,18 @@
+       }
+       console.log(`[INFO] Existing player account '${username}' found. Elevating role to 'admin'...`);
+       await MongoUserModel.updateOne({ username }, { role: 'admin' });
++      await AuditLog.log({
++        actor_id: 'SYSTEM_CLI',
++        action: 'ADMIN_ROLE_ELEVATE',
++        target_collection: 'users',
++        target_id: String(existing._id || existing.id),
++        details: {
++          username: existing.username,
++          previous_role: existing.role,
++          new_role: 'admin',
++          provisioned_via: 'cli'
++        }
++      });
+       console.log(`[SUCCESS] Account '${username}' elevated to role 'admin'.`);
+       return { success: true, message: 'elevated', user: existing };
+     }
+@@ -196,6 +231,19 @@
+       role: 'admin'
+     });
+ 
++    await AuditLog.log({
++      actor_id: 'SYSTEM_CLI',
++      action: 'ADMIN_CREATE',
++      target_collection: 'users',
++      target_id: String(adminUser._id || adminUser.id),
++      details: {
++        username: adminUser.username,
++        fullName: adminUser.fullName,
++        role: 'admin',
++        provisioned_via: 'cli'
++      }
++    });
++
+     console.log(`[SUCCESS] Administrator account '${adminUser.username}' created with role 'admin'.`);
+     return { success: true, message: 'created', user: adminUser };
+   } finally {
+diff --git a/server/middleware/requireAdmin.js b/server/middleware/requireAdmin.js
+index 1111111..2222222 100644
+--- a/server/middleware/requireAdmin.js
++++ b/server/middleware/requireAdmin.js
+@@ -20,7 +20,10 @@
+   if (configured && typeof configured === 'string') {
+     configured.split(',').map(s => s.trim()).filter(Boolean).forEach(orig => {
+       try {
+-        const escaped = orig.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
++        // Escape regex special chars while translating * to wildcard subdomain/host matcher
++        const escaped = orig
++          .replace(/[-[\]{}()+?.,\\^$|#\s]/g, '\\$&')
++          .replace(/\*/g, '[a-zA-Z0-9.-]+');
+         patterns.push(new RegExp(`^${escaped}$`));
+       } catch (e) {
+         patterns.push(new RegExp(`^${orig}$`));
+diff --git a/MindRush-AI/scripts/initial_model_benchmark.py b/MindRush-AI/scripts/initial_model_benchmark.py
+index 1111111..2222222 100644
+--- a/MindRush-AI/scripts/initial_model_benchmark.py
++++ b/MindRush-AI/scripts/initial_model_benchmark.py
+@@ -151,7 +151,7 @@
+         return {"error": str(e), "vram_used_mib": None, "vram_total_mib": 4096, "gpu_util_percent": None}
+ 
+ class VRAMSampler:
+-    """Continuously samples GPU VRAM during inference to record true peak utilization."""
++    """Continuously samples GPU VRAM during inference to record peak sampled utilization."""
+     def __init__(self, interval_sec: float = 0.05):
+         self.interval = interval_sec
+         self.peak_vram_mib = 0
+@@ -271,6 +271,15 @@
+     if not isinstance(ca, dict) or "value" not in ca or ca.get("type") not in ["number", "string"]:
+         errors.append("correct_answer must be an object with 'value' and 'type' ('number' or 'string')")
+     else:
++        ca_type = ca.get("type")
++        ca_val = ca.get("value")
++        if ca_type == "number":
++            if isinstance(ca_val, bool) or not isinstance(ca_val, (int, float)):
++                errors.append(f"correct_answer.value must be numeric when type is 'number', got {type(ca_val).__name__}")
++        elif ca_type == "string":
++            if not isinstance(ca_val, str):
++                errors.append(f"correct_answer.value must be a string when type is 'string', got {type(ca_val).__name__}")
++
+         # Check alignment between correct_option_id text and correct_answer.value
+         if isinstance(opts, list) and corr_id:
+             matching = [o for o in opts if isinstance(o, dict) and o.get("id") == corr_id]
+@@ -336,11 +345,12 @@
+     sampler.start()
+ 
+     start_time = time.perf_counter()
+-    with httpx.Client(trust_env=False, timeout=180.0) as client:
+-        resp = client.post(OLLAMA_API_URL, json=payload)
++    try:
++        with httpx.Client(trust_env=False, timeout=180.0) as client:
++            resp = client.post(OLLAMA_API_URL, json=payload)
++    finally:
++        peak_vram_sampled_mib = sampler.stop()
+     elapsed_time = time.perf_counter() - start_time
+-
+-    peak_vram_sampled_mib = sampler.stop()
+ 
+     gpu_after = get_gpu_metrics()
+     ram_process_after_mb = process.memory_info().rss / (1024 * 1024)
+@@ -416,7 +426,7 @@
+ def main():
+     print("=" * 60)
+     print(" MindRush AI - qwen3.5:4b Candidate Model Benchmark")
+-    print(" True Peak Sampled Telemetry & Strict Field Validation")
++    print(" Peak Sampled Telemetry & Strict Field Validation")
+     print("=" * 60)
+ 
+     # Preserve historical results if present
+diff --git a/MindRush-AI/tests/test_benchmark_validator.py b/MindRush-AI/tests/test_benchmark_validator.py
+index 1111111..2222222 100644
+--- a/MindRush-AI/tests/test_benchmark_validator.py
++++ b/MindRush-AI/tests/test_benchmark_validator.py
+@@ -1,7 +1,7 @@
+ """
+-Tests for benchmark validation functions.
++Tests for benchmark validation functions and VRAMSampler lifecycle.
+ """
+-from scripts.initial_model_benchmark import verify_math_correctness, validate_full_schema
++from scripts.initial_model_benchmark import verify_math_correctness, validate_full_schema, VRAMSampler
+ 
+ def test_unsupported_math_pattern_returns_false():
+     res, msg = verify_math_correctness("Find the secret number that shines like the sun", "5", "Geometry")
+@@ -55,3 +55,113 @@
+     ok, errs = validate_full_schema(invalid_q, "Addition")
+     assert ok is False
+     assert any("does not match" in e for e in errs)
++
++def test_invalid_correct_answer_type_mismatch():
++    # Value is string but type declares number
++    q1 = {
++        "question": "What is 5 + 3?",
++        "options": [
++            {"id": "A", "text": "eight"},
++            {"id": "B", "text": "nine"},
++            {"id": "C", "text": "seven"},
++            {"id": "D", "text": "six"}
++        ],
++        "correct_option_id": "A",
++        "correct_answer": {"value": "eight", "type": "number"},
++        "explanation": "5 + 3 = 8",
++        "topic": "Addition",
++        "standard": 1,
++        "difficulty": "easy"
++    }
++    ok, errs = validate_full_schema(q1, "Addition")
++    assert ok is False
++    assert any("must be numeric when type is 'number'" in e for e in errs)
++
++    # Value is boolean (True) which is technically int subclass in Python
++    q2 = {
++        "question": "What is 5 + 3?",
++        "options": [
++            {"id": "A", "text": "True"},
++            {"id": "B", "text": "False"},
++            {"id": "C", "text": "7"},
++            {"id": "D", "text": "6"}
++        ],
++        "correct_option_id": "A",
++        "correct_answer": {"value": True, "type": "number"},
++        "explanation": "5 + 3 = 8",
++        "topic": "Addition",
++        "standard": 1,
++        "difficulty": "easy"
++    }
++    ok2, errs2 = validate_full_schema(q2, "Addition")
++    assert ok2 is False
++    assert any("must be numeric when type is 'number'" in e for e in errs2)
++
++    # Value is number but type declares string
++    q3 = {
++        "question": "What is 5 + 3?",
++        "options": [
++            {"id": "A", "text": "8"},
++            {"id": "B", "text": "9"},
++            {"id": "C", "text": "7"},
++            {"id": "D", "text": "6"}
++        ],
++        "correct_option_id": "A",
++        "correct_answer": {"value": 8, "type": "string"},
++        "explanation": "5 + 3 = 8",
++        "topic": "Addition",
++        "standard": 1,
++        "difficulty": "easy"
++    }
++    ok3, errs3 = validate_full_schema(q3, "Addition")
++    assert ok3 is False
++    assert any("must be a string when type is 'string'" in e for e in errs3)
++
++def test_invalid_option_count_and_duplicates():
++    # Only 3 options
++    q1 = {
++        "question": "What is 5 + 3?",
++        "options": [
++            {"id": "A", "text": "8"},
++            {"id": "B", "text": "9"},
++            {"id": "C", "text": "7"}
++        ],
++        "correct_option_id": "A",
++        "correct_answer": {"value": 8, "type": "number"},
++        "explanation": "5 + 3 = 8",
++        "topic": "Addition",
++        "standard": 1,
++        "difficulty": "easy"
++    }
++    ok, errs = validate_full_schema(q1, "Addition")
++    assert ok is False
++    assert any("exactly 4 elements" in e for e in errs)
++
++    # Duplicate option text
++    q2 = {
++        "question": "What is 5 + 3?",
++        "options": [
++            {"id": "A", "text": "8"},
++            {"id": "B", "text": "8"}, # Duplicate text
++            {"id": "C", "text": "7"},
++            {"id": "D", "text": "6"}
++        ],
++        "correct_option_id": "A",
++        "correct_answer": {"value": 8, "type": "number"},
++        "explanation": "5 + 3 = 8",
++        "topic": "Addition",
++        "standard": 1,
++        "difficulty": "easy"
++    }
++    ok2, errs2 = validate_full_schema(q2, "Addition")
++    assert ok2 is False
++    assert any("distinct" in e for e in errs2)
++
++def test_sampler_lifecycle_and_stop():
++    sampler = VRAMSampler(interval_sec=0.01)
++    sampler.start()
++    assert sampler._thread is not None
++    assert sampler._thread.is_alive()
++    peak = sampler.stop()
++    assert not sampler._thread.is_alive()
++    assert peak >= 0
+diff --git a/MindRush-AI/tests/test_health.py b/MindRush-AI/tests/test_health.py
+index 1111111..2222222 100644
+--- a/MindRush-AI/tests/test_health.py
++++ b/MindRush-AI/tests/test_health.py
+@@ -1,37 +1,58 @@
+ """
+-Tests for MindRush AI Service health endpoints and authentication security.
++MindRush AI Subsystem - Health & Secret Authorization Tests
++Verifies internal endpoint authentication and public health probe behavior against the live FastAPI app.
+ """
++
+ import pytest
+ from fastapi.testclient import TestClient
+ from ai_service.app import app
++from ai_service.config import INTERNAL_API_SECRET
+ 
+ client = TestClient(app)
+ 
+ def test_health_check_without_secret():
+-    response = client.get("/health")
+-    assert response.status_code == 200
+-    assert response.json() == {"status": "ok", "service": "mindrush-ai"}
++    """Health check without secret should succeed (public probe for uptime/container monitors)."""
++    resp = client.get("/health")
++    assert resp.status_code == 200
++    data = resp.json()
++    assert data["status"] == "ok"
++    assert "ollama_connected" in data
++    assert "gpu_detected" in data
++    # Secret must never be leaked in public health response
++    assert INTERNAL_API_SECRET not in resp.text
+ 
+ def test_health_check_with_valid_secret():
+-    headers = {"X-Internal-Secret": "dev-internal-secret-change-in-production-min32chars"}
+-    response = client.get("/health", headers=headers)
+-    assert response.status_code == 200
+-    assert response.json() == {"status": "ok", "service": "mindrush-ai"}
++    """Health check with valid secret should succeed."""
++    resp = client.get("/health", headers={"X-Internal-Secret": INTERNAL_API_SECRET})
++    assert resp.status_code == 200
++    assert resp.json()["status"] == "ok"
++    assert INTERNAL_API_SECRET not in resp.text
+ 
+ def test_health_check_with_invalid_secret():
+-    headers = {"X-Internal-Secret": "wrong-secret"}
+-    response = client.get("/health", headers=headers)
+-    assert response.status_code == 401
+-    assert response.json()["detail"] == "Invalid internal API secret"
++    """Health check with invalid secret should be rejected with 401."""
++    resp = client.get("/health", headers={"X-Internal-Secret": "invalid_wrong_secret"})
++    assert resp.status_code == 401
++    assert resp.json()["error"] == "UNAUTHORIZED"
++    assert INTERNAL_API_SECRET not in resp.text
+ 
+-def test_production_secret_enforcement(monkeypatch):
+-    """Verifies that production fails startup if secret is missing or insecure."""
+-    monkeypatch.setenv("ENV", "production")
+-    monkeypatch.delenv("INTERNAL_API_SECRET", raising=False)
+-    
+-    # Reloading config in production with missing secret must raise RuntimeError
+-    with pytest.raises(RuntimeError) as exc_info:
+-        from ai_service.config import get_settings
+-        get_settings.cache_clear()
+-        get_settings()
+-    assert "CRITICAL SECURITY ERROR" in str(exc_info.value)
++def test_internal_endpoint_without_secret():
++    """Protected internal endpoints without secret must be rejected with 401."""
++    resp = client.get("/internal/ping")
++    assert resp.status_code == 401
++    assert resp.json()["error"] == "UNAUTHORIZED"
++    assert INTERNAL_API_SECRET not in resp.text
++
++def test_internal_endpoint_with_invalid_secret():
++    """Protected internal endpoints with invalid secret must be rejected with 401."""
++    resp = client.get("/internal/ping", headers={"X-Internal-Secret": "wrong_key_12345"})
++    assert resp.status_code == 401
++    assert resp.json()["error"] == "UNAUTHORIZED"
++    assert INTERNAL_API_SECRET not in resp.text
++
++def test_internal_endpoint_with_valid_secret():
++    """Protected internal endpoints with valid secret must succeed."""
++    resp = client.get("/internal/ping", headers={"X-Internal-Secret": INTERNAL_API_SECRET})
++    assert resp.status_code == 200
++    assert resp.json()["status"] == "ok"
++    assert resp.json()["message"] == "authenticated"
++    assert INTERNAL_API_SECRET not in resp.text
+diff --git a/tests/test_foundation_milestone.mjs b/tests/test_foundation_milestone.mjs
+index 1111111..2222222 100644
+--- a/tests/test_foundation_milestone.mjs
++++ b/tests/test_foundation_milestone.mjs
+@@ -7,7 +7,7 @@
+ import { User } from '../server/models/User.js';
+ import { Curriculum } from '../server/models/Curriculum.js';
+ import { Counter } from '../server/models/Counter.js';
+-import { AuditLog } from '../server/models/AuditLog.js';
++import { AuditLog, MongoAuditLogModel } from '../server/models/AuditLog.js';
+ import { requireAdmin } from '../server/middleware/requireAdmin.js';
+ import { hashPassword } from '../server/utils/auth.js';
+ 
+@@ -121,6 +121,55 @@
+     assert.ok(logs.length > 0, 'Should find logged action');
+   });
+ 
++  await test('AuditLog enforces append-only semantics and blocks mutating queries and bulkWrite', async () => {
++    // Memory store update / delete block
++    await assert.rejects(
++      async () => {
++        await AuditLog._getMemoryStore().update();
++      },
++      /append-only/,
++      'Memory store update must be blocked'
++    );
++
++    await assert.rejects(
++      async () => {
++        await AuditLog._getMemoryStore().delete();
++      },
++      /append-only/,
++      'Memory store delete must be blocked'
++    );
++
++    // MongoAuditLogModel bulkWrite override block
++    await assert.rejects(
++      async () => {
++        await MongoAuditLogModel.bulkWrite([
++          { updateOne: { filter: { _id: '123' }, update: { action: 'MUTATED' } } }
++        ]);
++      },
++      /append-only.*bulkWrite/,
++      'bulkWrite updateOne must be blocked'
++    );
++
++    await assert.rejects(
++      async () => {
++        await MongoAuditLogModel.bulkWrite([
++          { deleteOne: { filter: { _id: '123' } } }
++        ]);
++      },
++      /append-only.*bulkWrite/,
++      'bulkWrite deleteOne must be blocked'
++    );
++
++    await assert.rejects(
++      async () => {
++        await MongoAuditLogModel.bulkWrite([
++          { replaceOne: { filter: { _id: '123' }, replacement: {} } }
++        ]);
++      },
++      /append-only.*bulkWrite/,
++      'bulkWrite replaceOne must be blocked'
++    );
++  });
+ 
+   // --- Test 5: requireAdmin Middleware Authentication (T010) ---
+   await test('requireAdmin rejects unauthenticated requests with 401', async () => {
+@@ -308,6 +357,111 @@
+     delete process.env.ADMIN_ALLOWED_ORIGINS;
+   });
+ 
++  await test('requireAdmin supports wildcard origin patterns in ADMIN_ALLOWED_ORIGINS', async () => {
++    process.env.ADMIN_ALLOWED_ORIGINS = 'https://*.mindrush.org';
++    const admin = await User.create({
++      fullName: 'Admin User Wildcard',
++      username: 'admin_wc_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('1990-01-01'),
++      gender: 'male',
++      passwordHash: await hashPassword('AdminPass123!'),
++      role: 'admin'
++    });
++
++    // Subdomain matching wildcard
++    const validReq = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        origin: 'https://subdomain.mindrush.org',
++        'x-requested-with': 'MindRush-Admin'
++      },
++      method: 'POST'
++    };
++    let nextCalled = false;
++    const res = { status() { return this; }, json() {} };
++    await requireAdmin(validReq, res, () => { nextCalled = true; });
++    assert.strictEqual(nextCalled, true, 'Wildcard subdomain origin must be allowed');
++
++    // Unmatched origin
++    let status = null;
++    let json = null;
++    const rejectRes = {
++      status(s) { status = s; return this; },
++      json(j) { json = j; }
++    };
++    const invalidReq = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        origin: 'https://subdomain.evilmindrush.org',
++        'x-requested-with': 'MindRush-Admin'
++      },
++      method: 'POST'
++    };
++    await requireAdmin(invalidReq, rejectRes, () => {});
++    assert.strictEqual(status, 403);
++    assert.strictEqual(json.error, 'ORIGIN_FORBIDDEN');
++    delete process.env.ADMIN_ALLOWED_ORIGINS;
++  });
++
++  await test('requireAdmin validates Referer header when Origin header is absent', async () => {
++    const admin = await User.create({
++      fullName: 'Admin User Referer',
++      username: 'admin_ref_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('1990-01-01'),
++      gender: 'female',
++      passwordHash: await hashPassword('AdminPass123!'),
++      role: 'admin'
++    });
++
++    // 1. Trusted Referer
++    const validRefReq = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        referer: 'http://localhost:3000/admin/dashboard',
++        'x-requested-with': 'MindRush-Admin'
++      },
++      method: 'POST'
++    };
++    let validNext = false;
++    await requireAdmin(validRefReq, { status() { return this; }, json() {} }, () => { validNext = true; });
++    assert.strictEqual(validNext, true, 'Trusted referer origin must be accepted');
++
++    // 2. Untrusted Referer
++    let refStatus = null;
++    let refJson = null;
++    const invalidRefReq = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        referer: 'http://malicious.org/attack',
++        'x-requested-with': 'MindRush-Admin'
++      },
++      method: 'POST'
++    };
++    await requireAdmin(invalidRefReq, {
++      status(s) { refStatus = s; return this; },
++      json(j) { refJson = j; }
++    }, () => {});
++    assert.strictEqual(refStatus, 403);
++    assert.strictEqual(refJson.error, 'ORIGIN_FORBIDDEN');
++
++    // 3. Malformed Referer
++    let malStatus = null;
++    let malJson = null;
++    const malformedRefReq = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        referer: 'not-a-valid-url',
++        'x-requested-with': 'MindRush-Admin'
++      },
++      method: 'POST'
++    };
++    await requireAdmin(malformedRefReq, {
++      status(s) { malStatus = s; return this; },
++      json(j) { malJson = j; }
++    }, () => {});
++    assert.strictEqual(malStatus, 403);
++    assert.strictEqual(malJson.error, 'ORIGIN_FORBIDDEN');
++  });
+ 
+   console.log('--------------------------------------------------------');
+   console.log(` Tests Completed: ${passedTests}/${totalTests} Passed.`);
+diff --git a/tests/test_admin_provisioning.mjs b/tests/test_admin_provisioning.mjs
+index 1111111..2222222 100644
+--- a/tests/test_admin_provisioning.mjs
++++ b/tests/test_admin_provisioning.mjs
+@@ -10,8 +10,9 @@
+ 
+ import assert from 'assert';
+ import mongoose from 'mongoose';
+-import { runAdminProvisioning, validateDob, validateGender } from '../server/scripts/create-admin.js';
++import { runAdminProvisioning, validateDob, validateGender, promptQuestion } from '../server/scripts/create-admin.js';
+ import { User, MongoUserModel } from '../server/models/User.js';
++import { AuditLog, MongoAuditLogModel } from '../server/models/AuditLog.js';
+ import { hashPassword } from '../server/utils/auth.js';
+ 
+ console.log('========================================================');
+@@ -50,24 +51,53 @@
+     );
+   });
+ 
+-  // --- Test 2: DOB Validation Rules ---
+-  await test('validateDob rejects invalid date strings', () => {
++  // --- Test 2: DOB Validation Rules (Strict Calendar Checking) ---
++  await test('validateDob rejects invalid date strings and malformed formats', () => {
+     assert.throws(() => validateDob('not-a-date'), /Invalid date of birth format/);
+     assert.throws(() => validateDob(''), /Date of birth is required/);
+     assert.throws(() => validateDob(null), /Date of birth is required/);
++    assert.throws(() => validateDob('1995/08/20'), /Invalid date of birth format/);
++    assert.throws(() => validateDob('20-08-1995'), /Invalid date of birth format/);
++  });
++
++  await test('validateDob strictly enforces calendar validity and rejects rollover dates', () => {
++    // 2024 is a leap year -> Feb 29 is valid
++    const leapDate = validateDob('2024-02-29');
++    assert.strictEqual(leapDate.getUTCFullYear(), 2024);
++    assert.strictEqual(leapDate.getUTCMonth(), 1);
++    assert.strictEqual(leapDate.getUTCDate(), 29);
++
++    // 2023 is not a leap year -> Feb 29 rolls over to March 1 in loose parsers, must be rejected!
++    assert.throws(() => validateDob('2023-02-29'), /Invalid calendar date/);
++
++    // Feb 31 does not exist in any year
++    assert.throws(() => validateDob('2024-02-31'), /Invalid calendar date/);
++
++    // April 31 does not exist (30 days in April)
++    assert.throws(() => validateDob('2024-04-31'), /Invalid calendar date/);
++
++    // Invalid month
++    assert.throws(() => validateDob('2024-13-01'), /Invalid calendar date/);
++    assert.throws(() => validateDob('2024-00-15'), /Invalid calendar date/);
++
++    // Invalid day
++    assert.throws(() => validateDob('2024-01-32'), /Invalid calendar date/);
++    assert.throws(() => validateDob('2024-01-00'), /Invalid calendar date/);
+   });
+ 
+   await test('validateDob rejects future dates and pre-1900 dates', () => {
+     const futureDate = new Date();
+-    futureDate.setFullYear(futureDate.getFullYear() + 1);
+-    assert.throws(() => validateDob(futureDate.toISOString().split('T')[0]), /cannot be in the future/);
++    futureDate.setUTCFullYear(futureDate.getUTCFullYear() + 1);
++    const futureStr = `${futureDate.getUTCFullYear()}-01-01`;
++    assert.throws(() => validateDob(futureStr), /cannot be in the future/);
+     assert.throws(() => validateDob('1885-05-12'), /must be >= 1900/);
+   });
+ 
+   await test('validateDob accepts valid realistic birthdates', () => {
+     const valid = validateDob('1995-08-20');
+-    assert.strictEqual(valid.getFullYear(), 1995);
+-    assert.strictEqual(valid.getMonth(), 7); // 0-indexed August
++    assert.strictEqual(valid.getUTCFullYear(), 1995);
++    assert.strictEqual(valid.getUTCMonth(), 7); // 0-indexed August
++    assert.strictEqual(valid.getUTCDate(), 20);
+   });
+ 
+   // --- Test 3: Gender Validation Rules ---
+@@ -123,6 +153,17 @@
+       assert.strictEqual(found.role, 'admin', 'User role must be admin');
+       assert.strictEqual(found.gender, 'female');
+ 
++      // Verify AuditLog record for ADMIN_CREATE
++      const createLog = await MongoAuditLogModel.findOne({
++        action: 'ADMIN_CREATE',
++        target_id: String(found._id)
++      });
++      assert.ok(createLog, 'AuditLog entry must be created for ADMIN_CREATE');
++      assert.strictEqual(createLog.actor_id, 'SYSTEM_CLI');
++      assert.strictEqual(createLog.details.username, username);
++      assert.strictEqual(createLog.details.role, 'admin');
++      assert.strictEqual(createLog.details.password, undefined);
++      assert.strictEqual(createLog.details.passwordHash, undefined);
+     });
+ 
+     await test('Provisioning elevates existing player to admin in live MongoDB', async () => {
+@@ -146,11 +187,52 @@
+       const updated = await MongoUserModel.findOne({ username });
+       assert.strictEqual(updated.role, 'admin', 'Existing player must be elevated to admin');
+ 
++      // Verify AuditLog record for ADMIN_ROLE_ELEVATE
++      const elevateLog = await MongoAuditLogModel.findOne({
++        action: 'ADMIN_ROLE_ELEVATE',
++        target_id: String(updated._id)
++      });
++      assert.ok(elevateLog, 'AuditLog entry must be created for ADMIN_ROLE_ELEVATE');
++      assert.strictEqual(elevateLog.actor_id, 'SYSTEM_CLI');
++      assert.strictEqual(elevateLog.details.username, username);
++      assert.strictEqual(elevateLog.details.previous_role, 'player');
++      assert.strictEqual(elevateLog.details.new_role, 'admin');
+     });
+ 
+     await mongoose.disconnect();
+   }
+ 
++  // --- Test 5: Interactive Cancellation Handling ---
++  await test('promptQuestion rejects with USER_CANCELLED and cleans up listeners on Ctrl+C', async () => {
++    const origIsTTY = process.stdin.isTTY;
++    const origSetRawMode = process.stdin.setRawMode;
++    let rawModeDisabled = false;
++
++    process.stdin.isTTY = true;
++    process.stdin.setRawMode = (mode) => {
++      if (!mode) rawModeDisabled = true;
++    };
++
++    const promptPromise = promptQuestion(null, 'Enter Secret: ', true);
++    
++    // Simulate Ctrl+C input chunk
++    process.stdin.emit('data', Buffer.from('\u0003'));
++
++    await assert.rejects(
++      promptPromise,
++      (err) => {
++        assert.strictEqual(err.message, 'PROVISIONING_CANCELLED');
++        assert.strictEqual(err.code, 'USER_CANCELLED');
++        return true;
++      },
++      'Must reject with USER_CANCELLED on Ctrl+C'
++    );
++
++    // Restore original stdin properties
++    process.stdin.isTTY = origIsTTY;
++    process.stdin.setRawMode = origSetRawMode;
++    process.stdin.pause();
++  });
+ 
+   console.log('--------------------------------------------------------');
+   console.log(` Admin Provisioning Tests: ${passedTests}/${totalTests} Passed.`);
+diff --git a/MindRush-AI/tests/test_config.py b/MindRush-AI/tests/test_config.py
+new file mode 100644
+index 0000000..1111111
+--- /dev/null
++++ b/MindRush-AI/tests/test_config.py
+@@ -0,0 +1,82 @@
++"""
++MindRush AI Subsystem - Configuration Isolation Tests
++Tests production, staging, and development configuration loading using isolated subprocesses
++to guarantee no sys.modules caching effects.
++"""
++
++import os
++import sys
++import subprocess
++from pathlib import Path
++
++PYTHON_EXE = sys.executable
++AI_ROOT = Path(__file__).resolve().parent.parent
++
++def run_config_subprocess(env_overrides):
++    env = os.environ.copy()
++    env["PYTHONPATH"] = str(AI_ROOT)
++    for k, v in env_overrides.items():
++        if v is None:
++            env.pop(k, None)
++        else:
++            env[k] = v
++
++    code = "from ai_service import config; print('LOADED:', config.INTERNAL_API_SECRET)"
++    res = subprocess.run(
++        [PYTHON_EXE, "-c", code],
++        cwd=str(AI_ROOT),
++        env=env,
++        capture_output=True,
++        text=True
++    )
++    return res
++
++def test_production_missing_secret_fails():
++    """In production, missing secret must abort initialization."""
++    res = run_config_subprocess({"ENVIRONMENT": "production", "AI_SERVICE_SECRET": ""})
++    assert res.returncode != 0
++    assert "FATAL: In production environments, AI_SERVICE_SECRET must be explicitly defined." in res.stderr
++
++def test_production_default_secret_fails():
++    """In production, known development default secret must abort initialization."""
++    res = run_config_subprocess({
++        "ENVIRONMENT": "production",
++        "AI_SERVICE_SECRET": "dev_internal_secret_key_change_in_production"
++    })
++    assert res.returncode != 0
++    assert "cannot use the known development fallback" in res.stderr
++
++def test_production_short_secret_fails():
++    """In production, secret shorter than 32 characters must abort initialization."""
++    res = run_config_subprocess({
++        "ENVIRONMENT": "production",
++        "AI_SERVICE_SECRET": "too_short_key_123"
++    })
++    assert res.returncode != 0
++    assert "must be at least 32 characters long" in res.stderr
++
++def test_staging_missing_secret_fails():
++    """In staging, missing secret must abort initialization."""
++    res = run_config_subprocess({"ENVIRONMENT": "staging", "AI_SERVICE_SECRET": ""})
++    assert res.returncode != 0
++    assert "FATAL: In production environments, AI_SERVICE_SECRET must be explicitly defined." in res.stderr
++
++def test_production_valid_secret_succeeds():
++    """In production, a valid 32+ character non-default secret must succeed."""
++    valid_sec = "a_very_secure_production_secret_key_that_is_32_chars_long_123"
++    res = run_config_subprocess({"ENVIRONMENT": "production", "AI_SERVICE_SECRET": valid_sec})
++    assert res.returncode == 0
++    assert f"LOADED: {valid_sec}" in res.stdout
++
++def test_development_default_secret_succeeds():
++    """In development, missing secret falls back to known dev secret."""
++    res = run_config_subprocess({"ENVIRONMENT": "development", "AI_SERVICE_SECRET": ""})
++    assert res.returncode == 0
++    assert "LOADED: dev_internal_secret_key_change_in_production" in res.stdout
++
++def test_development_custom_secret_succeeds():
++    """In development, custom secret is respected."""
++    custom = "custom_dev_key"
++    res = run_config_subprocess({"ENVIRONMENT": "development", "AI_SERVICE_SECRET": custom})
++    assert res.returncode == 0
++    assert f"LOADED: {custom}" in res.stdout

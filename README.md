@@ -1,90 +1,144 @@
-﻿# MindRush — Gesture-Based Arcade & Learning Platform
+# MindRush — Interactive Gesture Arcade & AI-Assisted Educational Gaming
 
-> **Status: Phase 1 Complete (Shared Engine, Procedural Badges, Balanced Difficulties).**  
-> Modernized browser-based game engine deployed with Firebase Hosting support, procedural canvas graphics (p5.js), and future MediaPipe hand tracking.
+[![Node.js CI](https://img.shields.io/badge/Node.js-v18+-green.svg)](https://nodejs.org)
+[![Python](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://python.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-v0.100+-teal.svg)](https://fastapi.tiangolo.com)
+[![MongoDB](https://img.shields.io/badge/MongoDB-Community_or_Atlas-forestgreen.svg)](https://www.mongodb.com)
+[![Ollama](https://img.shields.io/badge/Ollama-Qwen3.5_4B-orange.svg)](https://ollama.com)
 
-Welcome to **MindRush** (formerly *Skyfall Gesture Game*), an immersive motion- and gesture-based arcade gaming platform designed for both high-speed arcade action (Fun Mode) and interactive question-answering challenges (Educational Mode). Catch falling collectible badges, avoid hazardous traps, unlock achievements, and climb the leaderboard!
+MindRush is a dual-mode gaming and educational platform. It combines real-time hand gesture tracking via webcam with local AI-assisted question generation, deterministic validation, and human review governance for primary school mathematics.
 
 ---
 
-## Project Structure
+## 1. Game Modes & Capabilities
 
+### Fun Mode (Arcade)
+- **Breakout Retro Mode:** Classic paddle ball physics, power-ups, brick destruction, and hazard avoidance.
+- **Space Invaders Retro Mode:** Multi-phase UFO waves, boss battles, dynamic reactive UFO AI, and gesture lasers.
+- **Control Schemes:** Webcam hand gesture tracking (Handtrack.js / MediaPipe), mouse movement, and keyboard arrow controls.
+
+### Educational Mode (Curriculum Learning)
+- **Falling Answer Object Gameplay:** Questions appear with falling option badges. Cadets steer their paddle to catch the correct answer.
+- **Progressive Scoring & Lives:** Zero lives lost on correct catches; progressive penalties and life deductions on incorrect or missed answers.
+- **Verified Question Banks:** 100 canonical Crest Mathematics Olympiad (CMO) Standard 1 questions + companion dynamic expansion bank.
+
+### AI-Assisted Question Generation Subsystem (Feature 001)
+- **Source Material Extraction:** Ingests Olympiad PDF papers with canonical path traversal defense.
+- **Local LLM Inference:** Generates grade-appropriate MCQs using local Ollama (`qwen3.5:4b`) with zero cloud token costs.
+- **Automated Multi-Tier Validation:**
+  - Pydantic schema integrity (4 distinct options, answer equivalence).
+  - Deterministic safe AST math recalculation (addition and subtraction ground-truth verification).
+  - 4-tier duplicate similarity detection (exact, normalized, Levenshtein distance, token overlap).
+- **Human-in-the-Loop Governance:** Pending review queue with automated validation reports and mandatory rejection reasons.
+- **Atomic Publication:** Monotonic IDs starting at `1001` via MongoDB atomic counter sequences and staged `.tmp` file replacement.
+
+---
+
+## 2. High-Level Technology Stack
+
+- **Frontend:** HTML5, CSS3, JavaScript (ES Modules), p5.js, Handtrack.js, MediaPipe
+- **Backend:** Node.js, Express.js, Mongoose, Argon2id, Express-Session, Connect-Mongo
+- **AI Microservice:** Python 3.11+, FastAPI, Uvicorn, Pydantic, PyMuPDF, Safe AST
+- **Local Inference:** Ollama Daemon running `qwen3.5:4b` (GGUF Q4_K_M)
+- **Database:** MongoDB Community Server (Local) or MongoDB Atlas (Production)
+
+---
+
+## 3. Quick Start & Local Setup
+
+### Prerequisites
+- Node.js v18+ & Python 3.11+
+- MongoDB Community Server running locally on `mongodb://127.0.0.1:27017`
+- Ollama installed with candidate model pulled: `ollama pull qwen3.5:4b`
+
+### Installation Steps
+
+1. **Clone the Repository & Install Node Dependencies:**
+   ```powershell
+   git clone https://github.com/your-username/MindRush.git
+   cd MindRush
+   npm install
+   ```
+
+2. **Configure Environment:**
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+   *Verify that `.env` points to `MONGODB_URI=mongodb://127.0.0.1:27017/MindRush`.*
+
+3. **Set Up Python Virtual Environment:**
+   ```powershell
+   python -m venv MindRush-AI/.venv
+   .\MindRush-AI\.venv\Scripts\Activate.ps1
+   pip install -r MindRush-AI/requirements.txt
+   ```
+
+4. **Initialize Database & Seed Curriculum:**
+   ```powershell
+   node server/scripts/seed-curriculum.js
+   ```
+
+5. **Provision an Administrator Account:**
+   ```powershell
+   node server/scripts/create-admin.js
+   ```
+
+---
+
+## 4. Running the Platform
+
+Start each service in a dedicated terminal:
+
+### Terminal 1: Ollama
+```powershell
+ollama serve
 ```
-MindRush/
-├── public/                     # Active client-side web application (Firebase Hosting root)
-│   ├── index.html              # Landing / entry page
-│   ├── dashboard.html          # Main game hub, profile, leaderboard & achievements
-│   ├── game.html               # Configurable shared game engine (Easy, Medium, Hard)
-│   ├── game-easy.html          # Legacy Easy difficulty canvas (preserved)
-│   ├── game-medium.html        # Legacy Medium difficulty canvas (preserved)
-│   ├── game-hard.html          # Legacy Hard difficulty canvas (preserved)
-│   ├── login.html              # Authentication sign-in page
-│   ├── register.html           # Account registration page
-│   ├── forgot-password.html    # Password recovery page
-│   ├── about.html              # About page & project origins
-│   ├── credits.html            # Credits and team acknowledgments
-│   ├── terms.html              # Terms and conditions
-│   ├── contact.html            # Contact support page
-│   │
-│   ├── assets/
-│   │   ├── images/             # Game UI images and sprites
-│   │   │   └── balls/          # Collectible sprite assets
-│   │   └── audio/              # Sound effects and soundtrack
-│   │
-│   ├── css/
-│   │   ├── main.css            # Global application stylesheet and tokens
-│   │   └── game.css            # HUD and shared game layout styles
-│   │
-│   └── js/
-│       ├── app.js              # Application entry point
-│       └── game/               # Modular game engine
-│           ├── engine.js       # Main game loop orchestration
-│           ├── difficulty.js   # Difficulty configurations, rules & badge pools
-│           ├── objects.js      # Procedural badge rendering, glows & spawner
-│           ├── collision.js    # Collision detection & resolution
-│           ├── paddle.js       # Player paddle physics & bounds
-│           ├── state.js        # Score, lives, achievements & game lifecycle
-│           ├── audio.js        # Web Audio API sound management
-│           ├── input.js        # Mouse & keyboard controls
-│           └── ui.js           # Responsive canvas HUD & overlays
-│
-├── tests/                      # Automated test suites for difficulty & physics
-├── legacy/                     # Archived original Skyfall implementation (reference only)
-│   ├── php/                    # Original PHP authentication and MySQL endpoints
-│   └── python/                 # Original desktop OpenCV / cvzone gesture tracking
-│
-├── database/
-│   └── project.sql             # Original MySQL database schema and initial data
-│
-├── docs/                       # Project documentation, reviews, and architecture diagrams
-│
-├── firebase.json               # Firebase Hosting configuration
-├── .firebaserc                 # Firebase project configuration
-├── .gitignore                  # Git ignore rules
-└── README.md                   # Project documentation
+
+### Terminal 2: Python AI Microservice
+```powershell
+$env:PYTHONPATH="MindRush-AI"
+.\MindRush-AI\.venv\Scripts\uvicorn ai_service.app:app --host 127.0.0.1 --port 5050
+```
+
+### Terminal 3: Node.js Express Server
+```powershell
+node server.js
 ```
 
 ---
 
-## Architecture & Migration Roadmap
+## 5. Key URLs
 
-The application is being migrated from a legacy PHP + XAMPP + Local Python desktop prototype to a modern web platform:
-
-1. **Hosting**: Firebase Hosting
-2. **Authentication**: Firebase Authentication (Email/Password, Google Sign-In)
-3. **Database**: Cloud Firestore (Realtime high scores, achievements, user profiles)
-4. **Gesture Tracking**: MediaPipe Hands via in-browser WebCam (zero local Python/OpenCV installs required)
-5. **Game Engine**: Modular ES6 + p5.js physics, procedural badge rendering & sound effects
-
----
-
-## Legacy Reference
-
-The original desktop prototype files are safely preserved under `legacy/` for reference and verification:
-- `legacy/php/`: Legacy session handling, MySQL database queries, and PHPMailer workflows.
-- `legacy/python/`: Legacy Python 3 script using `cvzone.HandTrackingModule` and `pyautogui` for desktop input control.
-- `database/project.sql`: Original relational table schemas for users, scores, and achievements.
+- **Game Home:** `http://localhost:3000`
+- **Cadet Login:** `http://localhost:3000/login`
+- **Admin Flight Deck:** `http://localhost:3000/admin/index.html`
+- **Question Generation Console:** `http://localhost:3000/admin/generate.html`
+- **Human Review Queue:** `http://localhost:3000/admin/review.html`
+- **Publication Manager:** `http://localhost:3000/admin/publish.html`
+- **AI Microservice Health:** `http://127.0.0.1:5050/health`
 
 ---
 
-Enjoy playing MindRush!
+## 6. Running Test Suites
+
+```powershell
+# Python AI Subsystem Tests (34 tests)
+.\MindRush-AI\.venv\Scripts\pytest MindRush-AI/tests/
+
+# Node.js Integration & Regression Suites (27 test suites)
+node --test tests/test_foundation_milestone.mjs tests/test_admin_provisioning.mjs tests/test_generation_batch.mjs tests/test_validation_pipeline.mjs tests/test_review_workflow.mjs tests/test_educational_engine_adapter.mjs tests/test_publication_atomicity.mjs tests/test_dashboard_audit.mjs
+```
+
+---
+
+## 7. Documentation Index
+
+- [docs/ARCHITECTURE.md](file:///d:/MindRush/docs/ARCHITECTURE.md) — Detailed architecture, data flows, and service boundaries.
+- [docs/DEVELOPMENT_SETUP.md](file:///d:/MindRush/docs/DEVELOPMENT_SETUP.md) — Fresh machine setup and troubleshooting guide.
+- [docs/SECURITY_AUDIT.md](file:///d:/MindRush/docs/SECURITY_AUDIT.md) — Security audit findings, sanitization, and upload readiness.
+- [docs/API_REFERENCE.md](file:///d:/MindRush/docs/API_REFERENCE.md) — Complete endpoint documentation.
+- [docs/DATABASE_SCHEMA.md](file:///d:/MindRush/docs/DATABASE_SCHEMA.md) — MongoDB schemas, models, and dual-store patterns.
+- [docs/AI_QUESTION_GENERATION.md](file:///d:/MindRush/docs/AI_QUESTION_GENERATION.md) — Detailed question generation and validation pipeline guide.
+- [docs/ANTIGRAVITY_GUIDE.md](file:///d:/MindRush/docs/ANTIGRAVITY_GUIDE.md) — Collaboration guide for Google Antigravity IDE users.
+- [docs/KNOWN_ISSUES.md](file:///d:/MindRush/docs/KNOWN_ISSUES.md) — Active limitations and technical register.
+- [CONTRIBUTING.md](file:///d:/MindRush/CONTRIBUTING.md) — Developer guidelines and pull request instructions.

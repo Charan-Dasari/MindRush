@@ -41,6 +41,19 @@ ui-debug.log*
 *.sql
 database/*.sql
 
-# Scratch & Temporary Testing
+# Scratch, Temporary & Local Backup Dumps
 scratch/
 test_*.tmp
+*.tmp
+*.bak
+backup org/
+all updated files*.txt
+MindRush_AI_V1_Master_Prompt_for_Planning.txt
+
+# Local AI Models & Inference Artifacts (Ollama models stored locally, never committed)
+*.gguf
+*.bin
+models/
+.ollama/
+MindRush-AI/dataset/**/*.pdf
+!MindRush-AI/dataset/README.md

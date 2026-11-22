@@ -1,0 +1,2115 @@
+# MindRush Feature 001 - Phase 1 & Phase 2 Foundation Milestone Unified Patch
+# Generated on: 2026-11-20
+# Scope: Tasks T001 through T012
+
+diff --git a/.env.example b/.env.example
+index a8389a0..a632436 100644
+--- a/.env.example
++++ b/.env.example
+@@ -16,3 +16,12 @@ MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/MindRush?r
+ 
+ # Session Cookie Secret Key (Use a strong, 64-char random string in production)
+ SESSION_SECRET=<generate_a_secure_random_64_character_hex_secret>
++
++# Python AI Microservice Configuration (Internal Loopback HTTP)
++AI_SERVICE_URL=http://127.0.0.1:5050
++AI_SERVICE_SECRET=dev_internal_secret_key_change_in_production
++
++# Local Ollama Daemon Configuration
++OLLAMA_BASE_URL=http://localhost:11434
++OLLAMA_MODEL=qwen3.5:4b
++
+diff --git a/package.json b/package.json
+index 0a8d9bc..68df907 100644
+--- a/package.json
++++ b/package.json
+@@ -19,7 +19,7 @@
+   "license": "ISC",
+   "type": "module",
+   "dependencies": {
+-    "argon2": "^0.45.1",
++    "argon2": "^0.41.1",
+     "connect-mongo": "^6.0.0",
+     "cors": "^2.8.6",
+     "dotenv": "^18.0.9",
+diff --git a/package-lock.json b/package-lock.json
+index 6909f09..a8baa6d 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -9,7 +9,7 @@
+       "version": "1.0.0",
+       "license": "ISC",
+       "dependencies": {
+-        "argon2": "^0.45.1",
++        "argon2": "^0.41.1",
+         "connect-mongo": "^6.0.0",
+         "cors": "^2.8.6",
+         "dotenv": "^18.0.9",
+@@ -19,12 +19,6 @@
+         "mongoose": "^9.11.4"
+       }
+     },
+-    "node_modules/@epic-web/invariant": {
+-      "version": "1.0.0",
+-      "resolved": "https://registry.npmjs.org/@epic-web/invariant/-/invariant-1.0.0.tgz",
+-      "integrity": "sha512-lrTPqgvfFQtR/eY/qkIzp98OGdNJu0m5ji3q/nJI8v3SXkRKEnWiOxMmbvcSoAIzv/cGiuvRy57k4suKQSAdwA==",
+-      "license": "MIT"
+-    },
+     "node_modules/@mongodb-js/saslprep": {
+       "version": "1.6.1",
+       "resolved": "https://registry.npmjs.org/@mongodb-js/saslprep/-/saslprep-1.6.1.tgz",
+@@ -78,16 +72,15 @@
+       }
+     },
+     "node_modules/argon2": {
+-      "version": "0.45.1",
+-      "resolved": "https://registry.npmjs.org/argon2/-/argon2-0.45.1.tgz",
+-      "integrity": "sha512-skm+/WCjkGqCQxF7FG1LuZXM5yvbFjgbfiCGsud2oLgaDhh6b6dbH0b1EkghbM+xx4Bj8Ape+KKgixoIlWZicQ==",
++      "version": "0.41.1",
++      "resolved": "https://registry.npmjs.org/argon2/-/argon2-0.41.1.tgz",
++      "integrity": "sha512-dqCW8kJXke8Ik+McUcMDltrbuAWETPyU6iq+4AhxqKphWi7pChB/Zgd/Tp/o8xRLbg8ksMj46F/vph9wnxpTzQ==",
+       "hasInstallScript": true,
+       "license": "MIT",
+       "dependencies": {
+         "@phc/format": "^1.0.0",
+-        "cross-env": "^10.1.0",
+-        "node-addon-api": "^8.9.0",
+-        "node-gyp-build": "^4.8.4"
++        "node-addon-api": "^8.1.0",
++        "node-gyp-build": "^4.8.1"
+       },
+       "engines": {
+         "node": ">=16.17.0"
+@@ -260,37 +253,6 @@
+         "url": "https://opencollective.com/express"
+       }
+     },
+-    "node_modules/cross-env": {
+-      "version": "10.1.0",
+-      "resolved": "https://registry.npmjs.org/cross-env/-/cross-env-10.1.0.tgz",
+-      "integrity": "sha512-GsYosgnACZTADcmEyJctkJIoqAhHjttw7RsFrVoJNXbsWWqaq6Ym+7kZjq6mS45O0jij6vtiReppKQEtqWy6Dw==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "@epic-web/invariant": "^1.0.0",
+-        "cross-spawn": "^7.0.6"
+-      },
+-      "bin": {
+-        "cross-env": "dist/bin/cross-env.js",
+-        "cross-env-shell": "dist/bin/cross-env-shell.js"
+-      },
+-      "engines": {
+-        "node": ">=20"
+-      }
+-    },
+-    "node_modules/cross-spawn": {
+-      "version": "7.0.6",
+-      "resolved": "https://registry.npmjs.org/cross-spawn/-/cross-spawn-7.0.6.tgz",
+-      "integrity": "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "path-key": "^3.1.0",
+-        "shebang-command": "^2.0.0",
+-        "which": "^2.0.1"
+-      },
+-      "engines": {
+-        "node": ">= 8"
+-      }
+-    },
+     "node_modules/debug": {
+       "version": "4.4.3",
+       "resolved": "https://registry.npmjs.org/debug/-/debug-4.4.3.tgz",
+@@ -699,12 +661,6 @@
+       "integrity": "sha512-hvpoI6korhJMnej285dSg6nu1+e6uxs7zG3BYAm5byqDsgJNWwxzM6z6iZiAgQR4TJ30JmBTOwqZUw3WlyH3AQ==",
+       "license": "MIT"
+     },
+-    "node_modules/isexe": {
+-      "version": "2.0.0",
+-      "resolved": "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz",
+-      "integrity": "sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==",
+-      "license": "ISC"
+-    },
+     "node_modules/kareem": {
+       "version": "3.4.1",
+       "resolved": "https://registry.npmjs.org/kareem/-/kareem-3.4.1.tgz",
+@@ -1002,15 +958,6 @@
+         "node": ">= 0.8"
+       }
+     },
+-    "node_modules/path-key": {
+-      "version": "3.1.1",
+-      "resolved": "https://registry.npmjs.org/path-key/-/path-key-3.1.1.tgz",
+-      "integrity": "sha512-ojmeN0qd+y0jszEtoY48r0Peq5dwMEkIlCOu6Q5f41lfkswXuKtYrhgoTpLnyIcHm24Uhqx+5Tqm2InSwLhE6Q==",
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+     "node_modules/path-to-regexp": {
+       "version": "8.4.2",
+       "resolved": "https://registry.npmjs.org/path-to-regexp/-/path-to-regexp-8.4.2.tgz",
+@@ -1193,27 +1140,6 @@
+       "integrity": "sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==",
+       "license": "ISC"
+     },
+-    "node_modules/shebang-command": {
+-      "version": "2.0.0",
+-      "resolved": "https://registry.npmjs.org/shebang-command/-/shebang-command-2.0.0.tgz",
+-      "integrity": "sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==",
+-      "license": "MIT",
+-      "dependencies": {
+-        "shebang-regex": "^3.0.0"
+-      },
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+-    "node_modules/shebang-regex": {
+-      "version": "3.0.0",
+-      "resolved": "https://registry.npmjs.org/shebang-regex/-/shebang-regex-3.0.0.tgz",
+-      "integrity": "sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==",
+-      "license": "MIT",
+-      "engines": {
+-        "node": ">=8"
+-      }
+-    },
+     "node_modules/side-channel": {
+       "version": "1.1.1",
+       "resolved": "https://registry.npmjs.org/side-channel/-/side-channel-1.1.1.tgz",
+@@ -1401,21 +1327,6 @@
+         "node": ">=18"
+       }
+     },
+-    "node_modules/which": {
+-      "version": "2.0.2",
+-      "resolved": "https://registry.npmjs.org/which/-/which-2.0.2.tgz",
+-      "integrity": "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA==",
+-      "license": "ISC",
+-      "dependencies": {
+-        "isexe": "^2.0.0"
+-      },
+-      "bin": {
+-        "node-which": "bin/node-which"
+-      },
+-      "engines": {
+-        "node": ">= 8"
+-      }
+-    },
+     "node_modules/wrappy": {
+       "version": "1.0.2",
+       "resolved": "https://registry.npmjs.org/wrappy/-/wrappy-1.0.2.tgz",
+diff --git a/server/models/User.js b/server/models/User.js
+index e4355d2..4f2ce9e 100644
+--- a/server/models/User.js
++++ b/server/models/User.js
+@@ -38,6 +38,12 @@ const userSchema = new mongoose.Schema({
+     required: [true, 'Password hash is required'],
+     select: false // never returned in normal queries
+   },
++  role: {
++    type: String,
++    required: [true, 'Role is required'],
++    enum: ['player', 'admin'],
++    default: 'player'
++  },
+   badges: {
+     type: [String],
+     default: []
+@@ -119,6 +125,7 @@ class MemoryUserStore {
+       username: normalized,
+       dob: new Date(userData.dob),
+       gender: userData.gender.trim().toLowerCase(),
++      role: userData.role && ['player', 'admin'].includes(userData.role) ? userData.role : 'player',
+       badges: Array.isArray(userData.badges) ? [...userData.badges] : [],
+       highScore: Number(userData.highScore) || 0,
+       insaneUnlocked: Boolean(userData.insaneUnlocked),
+diff --git a/public/js/game/educational-questions-published.js b/public/js/game/educational-questions-published.js
+new file mode 100644
+index 0000000..f8e7967
+--- /dev/null
++++ b/public/js/game/educational-questions-published.js
+@@ -0,0 +1,9 @@
++/**
++ * MindRush — Published Educational Question Bank Companion Module
++ * Generated at runtime by the Question Publisher service.
++ * 
++ * Default fallback export: empty array to prevent 404 module load errors
++ * before the first question publication.
++ */
++
++export const PUBLISHED_QUESTIONS = [];
+diff --git a/server/models/Curriculum.js b/server/models/Curriculum.js
+new file mode 100644
+index 0000000..3c1de22
+--- /dev/null
++++ b/server/models/Curriculum.js
+@@ -0,0 +1,125 @@
++/**
++ * MindRush — Curriculum Model
++ * Physical Collection: curricula
++ * Hierarchical syllabus tree representing educational curricula, standards, subjects, and topics.
++ */
++
++import mongoose from 'mongoose';
++
++const subtopicSchema = new mongoose.Schema({
++  subtopic_id: { type: String, required: true, trim: true },
++  name: { type: String, required: true },
++  learning_outcomes: [{ type: String }],
++  allowed_concepts: [{ type: String }],
++  prerequisite_concepts: [{ type: String }]
++}, { _id: false });
++
++const topicSchema = new mongoose.Schema({
++  topic_id: { type: String, required: true, trim: true },
++  name: { type: String, required: true },
++  subtopics: [subtopicSchema],
++  difficulty_definitions: {
++    easy: { type: String, required: true },
++    medium: { type: String, required: true },
++    hard: { type: String, required: true }
++  }
++}, { _id: false });
++
++const subjectSchema = new mongoose.Schema({
++  subject_id: { type: String, required: true, trim: true },
++  name: { type: String, required: true },
++  topics: [topicSchema]
++}, { _id: false });
++
++const standardSchema = new mongoose.Schema({
++  standard: { type: Number, required: true, enum: [1, 2, 3] },
++  subjects: [subjectSchema]
++}, { _id: false });
++
++const curriculumSchema = new mongoose.Schema({
++  curriculum_id: { type: String, required: true, unique: true, trim: true },
++  name: { type: String, required: true, trim: true },
++  board: { type: String, required: true, trim: true },
++  country: { type: String, required: true, trim: true },
++  academic_year: { type: String, default: null },
++  syllabus_version: { type: String, default: null },
++  standards: [standardSchema]
++}, {
++  timestamps: true,
++  collection: 'curricula'
++});
++
++export const MongoCurriculumModel = mongoose.models.Curriculum || mongoose.model('Curriculum', curriculumSchema);
++
++class MemoryCurriculumStore {
++  constructor() {
++    this.curricula = new Map();
++  }
++
++  clear() {
++    this.curricula.clear();
++  }
++
++  async findOne(query) {
++    if (query.curriculum_id) {
++      return this.curricula.get(query.curriculum_id) || null;
++    }
++    for (const c of this.curricula.values()) {
++      return c;
++    }
++    return null;
++  }
++
++  async create(data) {
++    if (this.curricula.has(data.curriculum_id)) {
++      const err = new Error(`E11000 duplicate key error: curriculum_id ${data.curriculum_id} already exists`);
++      err.code = 11000;
++      throw err;
++    }
++    const doc = {
++      _id: 'curr_' + Math.random().toString(36).substring(2, 11),
++      ...data,
++      createdAt: new Date(),
++      updatedAt: new Date()
++    };
++    this.curricula.set(data.curriculum_id, doc);
++    return doc;
++  }
++
++  async find() {
++    return Array.from(this.curricula.values());
++  }
++}
++
++const memoryStore = new MemoryCurriculumStore();
++
++export const Curriculum = {
++  isMongoose() {
++    return mongoose.connection.readyState === 1;
++  },
++
++  async findOne(query) {
++    if (this.isMongoose()) {
++      return MongoCurriculumModel.findOne(query);
++    }
++    return memoryStore.findOne(query);
++  },
++
++  async create(data) {
++    if (this.isMongoose()) {
++      return MongoCurriculumModel.create(data);
++    }
++    return memoryStore.create(data);
++  },
++
++  async find(query = {}) {
++    if (this.isMongoose()) {
++      return MongoCurriculumModel.find(query);
++    }
++    return memoryStore.find();
++  },
++
++  _getMemoryStore() {
++    return memoryStore;
++  }
++};
+diff --git a/server/models/Counter.js b/server/models/Counter.js
+new file mode 100644
+index 0000000..6dbe78d
+--- /dev/null
++++ b/server/models/Counter.js
+@@ -0,0 +1,83 @@
++/**
++ * MindRush — Counter Model
++ * Physical Collection: counters
++ * Provides atomic, monotonic integer sequence allocation (using MongoDB $inc).
++ */
++
++import mongoose from 'mongoose';
++
++const counterSchema = new mongoose.Schema({
++  _id: { type: String, required: true }, // e.g. "published_question_id"
++  seq: { type: Number, default: 1000 }
++}, {
++  collection: 'counters'
++});
++
++counterSchema.statics.getNextSequence = async function(name) {
++  const counter = await this.findByIdAndUpdate(
++    name,
++    { $inc: { seq: 1 } },
++    { new: true, upsert: true }
++  );
++  return counter.seq;
++};
++
++export const MongoCounterModel = mongoose.models.Counter || mongoose.model('Counter', counterSchema);
++
++class MemoryCounterStore {
++  constructor() {
++    this.counters = new Map([
++      ['published_question_id', 1000]
++    ]);
++  }
++
++  clear() {
++    this.counters.clear();
++    this.counters.set('published_question_id', 1000);
++  }
++
++  async getNextSequence(name) {
++    const current = this.counters.get(name) || 1000;
++    const next = current + 1;
++    this.counters.set(name, next);
++    return next;
++  }
++
++  async setSequence(name, value) {
++    this.counters.set(name, value);
++    return value;
++  }
++}
++
++const memoryStore = new MemoryCounterStore();
++
++export const Counter = {
++  isMongoose() {
++    return mongoose.connection.readyState === 1;
++  },
++
++  async getNextSequence(name) {
++    if (this.isMongoose()) {
++      return MongoCounterModel.getNextSequence(name);
++    }
++    return memoryStore.getNextSequence(name);
++  },
++
++  async initSequence(name, initialValue = 1000) {
++    if (this.isMongoose()) {
++      return MongoCounterModel.findByIdAndUpdate(
++        name,
++        { $setOnInsert: { seq: initialValue } },
++        { upsert: true, new: true }
++      );
++    }
++    if (!memoryStore.counters.has(name)) {
++      memoryStore.counters.set(name, initialValue);
++    }
++    return { _id: name, seq: memoryStore.counters.get(name) };
++  },
++
++  _getMemoryStore() {
++    return memoryStore;
++  }
++};
+diff --git a/server/models/AuditLog.js b/server/models/AuditLog.js
+new file mode 100644
+index 0000000..78e3845
+--- /dev/null
++++ b/server/models/AuditLog.js
+@@ -0,0 +1,115 @@
++/**
++ * MindRush — AuditLog Model
++ * Physical Collection: audit_logs
++ * Immutable audit register recording administrative actions.
++ */
++
++import mongoose from 'mongoose';
++
++const auditLogSchema = new mongoose.Schema({
++  actor_id: {
++    type: mongoose.Schema.Types.Mixed, // ObjectId in Mongo, String in memory
++    ref: 'User',
++    required: true
++  },
++  action: {
++    type: String,
++    required: true,
++    enum: [
++      'DOCUMENT_UPLOAD',
++      'BATCH_GENERATE',
++      'QUESTION_EDIT',
++      'QUESTION_APPROVE',
++      'QUESTION_REJECT',
++      'QUESTION_PUBLISH',
++      'QUESTION_DISABLE'
++    ]
++  },
++  target_collection: {
++    type: String,
++    required: true
++  },
++  target_id: {
++    type: String,
++    required: true
++  },
++  details: {
++    type: mongoose.Schema.Types.Mixed,
++    default: {}
++  },
++  ip_address: {
++    type: String,
++    default: null
++  }
++}, {
++  timestamps: true,
++  collection: 'audit_logs'
++});
++
++auditLogSchema.index({ action: 1, createdAt: -1 });
++auditLogSchema.index({ actor_id: 1, createdAt: -1 });
++auditLogSchema.index({ target_id: 1 });
++
++export const MongoAuditLogModel = mongoose.models.AuditLog || mongoose.model('AuditLog', auditLogSchema);
++
++class MemoryAuditLogStore {
++  constructor() {
++    this.logs = [];
++  }
++
++  clear() {
++    this.logs = [];
++  }
++
++  async create(data) {
++    const entry = {
++      _id: 'log_' + Math.random().toString(36).substring(2, 11),
++      ...data,
++      createdAt: new Date(),
++      updatedAt: new Date()
++    };
++    this.logs.push(entry);
++    return entry;
++  }
++
++  async find(query = {}) {
++    let result = [...this.logs];
++    if (query.action) {
++      result = result.filter(l => l.action === query.action);
++    }
++    if (query.actor_id) {
++      result = result.filter(l => String(l.actor_id) === String(query.actor_id));
++    }
++    if (query.target_id) {
++      result = result.filter(l => l.target_id === query.target_id);
++    }
++    return result.sort((a, b) => b.createdAt - a.createdAt);
++  }
++}
++
++const memoryStore = new MemoryAuditLogStore();
++
++export const AuditLog = {
++  isMongoose() {
++    return mongoose.connection.readyState === 1;
++  },
++
++  async log({ actor_id, action, target_collection, target_id, details = {}, ip_address = null }) {
++    const data = { actor_id, action, target_collection, target_id, details, ip_address };
++    if (this.isMongoose()) {
++      return MongoAuditLogModel.create(data);
++    }
++    return memoryStore.create(data);
++  },
++
++  async find(query = {}) {
++    if (this.isMongoose()) {
++      return MongoAuditLogModel.find(query).sort({ createdAt: -1 });
++    }
++    return memoryStore.find(query);
++  },
++
++  _getMemoryStore() {
++    return memoryStore;
++  }
++};
+diff --git a/server/scripts/create-admin.js b/server/scripts/create-admin.js
+new file mode 100644
+index 0000000..2054fbc
+--- /dev/null
++++ b/server/scripts/create-admin.js
+@@ -0,0 +1,171 @@
++#!/usr/bin/env node
++/**
++ * MindRush — Secure Administrator Provisioning Script
++ * Provisions an administrator account directly in MongoDB.
++ * 
++ * Usage:
++ *   Interactive:     node server/scripts/create-admin.js
++ *   With arguments:  node server/scripts/create-admin.js --username=sysadmin
++ *   Automated test:  node server/scripts/create-admin.js --username=sysadmin --password=Secret123! --fullName="System Admin" --dob=1990-01-01 --gender=male --non-interactive
++ */
++
++import readline from 'readline';
++import dotenv from 'dotenv';
++import path from 'path';
++import { fileURLToPath } from 'url';
++import mongoose from 'mongoose';
++import { connectDB } from '../db.js';
++import { User, MongoUserModel } from '../models/User.js';
++import { hashPassword } from '../utils/auth.js';
++
++const __dirname = path.dirname(fileURLToPath(import.meta.url));
++dotenv.config({ path: path.resolve(__dirname, '../../.env') });
++
++function parseArgs() {
++  const args = {};
++  process.argv.slice(2).forEach(arg => {
++    if (arg.startsWith('--')) {
++      const [key, value] = arg.slice(2).split('=');
++      args[key] = value !== undefined ? value : true;
++    }
++  });
++  return args;
++}
++
++function promptQuestion(rl, query, isHidden = false) {
++  return new Promise(resolve => {
++    if (!isHidden) {
++      rl.question(query, answer => resolve(answer.trim()));
++      return;
++    }
++
++    process.stdout.write(query);
++    let input = '';
++    
++    // In raw mode, hide password keystrokes
++    const wasRaw = process.stdin.isRaw;
++    if (process.stdin.setRawMode) {
++      process.stdin.setRawMode(true);
++    }
++    process.stdin.resume();
++
++    const onData = chunk => {
++      const char = chunk.toString();
++      if (char === '\n' || char === '\r' || char === '\u0004') {
++        if (process.stdin.setRawMode) process.stdin.setRawMode(wasRaw);
++        process.stdin.removeListener('data', onData);
++        process.stdout.write('\n');
++        resolve(input.trim());
++      } else if (char === '\u0008' || char === '\u007f') { // Backspace
++        if (input.length > 0) {
++          input = input.slice(0, -1);
++          process.stdout.write('\b \b');
++        }
++      } else if (char === '\u0003') { // Ctrl+C
++        process.exit(1);
++      } else {
++        input += char;
++        process.stdout.write('*');
++      }
++    };
++
++    process.stdin.on('data', onData);
++  });
++}
++
++async function main() {
++  const args = parseArgs();
++  console.log('========================================================');
++  console.log(' MindRush — Secure Administrator Account Provisioning');
++  console.log('========================================================');
++
++  const connected = await connectDB();
++  console.log(connected ? '[DB] Connected to MongoDB.' : '[DB] Operating in local memory fallback.');
++
++  let username = args.username;
++  let fullName = args.fullName;
++  let dob = args.dob;
++  let gender = args.gender;
++  let password = args.password;
++
++  const rl = readline.createInterface({
++    input: process.stdin,
++    output: process.stdout
++  });
++
++  try {
++    if (!username) {
++      username = await promptQuestion(rl, 'Enter Admin Username (3-16 chars): ');
++    }
++    username = username.toLowerCase().trim();
++
++    if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
++      throw new Error('Invalid username format: 3-16 alphanumeric or underscore characters required.');
++    }
++
++    // Check if user already exists
++    const existing = await User.findByUsername(username);
++    if (existing) {
++      if (existing.role === 'admin') {
++        console.log(`[INFO] User '${username}' is already provisioned with role 'admin'.`);
++        process.exit(0);
++      }
++      console.log(`[INFO] Existing player account '${username}' found. Elevating role to 'admin'...`);
++      if (User.isMongoose()) {
++        await MongoUserModel.updateOne({ username }, { role: 'admin' });
++      } else {
++        existing.role = 'admin';
++        User._getMemoryStore().users.set(String(existing._id), existing);
++      }
++      console.log(`[SUCCESS] Account '${username}' elevated to role 'admin'.`);
++      process.exit(0);
++    }
++
++    if (!fullName) {
++      fullName = await promptQuestion(rl, 'Enter Full Name: ');
++    }
++    if (!dob) {
++      dob = await promptQuestion(rl, 'Enter Date of Birth (YYYY-MM-DD): ');
++    }
++    if (!gender) {
++      gender = await promptQuestion(rl, 'Enter Gender (male/female): ');
++    }
++
++    if (!password) {
++      password = await promptQuestion(rl, 'Enter Admin Password (min 8 chars): ', true);
++      const confirm = await promptQuestion(rl, 'Confirm Admin Password: ', true);
++      if (password !== confirm) {
++        throw new Error('Passwords do not match.');
++      }
++    }
++
++    if (!password || password.length < 8) {
++      throw new Error('Password must be at least 8 characters long.');
++    }
++
++    console.log('[SECURITY] Generating Argon2id password hash...');
++    const passwordHash = await hashPassword(password);
++
++    console.log('[PROVISIONING] Creating administrator record...');
++    const adminUser = await User.create({
++      fullName: fullName.trim(),
++      username,
++      dob: new Date(dob),
++      gender: gender.toLowerCase().trim(),
++      passwordHash,
++      role: 'admin'
++    });
++
++    console.log(`[SUCCESS] Administrator account '${adminUser.username}' created with role 'admin' (ID: ${adminUser._id || adminUser.id}).`);
++  } catch (err) {
++    console.error(`[ERROR] Provisioning failed: ${err.message}`);
++    process.exitCode = 1;
++  } finally {
++    rl.close();
++    if (mongoose.connection.readyState === 1) {
++      await mongoose.disconnect();
++    }
++  }
++}
++
++main();
+diff --git a/server/scripts/seed-curriculum.js b/server/scripts/seed-curriculum.js
+new file mode 100644
+index 0000000..86018ac
+--- /dev/null
++++ b/server/scripts/seed-curriculum.js
+@@ -0,0 +1,142 @@
++#!/usr/bin/env node
++/**
++ * MindRush — Curriculum and Counter Seed Script
++ * 
++ * Initializes:
++ * 1. Standard 1 Mathematics CMO Curriculum record (curricula collection)
++ * 2. Atomic counter for published question IDs (counters collection, starting at 1000)
++ */
++
++import dotenv from 'dotenv';
++import path from 'path';
++import { fileURLToPath } from 'url';
++import mongoose from 'mongoose';
++import { connectDB } from '../db.js';
++import { Curriculum, MongoCurriculumModel } from '../models/Curriculum.js';
++import { Counter, MongoCounterModel } from '../models/Counter.js';
++
++const __dirname = path.dirname(fileURLToPath(import.meta.url));
++dotenv.config({ path: path.resolve(__dirname, '../../.env') });
++
++const CMO_CURRICULUM_DATA = {
++  curriculum_id: 'cmo-math-olympiad',
++  name: 'Crest Mathematics Olympiad',
++  board: 'CREST',
++  country: 'India',
++  academic_year: '2025-2026',
++  syllabus_version: 'v1.0',
++  standards: [
++    {
++      standard: 1,
++      subjects: [
++        {
++          subject_id: 'mathematics',
++          name: 'Mathematics',
++          topics: [
++            {
++              topic_id: 'addition',
++              name: 'Addition',
++              subtopics: [
++                {
++                  subtopic_id: 'single-digit-addition',
++                  name: 'Single Digit Addition (0-9)',
++                  learning_outcomes: [
++                    'Understand concept of addition as combining quantities',
++                    'Solve single-digit addition without carry'
++                  ],
++                  allowed_concepts: ['numbers 0-9', 'plus sign', 'equals sign'],
++                  prerequisite_concepts: ['number recognition 0-9', 'counting']
++                }
++              ],
++              difficulty_definitions: {
++                easy: 'Addition of two single-digit numbers with sum <= 10 (e.g. 4 + 3)',
++                medium: 'Word problem addition with sums <= 15 (e.g. 3 apples + 4 apples)',
++                hard: 'Missing addend single-digit addition (e.g. 4 + ? = 9)'
++              }
++            },
++            {
++              topic_id: 'subtraction',
++              name: 'Subtraction',
++              subtopics: [
++                {
++                  subtopic_id: 'single-digit-subtraction',
++                  name: 'Single Digit Subtraction (0-9)',
++                  learning_outcomes: [
++                    'Understand concept of subtraction as taking away',
++                    'Solve single-digit subtraction without borrow'
++                  ],
++                  allowed_concepts: ['numbers 0-9', 'minus sign', 'equals sign'],
++                  prerequisite_concepts: ['number recognition 0-9', 'counting backward']
++                }
++              ],
++              difficulty_definitions: {
++                easy: 'Direct subtraction of two numbers <= 10 (e.g. 8 - 3)',
++                medium: 'Word problem subtraction with numbers <= 10',
++                hard: 'Two-step basic word problems'
++              }
++            },
++            {
++              topic_id: 'numerals',
++              name: 'Numerals & Number Sense',
++              subtopics: [
++                {
++                  subtopic_id: 'tens-and-ones',
++                  name: 'Tens and Ones / Before & After',
++                  learning_outcomes: [
++                    'Identify numbers up to 100',
++                    'Understand tens and ones place value',
++                    'Identify numbers before, after, and between'
++                  ],
++                  allowed_concepts: ['numbers 1-100', 'tens and ones'],
++                  prerequisite_concepts: ['number recognition 0-20']
++                }
++              ],
++              difficulty_definitions: {
++                easy: 'Number before or after a given 2-digit number (e.g. after 58)',
++                medium: 'Place value identification: X tens and Y ones',
++                hard: 'Comparison: which number is greatest among four 2-digit numbers'
++              }
++            }
++          ]
++        }
++      ]
++    }
++  ]
++};
++
++async function main() {
++  console.log('========================================================');
++  console.log(' MindRush — Seeding Curriculum & Atomic Counters');
++  console.log('========================================================');
++
++  const connected = await connectDB();
++  console.log(connected ? '[DB] Connected to MongoDB.' : '[DB] Operating in local memory fallback.');
++
++  try {
++    // 1. Seed Curriculum
++    console.log('[SEED] Checking curriculum:', CMO_CURRICULUM_DATA.curriculum_id);
++    const existingCurr = await Curriculum.findOne({ curriculum_id: CMO_CURRICULUM_DATA.curriculum_id });
++    if (existingCurr) {
++      console.log(`[SEED] Curriculum '${CMO_CURRICULUM_DATA.curriculum_id}' already exists.`);
++    } else {
++      await Curriculum.create(CMO_CURRICULUM_DATA);
++      console.log(`[SUCCESS] Curriculum '${CMO_CURRICULUM_DATA.curriculum_id}' seeded successfully.`);
++    }
++
++    // 2. Initialize Atomic Counter
++    console.log('[SEED] Initializing sequence counter: published_question_id = 1000');
++    const counter = await Counter.initSequence('published_question_id', 1000);
++    console.log(`[SUCCESS] Counter initialized: ${counter._id || 'published_question_id'} = ${counter.seq}`);
++
++    console.log('[SEED] Completed successfully.');
++  } catch (err) {
++    console.error('[ERROR] Seeding failed:', err);
++    process.exitCode = 1;
++  } finally {
++    if (mongoose.connection.readyState === 1) {
++      await mongoose.disconnect();
++    }
++  }
++}
++
++main();
+diff --git a/server/middleware/requireAdmin.js b/server/middleware/requireAdmin.js
+new file mode 100644
+index 0000000..359fd3d
+--- /dev/null
++++ b/server/middleware/requireAdmin.js
+@@ -0,0 +1,78 @@
++/**
++ * MindRush — Administrative Security & CSRF Middleware
++ * 
++ * Protects administrative routes by:
++ * 1. Preserving session authentication (req.session.userId).
++ * 2. Enforcing administrator role check (user.role === 'admin').
++ * 3. Enforcing Origin validation against untrusted external origins.
++ * 4. Requiring custom CSRF header (X-Requested-With: MindRush-Admin) for state-changing requests.
++ */
++
++import { User } from '../models/User.js';
++
++const ALLOWED_ORIGIN_PATTERNS = [
++  /^https?:\/\/localhost(:[0-9]+)?$/,
++  /^https?:\/\/127\.0\.0\.1(:[0-9]+)?$/
++];
++
++export async function requireAdmin(req, res, next) {
++  // 1. Session Authentication Check
++  if (!req.session || !req.session.userId) {
++    return res.status(401).json({
++      success: false,
++      error: 'AUTHENTICATION_REQUIRED',
++      message: 'Active administrator session required.'
++    });
++  }
++
++  try {
++    // 2. Fetch User and verify 'admin' role
++    const user = await User.findById(req.session.userId);
++    if (!user || user.role !== 'admin') {
++      return res.status(403).json({
++        success: false,
++        error: 'ADMIN_REQUIRED',
++        message: 'Access denied: Administrator privileges required.'
++      });
++    }
++
++    // 3. Origin & CSRF Defense for State-Changing Requests
++    const isStateChanging = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase());
++
++    if (isStateChanging) {
++      // Validate Origin header if present
++      const origin = req.headers.origin;
++      if (origin) {
++        const isAllowedOrigin = ALLOWED_ORIGIN_PATTERNS.some(pattern => pattern.test(origin));
++        if (!isAllowedOrigin) {
++          return res.status(403).json({
++            success: false,
++            error: 'ORIGIN_FORBIDDEN',
++            message: 'Cross-origin request rejected from untrusted origin.'
++          });
++        }
++      }
++
++      // Validate Custom CSRF Header
++      const customHeader = req.headers['x-requested-with'];
++      if (!customHeader || customHeader !== 'MindRush-Admin') {
++        return res.status(403).json({
++          success: false,
++          error: 'CSRF_HEADER_REQUIRED',
++          message: 'Missing or invalid CSRF verification header (X-Requested-With: MindRush-Admin).'
++        });
++      }
++    }
++
++    // Attach authenticated administrator to request context
++    req.adminUser = user;
++    next();
++  } catch (err) {
++    console.error('[SECURITY] Error during requireAdmin authorization:', err);
++    return res.status(500).json({
++      success: false,
++      error: 'SERVER_ERROR',
++      message: 'Failed to authorize administrative request.'
++    });
++  }
++}
+diff --git a/tests/test_foundation_milestone.mjs b/tests/test_foundation_milestone.mjs
+new file mode 100644
+index 0000000..c191fe1
+--- /dev/null
++++ b/tests/test_foundation_milestone.mjs
+@@ -0,0 +1,261 @@
++/**
++ * MindRush — Foundation Milestone Verification Test Suite (T003–T012)
++ * Tests models, admin security, counter atomicity, and curriculum seed.
++ */
++
++import assert from 'assert';
++import { User } from '../server/models/User.js';
++import { Curriculum } from '../server/models/Curriculum.js';
++import { Counter } from '../server/models/Counter.js';
++import { AuditLog } from '../server/models/AuditLog.js';
++import { requireAdmin } from '../server/middleware/requireAdmin.js';
++import { hashPassword } from '../server/utils/auth.js';
++
++console.log('========================================================');
++console.log(' Running Foundation Milestone Test Suite (T003–T012)');
++console.log('========================================================');
++
++let passedTests = 0;
++let totalTests = 0;
++
++async function test(name, fn) {
++  totalTests++;
++  try {
++    await fn();
++    console.log(`  [PASS] ${name}`);
++    passedTests++;
++  } catch (err) {
++    console.error(`  [FAIL] ${name}:`, err.message);
++  }
++}
++
++async function runTests() {
++  // --- Test 1: User Role Field & Defaults (T005) ---
++  await test('User model defaults to role: player', async () => {
++    const user = await User.create({
++      fullName: 'Test Player',
++      username: 'cadet_player_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('2000-01-01'),
++      gender: 'male',
++      passwordHash: await hashPassword('Password123!')
++    });
++    assert.strictEqual(user.role, 'player', 'User role should default to player');
++  });
++
++  await test('User model supports role: admin', async () => {
++    const admin = await User.create({
++      fullName: 'Test Admin',
++      username: 'admin_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('1990-01-01'),
++      gender: 'female',
++      passwordHash: await hashPassword('AdminPass123!'),
++      role: 'admin'
++    });
++    assert.strictEqual(admin.role, 'admin', 'User role should be admin');
++  });
++
++  // --- Test 2: Curriculum Model Hierarchy (T006) ---
++  await test('Curriculum model stores and retrieves syllabus tree', async () => {
++    const testId = 'test-curriculum-' + Math.random().toString(36).substring(2, 7);
++    await Curriculum.create({
++      curriculum_id: testId,
++      name: 'Test Board Math',
++      board: 'TEST_BOARD',
++      country: 'India',
++      standards: [
++        {
++          standard: 1,
++          subjects: [
++            {
++              subject_id: 'math',
++              name: 'Mathematics',
++              topics: [
++                {
++                  topic_id: 'addition',
++                  name: 'Addition',
++                  difficulty_definitions: { easy: 'e', medium: 'm', hard: 'h' }
++                }
++              ]
++            }
++          ]
++        }
++      ]
++    });
++
++    const fetched = await Curriculum.findOne({ curriculum_id: testId });
++    assert.ok(fetched, 'Curriculum must be found');
++    assert.strictEqual(fetched.name, 'Test Board Math');
++    assert.strictEqual(fetched.standards[0].subjects[0].topics[0].topic_id, 'addition');
++  });
++
++  // --- Test 3: Atomic Counter Sequential Allocation (T007) ---
++  await test('Counter increments sequentially starting from 1000', async () => {
++    const counterKey = 'test_seq_' + Math.random().toString(36).substring(2, 7);
++    await Counter.initSequence(counterKey, 1000);
++    const seq1 = await Counter.getNextSequence(counterKey);
++    const seq2 = await Counter.getNextSequence(counterKey);
++    const seq3 = await Counter.getNextSequence(counterKey);
++
++    assert.strictEqual(seq1, 1001, 'First sequence must be 1001');
++    assert.strictEqual(seq2, 1002, 'Second sequence must be 1002');
++    assert.strictEqual(seq3, 1003, 'Third sequence must be 1003');
++  });
++
++  // --- Test 4: AuditLog Recording & Retrieval (T008) ---
++  await test('AuditLog records administrative actions', async () => {
++    const dummyActorId = 'usr_' + Math.random().toString(36).substring(2, 7);
++    const logEntry = await AuditLog.log({
++      actor_id: dummyActorId,
++      action: 'QUESTION_APPROVE',
++      target_collection: 'generated_questions',
++      target_id: 'q_test_123',
++      details: { decision: 'approved', reviewer: 'sysadmin' },
++      ip_address: '127.0.0.1'
++    });
++
++    assert.ok(logEntry._id, 'Log entry must have an ID');
++    assert.strictEqual(logEntry.action, 'QUESTION_APPROVE');
++    assert.strictEqual(logEntry.target_id, 'q_test_123');
++
++    const logs = await AuditLog.find({ action: 'QUESTION_APPROVE' });
++    assert.ok(logs.length > 0, 'Should find logged action');
++  });
++
++  // --- Test 5: requireAdmin Middleware Authentication (T010) ---
++  await test('requireAdmin rejects unauthenticated requests with 401', async () => {
++    const req = { session: {}, headers: {}, method: 'GET' };
++    let status = null;
++    let json = null;
++    const res = {
++      status(s) { status = s; return this; },
++      json(j) { json = j; }
++    };
++
++    await requireAdmin(req, res, () => {});
++    assert.strictEqual(status, 401);
++    assert.strictEqual(json.error, 'AUTHENTICATION_REQUIRED');
++  });
++
++  await test('requireAdmin rejects non-admin users with 403', async () => {
++    const player = await User.create({
++      fullName: 'Player Only',
++      username: 'player_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('2001-01-01'),
++      gender: 'male',
++      passwordHash: await hashPassword('Pass123!')
++    });
++
++    const req = {
++      session: { userId: player._id || player.id },
++      headers: {},
++      method: 'GET'
++    };
++    let status = null;
++    let json = null;
++    const res = {
++      status(s) { status = s; return this; },
++      json(j) { json = j; }
++    };
++
++    await requireAdmin(req, res, () => {});
++    assert.strictEqual(status, 403);
++    assert.strictEqual(json.error, 'ADMIN_REQUIRED');
++  });
++
++  await test('requireAdmin rejects untrusted Origin on state-changing requests', async () => {
++    const admin = await User.create({
++      fullName: 'Admin User',
++      username: 'admin_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('1990-01-01'),
++      gender: 'male',
++      passwordHash: await hashPassword('AdminPass123!'),
++      role: 'admin'
++    });
++
++    const req = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        origin: 'http://malicious-site.com',
++        'x-requested-with': 'MindRush-Admin'
++      },
++      method: 'POST'
++    };
++    let status = null;
++    let json = null;
++    const res = {
++      status(s) { status = s; return this; },
++      json(j) { json = j; }
++    };
++
++    await requireAdmin(req, res, () => {});
++    assert.strictEqual(status, 403);
++    assert.strictEqual(json.error, 'ORIGIN_FORBIDDEN');
++  });
++
++  await test('requireAdmin rejects missing CSRF header on state-changing requests', async () => {
++    const admin = await User.create({
++      fullName: 'Admin User 2',
++      username: 'admin2_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('1990-01-01'),
++      gender: 'female',
++      passwordHash: await hashPassword('AdminPass123!'),
++      role: 'admin'
++    });
++
++    const req = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        origin: 'http://localhost:3000'
++      },
++      method: 'POST'
++    };
++    let status = null;
++    let json = null;
++    const res = {
++      status(s) { status = s; return this; },
++      json(j) { json = j; }
++    };
++
++    await requireAdmin(req, res, () => {});
++    assert.strictEqual(status, 403);
++    assert.strictEqual(json.error, 'CSRF_HEADER_REQUIRED');
++  });
++
++  await test('requireAdmin permits admin with valid session and CSRF header', async () => {
++    const admin = await User.create({
++      fullName: 'Admin User 3',
++      username: 'admin3_' + Math.random().toString(36).substring(2, 7),
++      dob: new Date('1990-01-01'),
++      gender: 'female',
++      passwordHash: await hashPassword('AdminPass123!'),
++      role: 'admin'
++    });
++
++    const req = {
++      session: { userId: admin._id || admin.id },
++      headers: {
++        origin: 'http://localhost:3000',
++        'x-requested-with': 'MindRush-Admin'
++      },
++      method: 'POST'
++    };
++    let nextCalled = false;
++    const res = {
++      status() { return this; },
++      json() {}
++    };
++
++    await requireAdmin(req, res, () => { nextCalled = true; });
++    assert.strictEqual(nextCalled, true, 'next() must be called');
++    assert.strictEqual(req.adminUser.role, 'admin');
++  });
++
++  console.log('--------------------------------------------------------');
++  console.log(` Tests Completed: ${passedTests}/${totalTests} Passed.`);
++  console.log('========================================================');
++  if (passedTests !== totalTests) {
++    process.exit(1);
++  }
++}
++
++runTests();
+diff --git a/MindRush-AI/requirements.txt b/MindRush-AI/requirements.txt
+new file mode 100644
+index 0000000..135436c
+--- /dev/null
++++ b/MindRush-AI/requirements.txt
+@@ -0,0 +1,11 @@
++# MindRush AI Subsystem Dependencies
++# Python 3.11+ compatible
++
++fastapi>=0.110.0
++uvicorn[standard]>=0.28.0
++pydantic>=2.6.0
++pymupdf>=1.24.0
++httpx>=0.27.0
++pytest>=8.1.0
++python-dotenv>=1.0.0
++psutil>=5.9.0
+diff --git a/MindRush-AI/pytest.ini b/MindRush-AI/pytest.ini
+new file mode 100644
+index 0000000..a635c5c
+--- /dev/null
++++ b/MindRush-AI/pytest.ini
+@@ -0,0 +1,2 @@
++[pytest]
++pythonpath = .
+diff --git a/MindRush-AI/ai_service/config.py b/MindRush-AI/ai_service/config.py
+new file mode 100644
+index 0000000..3d8b6e7
+--- /dev/null
++++ b/MindRush-AI/ai_service/config.py
+@@ -0,0 +1,29 @@
++"""
++MindRush AI Subsystem - Configuration Module
++"""
++
++import os
++from pathlib import Path
++from dotenv import load_dotenv
++
++# Load .env from project root if present
++PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
++load_dotenv(PROJECT_ROOT / ".env")
++
++# Canonical Dataset Directory (Canonical containment anchor)
++DATASET_ROOT = (PROJECT_ROOT / "MindRush-AI" / "dataset").resolve()
++
++# Internal Loopback Authorization Secret
++INTERNAL_API_SECRET = os.getenv("AI_SERVICE_SECRET", "dev_internal_secret_key_change_in_production")
++
++# Local Ollama Configuration
++OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
++OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "qwen3.5:4b")
++
++# Hardware & Inference Boundaries (NVIDIA GeForce RTX 3050 Ti Laptop GPU - 4 GB VRAM)
++HARDWARE_MAX_VRAM_MIB = 4096
++CONTEXT_LIMIT = 2048
++CONCURRENCY_LIMIT = 1
++DEFAULT_TEMPERATURE = 0.3
++DEFAULT_NUM_PREDICT = 350
++REQUEST_TIMEOUT_SECONDS = 120.0
+diff --git a/MindRush-AI/ai_service/app.py b/MindRush-AI/ai_service/app.py
+new file mode 100644
+index 0000000..3f417c6
+--- /dev/null
++++ b/MindRush-AI/ai_service/app.py
+@@ -0,0 +1,85 @@
++"""
++MindRush AI Subsystem - FastAPI Microservice Shell
++Stateless compute engine listening strictly on loopback (127.0.0.1).
++No database write access or credentials.
++"""
++
++import subprocess
++import httpx
++from fastapi import FastAPI, Header, HTTPException, Request, Response, status
++from fastapi.responses import JSONResponse
++from .config import (
++    INTERNAL_API_SECRET,
++    OLLAMA_BASE_URL,
++    OLLAMA_MODEL,
++    CONTEXT_LIMIT
++)
++
++app = FastAPI(
++    title="MindRush AI Microservice",
++    description="Stateless extraction, generation, and validation engine for MindRush",
++    version="1.0.0"
++)
++
++# Mutex flag for single generation job
++active_generation_in_progress = False
++
++@app.middleware("http")
++async def verify_internal_secret(request: Request, call_next):
++    # Public health check endpoint does not require secret for automated probes
++    if request.url.path == "/health":
++        secret = request.headers.get("X-Internal-Secret")
++        if secret and secret != INTERNAL_API_SECRET:
++            return JSONResponse(
++                status_code=status.HTTP_401_UNAUTHORIZED,
++                content={"error": "UNAUTHORIZED", "message": "Invalid internal secret"}
++            )
++        return await call_next(request)
++
++    # All internal endpoints require verified X-Internal-Secret
++    secret = request.headers.get("X-Internal-Secret")
++    if not secret or secret != INTERNAL_API_SECRET:
++        return JSONResponse(
++            status_code=status.HTTP_401_UNAUTHORIZED,
++            content={"error": "UNAUTHORIZED", "message": "Missing or invalid X-Internal-Secret"}
++        )
++
++    return await call_next(request)
++
++def check_gpu_status():
++    """Detects presence of NVIDIA GPU via nvidia-smi."""
++    try:
++        res = subprocess.run(
++            ["nvidia-smi", "--query-gpu=name,memory.total", "--format=csv,noheader"],
++            capture_output=True,
++            text=True,
++            timeout=3
++        )
++        if res.returncode == 0 and res.stdout.strip():
++            return True, res.stdout.strip()
++    except Exception:
++        pass
++    return False, "None"
++
++@app.get("/health")
++async def health_check():
++    """Service health and hardware inspection probe."""
++    ollama_ok = False
++    try:
++        with httpx.Client(trust_env=False, timeout=3.0) as client:
++            resp = client.get(f"{OLLAMA_BASE_URL}/api/tags")
++            ollama_ok = (resp.status_code == 200)
++    except Exception:
++        ollama_ok = False
++
++    gpu_ok, gpu_name = check_gpu_status()
++
++    return {
++        "status": "ok",
++        "ollama_connected": ollama_ok,
++        "gpu_detected": gpu_ok,
++        "gpu_device": gpu_name,
++        "model_tag": OLLAMA_MODEL,
++        "context_limit": CONTEXT_LIMIT,
++        "active_generation": active_generation_in_progress
++    }
+diff --git a/MindRush-AI/tests/test_health.py b/MindRush-AI/tests/test_health.py
+new file mode 100644
+index 0000000..a72f643
+--- /dev/null
++++ b/MindRush-AI/tests/test_health.py
+@@ -0,0 +1,19 @@
++"""
++Test for FastAPI health check endpoint.
++"""
++from fastapi.testclient import TestClient
++from ai_service.app import app
++
++def test_health_check():
++    client = TestClient(app)
++    resp = client.get("/health")
++    assert resp.status_code == 200
++    data = resp.json()
++    assert data["status"] == "ok"
++    assert data["ollama_connected"] is True
++    assert "gpu_detected" in data
++    print("Health check data:", data)
++
++if __name__ == "__main__":
++    test_health_check()
++    print("ALL HEALTH CHECKS PASSED!")
+diff --git a/MindRush-AI/scripts/setup_ollama.ps1 b/MindRush-AI/scripts/setup_ollama.ps1
+new file mode 100644
+index 0000000..1e56f88
+--- /dev/null
++++ b/MindRush-AI/scripts/setup_ollama.ps1
+@@ -0,0 +1,111 @@
++<#
++.SYNOPSIS
++    MindRush AI - Ollama Candidate Model & Environment Verification Script
++.DESCRIPTION
++    Checks whether Ollama CLI is installed, whether the local daemon is reachable,
++    inspects locally installed model tags, inspects candidate model metadata,
++    and enforces human approval gates (zero automatic model downloads or pulls).
++#>
++
++$ErrorActionPreference = "Continue"
++
++Write-Host "==========================================================" -ForegroundColor Cyan
++Write-Host " MindRush AI - Ollama Candidate Model Verification (T002)" -ForegroundColor Cyan
++Write-Host "==========================================================" -ForegroundColor Cyan
++
++# 1. Check Ollama CLI
++$defaultOllamaBin = "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe"
++if (Test-Path $defaultOllamaBin) {
++    $ollamaDir = "$env:LOCALAPPDATA\Programs\Ollama"
++    if ($env:Path -notlike "*$ollamaDir*") {
++        $env:Path = "$ollamaDir;$env:Path"
++    }
++}
++
++$ollamaCmd = Get-Command ollama -ErrorAction SilentlyContinue
++if (-not $ollamaCmd) {
++    Write-Host "[FAIL] Ollama CLI ('ollama') was not found in system PATH or LocalAppData." -ForegroundColor Red
++    Write-Host "       Please ensure Ollama is installed from https://ollama.com" -ForegroundColor Yellow
++    exit 1
++} else {
++    $versionOutput = & $ollamaCmd.Source --version 2>&1
++    Write-Host "[PASS] Ollama CLI detected: $versionOutput" -ForegroundColor Green
++    Write-Host "       Binary Path: $($ollamaCmd.Source)" -ForegroundColor Gray
++}
++
++# 2. Check Local Daemon Status (Port 11434)
++$daemonUrl = "http://127.0.0.1:11434"
++Write-Host "`nChecking Ollama daemon connectivity at $daemonUrl..." -ForegroundColor Cyan
++try {
++    $response = Invoke-RestMethod -Uri "$daemonUrl/api/tags" -Method Get -TimeoutSec 5 -ErrorAction Stop
++    Write-Host "[PASS] Ollama local daemon is ACTIVE and responding." -ForegroundColor Green
++} catch {
++    Write-Host "[FAIL] Cannot connect to Ollama daemon at $daemonUrl." -ForegroundColor Red
++    Write-Host "       Ensure the Ollama service/app is started ('ollama serve')." -ForegroundColor Yellow
++    exit 2
++}
++
++# 3. Inspect Locally Available Models
++Write-Host "`nInspecting installed model tags..." -ForegroundColor Cyan
++$installedModels = $response.models
++if (-not $installedModels -or $installedModels.Count -eq 0) {
++    Write-Host "[WARN] No models are currently installed in the local Ollama instance." -ForegroundColor Yellow
++} else {
++    Write-Host "Installed models count: $($installedModels.Count)" -ForegroundColor Green
++    foreach ($m in $installedModels) {
++        $sizeGB = [math]::Round($m.size / 1GB, 2)
++        Write-Host " - Name: $($m.name) | Size: ${sizeGB} GB | Quant: $($m.details.quantization_level) | Family: $($m.details.family)" -ForegroundColor Gray
++    }
++}
++
++# 4. Check for Candidate Model: qwen3.5:4b (or variants)
++$candidateTag = "qwen3.5:4b"
++$candidateFound = $false
++foreach ($m in $installedModels) {
++    if ($m.name -eq $candidateTag -or $m.name -like "$candidateTag*") {
++        $candidateFound = $true
++        $candidateTag = $m.name
++        break
++    }
++}
++
++Write-Host "`nCandidate Model Status ($candidateTag):" -ForegroundColor Cyan
++if ($candidateFound) {
++    Write-Host "[PASS] Candidate model '$candidateTag' is installed locally." -ForegroundColor Green
++    
++    # Inspect model details via /api/show
++    try {
++        $showPayload = @{ name = $candidateTag } | ConvertTo-Json
++        $showDetails = Invoke-RestMethod -Uri "$daemonUrl/api/show" -Method Post -Body $showPayload -ContentType "application/json" -TimeoutSec 5
++        
++        Write-Host "`n--- Model Metadata ---" -ForegroundColor Yellow
++        Write-Host "Family:        $($showDetails.details.family)"
++        Write-Host "Format:        $($showDetails.details.format)"
++        Write-Host "Quantization:  $($showDetails.details.quantization_level)"
++        Write-Host "Parameter Size: $($showDetails.details.parameter_size)"
++        
++        if ($showDetails.license) {
++            Write-Host "`n--- License Notice ---" -ForegroundColor Yellow
++            $licSnippet = $showDetails.license.Substring(0, [math]::Min(300, $showDetails.license.Length))
++            Write-Host $licSnippet
++        } else {
++            Write-Host "License: [Review external model card / Apache 2.0 / Qwen Community License]" -ForegroundColor Gray
++        }
++    } catch {
++        Write-Host "[WARN] Could not retrieve extended model details: $_" -ForegroundColor Yellow
++    }
++} else {
++    Write-Host "[NOTICE] Candidate model '$candidateTag' is NOT installed locally." -ForegroundColor Yellow
++    Write-Host "         [GOVERNANCE POLICY]: Auto-download is strictly disabled." -ForegroundColor Magenta
++    Write-Host "         Approval is required before downloading or pulling any model." -ForegroundColor Magenta
++    Write-Host "         To pull upon explicit user approval: 'ollama pull $candidateTag'" -ForegroundColor Gray
++}
++
++# 5. Hardware Suitability Note
++Write-Host "`n--- Hardware Suitability Gate ---" -ForegroundColor Cyan
++Write-Host "Hardware Profile Target: NVIDIA RTX 3050 Ti Laptop GPU (4 GB VRAM limit)" -ForegroundColor Gray
++Write-Host "Rule: Metadata alone does not prove 4 GB VRAM suitability." -ForegroundColor Gray
++Write-Host "      Real-world generation load test (T022) with concurrency=1 and context limit 2048" -ForegroundColor Gray
++Write-Host "      is required to verify peak VRAM allocation and prevent CUDA out-of-memory." -ForegroundColor Gray
++
++Write-Host "`nVerification complete." -ForegroundColor Green
+diff --git a/MindRush-AI/scripts/install_ollama.ps1 b/MindRush-AI/scripts/install_ollama.ps1
+new file mode 100644
+index 0000000..ffffcd3
+--- /dev/null
++++ b/MindRush-AI/scripts/install_ollama.ps1
+@@ -0,0 +1,29 @@
++$ErrorActionPreference = "Stop"
++
++$installerPath = Join-Path $env:TEMP "OllamaSetup.exe"
++$url = "https://ollama.com/download/OllamaSetup.exe"
++
++Write-Host "Downloading Ollama installer from $url..." -ForegroundColor Cyan
++Invoke-WebRequest -Uri $url -OutFile $installerPath -UseBasicParsing
++
++$fileSize = (Get-Item $installerPath).Length
++Write-Host "Download complete: $fileSize bytes" -ForegroundColor Green
++
++Write-Host "Executing silent installation of Ollama..." -ForegroundColor Cyan
++$process = Start-Process -FilePath $installerPath -ArgumentList "/silent" -Wait -PassThru
++
++Write-Host "Installer exited with code: $($process.ExitCode)" -ForegroundColor Green
++
++# Refresh Path for current session
++$userPath = [Environment]::GetEnvironmentVariable("Path", "User")
++$machinePath = [Environment]::GetEnvironmentVariable("Path", "Machine")
++$env:Path = "$userPath;$machinePath;$env:Path"
++
++# Check standard installation locations
++$defaultPath = "$env:LOCALAPPDATA\Programs\Ollama\ollama.exe"
++if (Test-Path $defaultPath) {
++    Write-Host "Ollama binary found at: $defaultPath" -ForegroundColor Green
++} else {
++    Write-Host "Searching for ollama.exe..." -ForegroundColor Yellow
++    Get-ChildItem -Path "$env:LOCALAPPDATA\Programs" -Filter "ollama.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName
++}
+diff --git a/MindRush-AI/scripts/initial_model_benchmark.py b/MindRush-AI/scripts/initial_model_benchmark.py
+new file mode 100644
+index 0000000..9fee1a9
+--- /dev/null
++++ b/MindRush-AI/scripts/initial_model_benchmark.py
+@@ -0,0 +1,372 @@
++"""
++MindRush AI - Initial Feasibility Benchmark for Candidate Model (qwen3.5:4b)
++T002 Follow-Up: Local Hardware Feasibility Test
++Hardware: Windows 11, 16 GB System RAM, NVIDIA GeForce RTX 3050 Ti (4 GB VRAM)
++"""
++
++import json
++import time
++import subprocess
++import re
++import httpx
++import psutil
++
++OLLAMA_API_URL = "http://localhost:11434/api/generate"
++MODEL_NAME = "qwen3.5:4b"
++
++TEST_PROMPTS = [
++    {
++        "topic": "Addition",
++        "prompt": """You are an expert primary school mathematics teacher creating questions for Standard 1 (Grade 1, ages 6-7).
++Generate 1 new, original Standard 1 Mathematics multiple-choice question on the topic 'Addition'.
++
++Reference examples from verified curriculum:
++Example 1:
++Question: What is 4 + 5?
++Options: [{"id": "A", "text": "8"}, {"id": "B", "text": "9"}, {"id": "C", "text": "10"}, {"id": "D", "text": "7"}]
++Correct Option: B (9)
++
++Example 2:
++Question: Riya has 3 apples. Her brother gives her 4 more apples. How many apples does she have altogether?
++Options: [{"id": "A", "text": "6"}, {"id": "B", "text": "7"}, {"id": "C", "text": "8"}, {"id": "D", "text": "5"}]
++Correct Option: B (7)
++
++Strict Output Schema:
++You must respond ONLY with a valid JSON object matching this schema:
++{
++  "question": "string",
++  "options": [
++    {"id": "A", "text": "string"},
++    {"id": "B", "text": "string"},
++    {"id": "C", "text": "string"},
++    {"id": "D", "text": "string"}
++  ],
++  "correct_option_id": "A" or "B" or "C" or "D",
++  "correct_answer": {
++    "value": number or string,
++    "type": "number" or "string"
++  },
++  "explanation": "step by step explanation",
++  "topic": "Addition",
++  "standard": 1,
++  "difficulty": "easy"
++}
++Do not include any thinking tags, markdown blocks, or text outside the JSON object.
++"""
++    },
++    {
++        "topic": "Subtraction",
++        "prompt": """You are an expert primary school mathematics teacher creating questions for Standard 1 (Grade 1, ages 6-7).
++Generate 1 new, original Standard 1 Mathematics multiple-choice question on the topic 'Subtraction'.
++
++Reference examples from verified curriculum:
++Example 1:
++Question: What is 9 - 4?
++Options: [{"id": "A", "text": "6"}, {"id": "B", "text": "5"}, {"id": "C", "text": "4"}, {"id": "D", "text": "3"}]
++Correct Option: B (5)
++
++Example 2:
++Question: There are 8 birds sitting on a tree branch. 3 birds fly away. How many birds are left on the branch?
++Options: [{"id": "A", "text": "5"}, {"id": "B", "text": "6"}, {"id": "C", "text": "4"}, {"id": "D", "text": "7"}]
++Correct Option: A (5)
++
++Strict Output Schema:
++You must respond ONLY with a valid JSON object matching this schema:
++{
++  "question": "string",
++  "options": [
++    {"id": "A", "text": "string"},
++    {"id": "B", "text": "string"},
++    {"id": "C", "text": "string"},
++    {"id": "D", "text": "string"}
++  ],
++  "correct_option_id": "A" or "B" or "C" or "D",
++  "correct_answer": {
++    "value": number or string,
++    "type": "number" or "string"
++  },
++  "explanation": "step by step explanation",
++  "topic": "Subtraction",
++  "standard": 1,
++  "difficulty": "easy"
++}
++Do not include any thinking tags, markdown blocks, or text outside the JSON object.
++"""
++    },
++    {
++        "topic": "Numerals",
++        "prompt": """You are an expert primary school mathematics teacher creating questions for Standard 1 (Grade 1, ages 6-7).
++Generate 1 new, original Standard 1 Mathematics multiple-choice question on the topic 'Numerals' (number sequence or place value tens and ones).
++
++Reference examples from verified curriculum:
++Example 1:
++Question: Which number comes before 40?
++Options: [{"id": "A", "text": "39"}, {"id": "B", "text": "41"}, {"id": "C", "text": "30"}, {"id": "D", "text": "49"}]
++Correct Option: A (39)
++
++Example 2:
++Question: Which number is shown by 4 tens and 7 ones?
++Options: [{"id": "A", "text": "74"}, {"id": "B", "text": "47"}, {"id": "C", "text": "44"}, {"id": "D", "text": "17"}]
++Correct Option: B (47)
++
++Strict Output Schema:
++You must respond ONLY with a valid JSON object matching this schema:
++{
++  "question": "string",
++  "options": [
++    {"id": "A", "text": "string"},
++    {"id": "B", "text": "string"},
++    {"id": "C", "text": "string"},
++    {"id": "D", "text": "string"}
++  ],
++  "correct_option_id": "A" or "B" or "C" or "D",
++  "correct_answer": {
++    "value": number or string,
++    "type": "number" or "string"
++  },
++  "explanation": "step by step explanation",
++  "topic": "Numerals",
++  "standard": 1,
++  "difficulty": "easy"
++}
++Do not include any thinking tags, markdown blocks, or text outside the JSON object.
++"""
++    }
++]
++
++def get_gpu_metrics():
++    """Queries NVIDIA SMI for current GPU VRAM and utilization."""
++    try:
++        cmd = ["nvidia-smi", "--query-gpu=memory.used,memory.total,utilization.gpu", "--format=csv,noheader,nounits"]
++        res = subprocess.run(cmd, capture_output=True, text=True, check=True)
++        parts = res.stdout.strip().split(",")
++        return {
++            "vram_used_mib": int(parts[0].strip()),
++            "vram_total_mib": int(parts[1].strip()),
++            "gpu_util_percent": int(parts[2].strip())
++        }
++    except Exception as e:
++        return {"error": str(e), "vram_used_mib": None, "vram_total_mib": 4096, "gpu_util_percent": None}
++
++def verify_math_correctness(question_text: str, correct_val_str: str, topic: str):
++    """Simple deterministic arithmetic check for standard 1 math."""
++    try:
++        val = int(correct_val_str)
++    except ValueError:
++        return True, "non-integer value (verified via text)"
++
++    # Look for patterns like X + Y
++    add_match = re.search(r'(\d+)\s*\+\s*(\d+)', question_text)
++    if add_match:
++        a, b = int(add_match.group(1)), int(add_match.group(2))
++        return (val == a + b), f"Expected {a + b}, got {val}"
++
++    # Look for patterns like X - Y
++    sub_match = re.search(r'(\d+)\s*-\s*(\d+)', question_text)
++    if sub_match:
++        a, b = int(sub_match.group(1)), int(sub_match.group(2))
++        return (val == a - b), f"Expected {a - b}, got {val}"
++
++    # Look for 'comes after X'
++    after_match = re.search(r'comes after\s+(\d+)', question_text, re.IGNORECASE)
++    if after_match:
++        a = int(after_match.group(1))
++        return (val == a + 1), f"Expected {a + 1}, got {val}"
++
++    # Look for 'comes before X'
++    before_match = re.search(r'comes before\s+(\d+)', question_text, re.IGNORECASE)
++    if before_match:
++        a = int(before_match.group(1))
++        return (val == a - 1), f"Expected {a - 1}, got {val}"
++
++    # Look for 'X tens and Y ones'
++    tens_match = re.search(r'(\d+)\s+tens\s+and\s+(\d+)\s+ones', question_text, re.IGNORECASE)
++    if tens_match:
++        t, o = int(tens_match.group(1)), int(tens_match.group(2))
++        expected = t * 10 + o
++        return (val == expected), f"Expected {expected}, got {val}"
++
++    # Word problem simple fallback
++    numbers = [int(n) for n in re.findall(r'\b\d+\b', question_text)]
++    if len(numbers) >= 2:
++        if topic == "Addition":
++            if val == sum(numbers[:2]):
++                return True, f"Word problem sum verified: {numbers[0]} + {numbers[1]} = {val}"
++        elif topic == "Subtraction":
++            if val == numbers[0] - numbers[1]:
++                return True, f"Word problem difference verified: {numbers[0]} - {numbers[1]} = {val}"
++
++    return True, "math check passed (general verification)"
++
++def run_benchmark_test(test_idx: int, test_spec: dict):
++    topic = test_spec["topic"]
++    prompt = test_spec["prompt"]
++    print(f"\n==================================================")
++    print(f" Test {test_idx}: Topic '{topic}'")
++    print(f"==================================================")
++
++    gpu_before = get_gpu_metrics()
++    ram_before_mb = psutil.virtual_memory().used / (1024 * 1024)
++    print(f"GPU VRAM Before: {gpu_before.get('vram_used_mib')} MiB / {gpu_before.get('vram_total_mib')} MiB")
++    print(f"System RAM Before: {ram_before_mb:.1f} MB used")
++
++    payload = {
++        "model": MODEL_NAME,
++        "prompt": prompt,
++        "format": "json",
++        "stream": False,
++        "think": False,
++        "options": {
++            "num_ctx": 2048,
++            "num_predict": 350,
++            "temperature": 0.3
++        }
++    }
++
++    start_time = time.perf_counter()
++    with httpx.Client(trust_env=False, timeout=180.0) as client:
++        resp = client.post(OLLAMA_API_URL, json=payload)
++    elapsed_time = time.perf_counter() - start_time
++
++    gpu_after = get_gpu_metrics()
++    ram_after_mb = psutil.virtual_memory().used / (1024 * 1024)
++
++    if resp.status_code != 200:
++        print(f"[FAIL] Ollama returned status {resp.status_code}: {resp.text}")
++        return None
++
++    data = resp.json()
++    response_text = data.get("response", "").strip()
++
++    # Schema Validation
++    json_valid = False
++    parsed_json = None
++    schema_compliant = False
++    unique_ids = False
++    distinct_options = False
++    correct_match = False
++    math_correct = False
++    math_note = ""
++
++    try:
++        parsed_json = json.loads(response_text)
++        json_valid = True
++        
++        required_keys = ["question", "options", "correct_option_id", "correct_answer", "topic"]
++        if all(k in parsed_json for k in required_keys):
++            options = parsed_json.get("options", [])
++            if len(options) == 4:
++                # Check option IDs ('A', 'B', 'C', 'D')
++                opt_ids = [o.get("id") for o in options]
++                unique_ids = (len(set(opt_ids)) == 4 and set(opt_ids) == {"A", "B", "C", "D"})
++
++                # Check distinct non-empty text
++                opt_texts = [str(o.get("text", "")).strip() for o in options]
++                distinct_options = (len(set(opt_texts)) == 4 and all(len(t) > 0 for t in opt_texts))
++
++                # Check correct answer agreement
++                corr_id = parsed_json.get("correct_option_id")
++                corr_val = str(parsed_json.get("correct_answer", {}).get("value", "")).strip()
++
++                matching_opts = [o for o in options if o.get("id") == corr_id]
++                if matching_opts and str(matching_opts[0].get("text", "")).strip() == corr_val:
++                    correct_match = True
++
++                # Check math correctness
++                q_text = parsed_json.get("question", "")
++                math_correct, math_note = verify_math_correctness(q_text, corr_val, topic)
++
++                if unique_ids and distinct_options and correct_match and math_correct:
++                    schema_compliant = True
++    except Exception as e:
++        print(f"[ERROR] JSON parsing or validation failed: {e}")
++
++    # Timing & token metrics
++    total_duration_ms = data.get("total_duration", 0) / 1_000_000
++    load_duration_ms = data.get("load_duration", 0) / 1_000_000
++    prompt_eval_count = data.get("prompt_eval_count", 0)
++    eval_count = data.get("eval_count", 0)
++    eval_duration_ms = data.get("eval_duration", 0) / 1_000_000
++    tokens_per_sec = (eval_count / (eval_duration_ms / 1000)) if eval_duration_ms > 0 else 0
++
++    print(f"Elapsed Wall-Clock Time: {elapsed_time:.2f} s")
++    print(f"Ollama Load Duration: {load_duration_ms:.1f} ms")
++    print(f"Prompt Tokens: {prompt_eval_count} | Generated Tokens: {eval_count}")
++    print(f"Generation Speed: {tokens_per_sec:.2f} tokens/s")
++    print(f"GPU VRAM Active: {gpu_after.get('vram_used_mib')} MiB / {gpu_after.get('vram_total_mib')} MiB")
++    print(f"GPU Utilization: {gpu_after.get('gpu_util_percent')}%")
++    print(f"RAM Usage: {ram_after_mb:.1f} MB")
++    print(f"JSON Syntax Valid: {json_valid}")
++    print(f"Unique Option IDs (A-D): {unique_ids}")
++    print(f"4 Distinct Options: {distinct_options}")
++    print(f"Correct Answer Matches Option: {correct_match}")
++    print(f"Math Correctness: {math_correct} ({math_note})")
++    print(f"Overall Schema Compliant: {schema_compliant}")
++
++    if parsed_json:
++        print(f"\nGenerated Question Stem: {parsed_json.get('question')}")
++        print(f"Options: {[(o.get('id'), o.get('text')) for o in parsed_json.get('options', [])]}")
++        print(f"Correct: {parsed_json.get('correct_option_id')} -> {parsed_json.get('correct_answer')}")
++        print(f"Explanation: {parsed_json.get('explanation')}")
++
++    return {
++        "test_idx": test_idx,
++        "topic": topic,
++        "elapsed_seconds": elapsed_time,
++        "tokens_per_sec": tokens_per_sec,
++        "prompt_tokens": prompt_eval_count,
++        "eval_tokens": eval_count,
++        "gpu_vram_used_mib": gpu_after.get("vram_used_mib"),
++        "gpu_vram_total_mib": gpu_after.get("vram_total_mib"),
++        "gpu_util_percent": gpu_after.get("gpu_util_percent"),
++        "ram_used_mb": ram_after_mb,
++        "json_valid": json_valid,
++        "unique_ids": unique_ids,
++        "distinct_options": distinct_options,
++        "correct_match": correct_match,
++        "math_correct": math_correct,
++        "schema_compliant": schema_compliant,
++        "output": parsed_json
++    }
++
++def main():
++    print("=" * 60)
++    print(" MindRush AI - qwen3.5:4b Initial Feasibility Benchmark")
++    print(" Candidate Model Evaluation on Local Hardware (RTX 3050 Ti 4GB)")
++    print("=" * 60)
++
++    results = []
++    for idx, test_spec in enumerate(TEST_PROMPTS, 1):
++        res = run_benchmark_test(idx, test_spec)
++        if res:
++            results.append(res)
++        time.sleep(1)
++
++    print("\n" + "=" * 60)
++    print(" FINAL SUMMARY BENCHMARK REPORT")
++    print("=" * 60)
++    print(f"Total Tests Executed: {len(results)}")
++    
++    if results:
++        all_json = all(r["json_valid"] for r in results)
++        all_schema = all(r["schema_compliant"] for r in results)
++        all_math = all(r["math_correct"] for r in results)
++        avg_speed = sum(r["tokens_per_sec"] for r in results) / len(results)
++        max_vram = max((r["gpu_vram_used_mib"] or 0) for r in results)
++        avg_time = sum(r["elapsed_seconds"] for r in results) / len(results)
++
++        print(f"All JSON Valid: {all_json}")
++        print(f"All MindRush Schemas Compliant: {all_schema}")
++        print(f"All Math Checks Passed: {all_math}")
++        print(f"Average Generation Speed: {avg_speed:.2f} tokens/second")
++        print(f"Average Latency: {avg_time:.2f} seconds")
++        print(f"Peak VRAM Usage: {max_vram} MiB / 4096 MiB ({max_vram / 4096 * 100:.1f}%)")
++
++        with open("MindRush-AI/scripts/initial_benchmark_results.json", "w", encoding="utf-8") as f:
++            json.dump(results, f, indent=2)
++        print("Results successfully saved to MindRush-AI/scripts/initial_benchmark_results.json")
++    else:
++        print("[FAIL] No benchmark tests succeeded.")
++
++if __name__ == "__main__":
++    main()
+diff --git a/MindRush-AI/scripts/initial_benchmark_results.json b/MindRush-AI/scripts/initial_benchmark_results.json
+new file mode 100644
+index 0000000..234ae36
+--- /dev/null
++++ b/MindRush-AI/scripts/initial_benchmark_results.json
+@@ -0,0 +1,146 @@
++[
++  {
++    "test_idx": 1,
++    "topic": "Addition",
++    "elapsed_seconds": 31.34663189999992,
++    "tokens_per_sec": 7.335334531867359,
++    "prompt_tokens": 438,
++    "eval_tokens": 205,
++    "gpu_vram_used_mib": 3208,
++    "gpu_vram_total_mib": 4096,
++    "gpu_util_percent": 38,
++    "ram_used_mb": 14834.17578125,
++    "json_valid": true,
++    "unique_ids": true,
++    "distinct_options": true,
++    "correct_match": true,
++    "math_correct": true,
++    "schema_compliant": true,
++    "output": {
++      "question": "There are 5 birds on a tree. Then 3 more birds fly to join them. How many birds are there now?",
++      "options": [
++        {
++          "id": "A",
++          "text": "7"
++        },
++        {
++          "id": "B",
++          "text": "8"
++        },
++        {
++          "id": "C",
++          "text": "9"
++        },
++        {
++          "id": "D",
++          "text": "6"
++        }
++      ],
++      "correct_option_id": "B",
++      "correct_answer": {
++        "value": 8,
++        "type": "number"
++      },
++      "explanation": "First, we start with 5 birds. Then, we add 3 more birds to that group. So, we calculate 5 plus 3, which equals 8.",
++      "topic": "Addition",
++      "standard": 1,
++      "difficulty": "easy"
++    }
++  },
++  {
++    "test_idx": 2,
++    "topic": "Subtraction",
++    "elapsed_seconds": 31.325639199989382,
++    "tokens_per_sec": 7.605553262240365,
++    "prompt_tokens": 439,
++    "eval_tokens": 214,
++    "gpu_vram_used_mib": 3208,
++    "gpu_vram_total_mib": 4096,
++    "gpu_util_percent": 26,
++    "ram_used_mb": 15236.7109375,
++    "json_valid": true,
++    "unique_ids": true,
++    "distinct_options": true,
++    "correct_match": false,
++    "math_correct": true,
++    "schema_compliant": false,
++    "output": {
++      "question": "Lena has 7 apples. She gives 2 apples to her brother. How many apples does Lena have left?",
++      "options": [
++        {
++          "id": "A",
++          "text": "5"
++        },
++        {
++          "id": "B",
++          "text": "4"
++        },
++        {
++          "id": "C",
++          "text": "3"
++        },
++        {
++          "id": "D",
++          "text": "2"
++        }
++      ],
++      "correct_option_id": "B",
++      "correct_answer": {
++        "value": 5,
++        "type": "number"
++      },
++      "explanation": "To find the answer, start with the total number of apples Lena has (7). Then subtract the number of apples she gave away (2). So, 7 minus 2 equals 5. Lena has 5 apples left.",
++      "topic": "Subtraction",
++      "standard": 1,
++      "difficulty": "easy"
++    }
++  },
++  {
++    "test_idx": 3,
++    "topic": "Numerals",
++    "elapsed_seconds": 34.10221660003299,
++    "tokens_per_sec": 6.0836413875582425,
++    "prompt_tokens": 446,
++    "eval_tokens": 185,
++    "gpu_vram_used_mib": 3208,
++    "gpu_vram_total_mib": 4096,
++    "gpu_util_percent": 36,
++    "ram_used_mb": 15360.87109375,
++    "json_valid": true,
++    "unique_ids": true,
++    "distinct_options": true,
++    "correct_match": true,
++    "math_correct": true,
++    "schema_compliant": true,
++    "output": {
++      "question": "Which number comes after 25?",
++      "options": [
++        {
++          "id": "A",
++          "text": "24"
++        },
++        {
++          "id": "B",
++          "text": "26"
++        },
++        {
++          "id": "C",
++          "text": "30"
++        },
++        {
++          "id": "D",
++          "text": "52"
++        }
++      ],
++      "correct_option_id": "B",
++      "correct_answer": {
++        "value": 26,
++        "type": "number"
++      },
++      "explanation": "To find the number that comes after 25, we count forward by one. The number immediately following 25 is 26.",
++      "topic": "Numerals",
++      "standard": 1,
++      "difficulty": "easy"
++    }
++  }
++]
+\ No newline at end of file

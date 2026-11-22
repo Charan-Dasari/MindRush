@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindRush Admin — Question Publisher</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@400;600;700&display=swap">
+  <style>
+    body { background: #0b0f19; color: #e2e8f0; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
+    .admin-container { max-width: 1000px; margin: 40px auto; padding: 24px; background: #111827; border-radius: 12px; border: 1px solid #1f2937; }
+    .btn-pub { background: #16a34a; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-family: 'Orbitron'; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div class="admin-container">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #374151; padding-bottom:16px;">
+      <h1 style="font-family:'Orbitron'; color:#38bdf8; margin:0;">Publication Manager</h1>
+      <a href="index.html" style="color:#38bdf8; text-decoration:none;">&larr; Admin Dashboard</a>
+    </div>
+    <div style="margin: 24px 0;">
+      <p>Publishes all human-approved questions to <code>educational-questions-published.js</code> with atomic sequential IDs (1001+).</p>
+      <button id="publish-btn" class="btn-pub">Publish Approved Questions Now</button>
+      <div id="pub-status" style="margin-top:16px; color:#94a3b8;"></div>
+    </div>
+  </div>
+  <script src="js/publish.js"></script>
+</body>
+</html>

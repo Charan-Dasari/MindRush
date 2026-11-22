@@ -71,3 +71,48 @@ This register tracks all created, modified, restored, or removed files across ev
 - `tests/` — untouched.
 - `package.json`, `.env`, `.env.example`, `server.js`, `firebase.json`, `.firebaserc`, `.gitignore` — untouched.
 
+---
+
+## Feature 001: Phase 1 Setup & Phase 2 Foundation Milestone (2026-11-20)
+
+### 1. Newly Created Files
+| Path | Type | Purpose |
+|---|---|---|
+| `MindRush-AI/requirements.txt` | Text | Python dependencies for AI microservice (T001) |
+| `MindRush-AI/scripts/setup_ollama.ps1` | PowerShell | Approval-controlled Ollama verification script (T002) |
+| `MindRush-AI/scripts/initial_model_benchmark.py` | Python | Candidate model evaluation benchmark script (T002) |
+| `MindRush-AI/scripts/initial_benchmark_results.json` | JSON | Hardware telemetry and generation metrics output (T002) |
+| `MindRush-AI/ai_service/config.py` | Python | Subsystem configuration and typed environment settings (T003) |
+| `public/js/game/educational-questions-published.js` | JS Module | Starter fallback published question module (T004) |
+| `server/models/Curriculum.js` | JS (Mongoose) | Hierarchical curriculum/syllabus model with memory fallback (T006) |
+| `server/models/Counter.js` | JS (Mongoose) | Atomic sequence generator model with memory fallback (T007) |
+| `server/models/AuditLog.js` | JS (Mongoose) | Administrative action audit log model (T008) |
+| `server/scripts/create-admin.js` | Node.js Script | CLI-only secure admin account provisioning script (T009) |
+| `server/middleware/requireAdmin.js` | Express Middleware | Admin role check, session verification, Origin validation, CSRF check (T010) |
+| `MindRush-AI/ai_service/app.py` | Python (FastAPI) | Microservice shell with loopback auth and `/health` probe (T011) |
+| `MindRush-AI/tests/test_health.py` | Python Test | FastAPI `/health` endpoint unit test (T011) |
+| `MindRush-AI/pytest.ini` | INI | Pytest configuration setting `pythonpath = .` (T011) |
+| `MindRush-AI/tests/test_config.py` | Python Test | Subprocess-isolated configuration loading tests (production/staging/development) |
+| `MindRush-AI/tests/test_benchmark_validator.py` | Python Test | Candidate benchmark validator, typing, and sampler lifecycle tests |
+| `tests/test_admin_provisioning.mjs` | Node.js Test | Admin provisioning, strict calendar DOB, elevation, and audit test suite |
+| `tests/test_counter_concurrency.mjs` | Node.js Test | 50 concurrent sequence allocations and model guarantees test suite |
+| `docs/reviews/PHASE_1_2_CODE_REVIEW.md` | Markdown | Comprehensive code review report for Phase 1 & 2 foundation milestone |
+| `docs/reviews/PHASE_1_2_CORRECTIONS.patch` | Patch | Follow-up review corrections unified patch |
+| `docs/reviews/PHASE_1_2_FINAL_CORRECTIONS.patch` | Patch | Final review corrections unified patch (36,123 bytes, 9 files) |
+| `server/scripts/seed-curriculum.js` | Node.js Script | Database seeder for CMO curriculum and counter base (T012) |
+| `tests/test_foundation_milestone.mjs` | Node.js Test | 10-aspect foundation verification test suite (T005–T012) |
+
+### 2. Modified Files
+| Path | Type | Purpose |
+|---|---|---|
+| `.env.example` | Env | Added AI microservice and Ollama environment variables (T003) |
+| `server/models/User.js` | JS (Mongoose) | Added `role: { type: String, enum: ['player', 'admin'], default: 'player' }` (T005) |
+| `package.json` | JSON | Pinned `"argon2": "^0.41.1"` to resolve Windows prebuild ABI crash |
+| `package-lock.json` | JSON | Updated lockfile for argon2 dependency tree |
+| `specs/001-ai-question-generation/tasks.md` | Markdown | Marked tasks T001 through T012 completed `[x]` |
+| `docs/DEVELOPMENT_LOG.md` | Markdown | Documented Phase 1 and Phase 2 implementation entries |
+| `docs/TEST_REPORT.md` | Markdown | Documented benchmark telemetry and Foundation test results |
+| `docs/ERROR_AND_FIX_LOG.md` | Markdown | Documented proxy, latency, and argon2 prebuild resolutions |
+| `docs/PROJECT_STATUS.md` | Markdown | Updated subsystem operational status |
+| `docs/CHANGELOG.md` | Markdown | Added unreleased changelog entry for Foundation milestone |
+

@@ -38,6 +38,12 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Password hash is required'],
     select: false // never returned in normal queries
   },
+  role: {
+    type: String,
+    required: [true, 'Role is required'],
+    enum: ['player', 'admin'],
+    default: 'player'
+  },
   badges: {
     type: [String],
     default: []
@@ -119,6 +125,7 @@ class MemoryUserStore {
       username: normalized,
       dob: new Date(userData.dob),
       gender: userData.gender.trim().toLowerCase(),
+      role: userData.role && ['player', 'admin'].includes(userData.role) ? userData.role : 'player',
       badges: Array.isArray(userData.badges) ? [...userData.badges] : [],
       highScore: Number(userData.highScore) || 0,
       insaneUnlocked: Boolean(userData.insaneUnlocked),
@@ -166,6 +173,10 @@ export const memoryUserStore = new MemoryUserStore();
 export const User = {
   isUsingMongo() {
     return mongoose.connection && mongoose.connection.readyState === 1;
+  },
+
+  isMongoose() {
+    return this.isUsingMongo();
   },
 
   isMongoRequired() {

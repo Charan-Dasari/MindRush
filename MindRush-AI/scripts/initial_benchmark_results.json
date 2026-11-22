@@ -1,0 +1,146 @@
+[
+  {
+    "test_idx": 1,
+    "topic": "Addition",
+    "elapsed_seconds": 31.34663189999992,
+    "tokens_per_sec": 7.335334531867359,
+    "prompt_tokens": 438,
+    "eval_tokens": 205,
+    "gpu_vram_used_mib": 3208,
+    "gpu_vram_total_mib": 4096,
+    "gpu_util_percent": 38,
+    "ram_used_mb": 14834.17578125,
+    "json_valid": true,
+    "unique_ids": true,
+    "distinct_options": true,
+    "correct_match": true,
+    "math_correct": true,
+    "schema_compliant": true,
+    "output": {
+      "question": "There are 5 birds on a tree. Then 3 more birds fly to join them. How many birds are there now?",
+      "options": [
+        {
+          "id": "A",
+          "text": "7"
+        },
+        {
+          "id": "B",
+          "text": "8"
+        },
+        {
+          "id": "C",
+          "text": "9"
+        },
+        {
+          "id": "D",
+          "text": "6"
+        }
+      ],
+      "correct_option_id": "B",
+      "correct_answer": {
+        "value": 8,
+        "type": "number"
+      },
+      "explanation": "First, we start with 5 birds. Then, we add 3 more birds to that group. So, we calculate 5 plus 3, which equals 8.",
+      "topic": "Addition",
+      "standard": 1,
+      "difficulty": "easy"
+    }
+  },
+  {
+    "test_idx": 2,
+    "topic": "Subtraction",
+    "elapsed_seconds": 31.325639199989382,
+    "tokens_per_sec": 7.605553262240365,
+    "prompt_tokens": 439,
+    "eval_tokens": 214,
+    "gpu_vram_used_mib": 3208,
+    "gpu_vram_total_mib": 4096,
+    "gpu_util_percent": 26,
+    "ram_used_mb": 15236.7109375,
+    "json_valid": true,
+    "unique_ids": true,
+    "distinct_options": true,
+    "correct_match": false,
+    "math_correct": true,
+    "schema_compliant": false,
+    "output": {
+      "question": "Lena has 7 apples. She gives 2 apples to her brother. How many apples does Lena have left?",
+      "options": [
+        {
+          "id": "A",
+          "text": "5"
+        },
+        {
+          "id": "B",
+          "text": "4"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        },
+        {
+          "id": "D",
+          "text": "2"
+        }
+      ],
+      "correct_option_id": "B",
+      "correct_answer": {
+        "value": 5,
+        "type": "number"
+      },
+      "explanation": "To find the answer, start with the total number of apples Lena has (7). Then subtract the number of apples she gave away (2). So, 7 minus 2 equals 5. Lena has 5 apples left.",
+      "topic": "Subtraction",
+      "standard": 1,
+      "difficulty": "easy"
+    }
+  },
+  {
+    "test_idx": 3,
+    "topic": "Numerals",
+    "elapsed_seconds": 34.10221660003299,
+    "tokens_per_sec": 6.0836413875582425,
+    "prompt_tokens": 446,
+    "eval_tokens": 185,
+    "gpu_vram_used_mib": 3208,
+    "gpu_vram_total_mib": 4096,
+    "gpu_util_percent": 36,
+    "ram_used_mb": 15360.87109375,
+    "json_valid": true,
+    "unique_ids": true,
+    "distinct_options": true,
+    "correct_match": true,
+    "math_correct": true,
+    "schema_compliant": true,
+    "output": {
+      "question": "Which number comes after 25?",
+      "options": [
+        {
+          "id": "A",
+          "text": "24"
+        },
+        {
+          "id": "B",
+          "text": "26"
+        },
+        {
+          "id": "C",
+          "text": "30"
+        },
+        {
+          "id": "D",
+          "text": "52"
+        }
+      ],
+      "correct_option_id": "B",
+      "correct_answer": {
+        "value": 26,
+        "type": "number"
+      },
+      "explanation": "To find the number that comes after 25, we count forward by one. The number immediately following 25 is 26.",
+      "topic": "Numerals",
+      "standard": 1,
+      "difficulty": "easy"
+    }
+  }
+]

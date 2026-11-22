@@ -57,3 +57,56 @@ This log records every error, limitation, or blocker encountered during environm
   2. Spec Kit successfully initialized all `.agents/skills/` templates formatted according to Antigravity's native skill specification (`SKILL.md` with YAML frontmatter).
   3. Confirmed Antigravity's workspace skill discovery automatically loads from `.agents/skills/` without needing an external CLI.
 
+---
+
+## Incident 5: Ollama CLI and Local Daemon Not Available (T002)
+- **Date:** 2026-11-20
+- **Context:** Executing candidate model and Ollama environment verification (`T002`).
+- **Symptom:**
+  - `ollama` CLI command not recognized in PowerShell PATH.
+  - Connection probe to `http://127.0.0.1:11434` returned `TcpTestSucceeded: False`.
+  - No active processes matching `*ollama*`.
+- **Root Cause:** Ollama is not installed on the Windows host or its service has not been started.
+- **Status / Action Taken:**
+  - Automated installation, model pulling, or candidate switching without explicit user approval is strictly prohibited under project governance rules.
+  - Documented exact findings in `INSTALLATION_AND_ENVIRONMENT_LOG.md`.
+  - Stopped execution at T002 gate to report results to user and receive guidance before proceeding.
+
+---
+
+## Incident 6: Loopback Traffic Intercepted by Sandbox HTTP Proxy (T002 Follow-Up)
+- **Date:** 2026-11-20
+- **Context:** Python `httpx` and `urllib` connecting to local Ollama daemon on `http://localhost:11434`.
+- **Symptom:** Requests failed with `403 Port 11434 not allowed for HTTP` (for localhost) or `400 Direct IP access is not allowed` (for 127.0.0.1).
+- **Root Cause:** Environment variables `HTTP_PROXY` and `HTTPS_PROXY` were set to the sandbox proxy (`127.0.0.1:61995`). Because `NO_PROXY` was not configured for loopback addresses, Python HTTP clients routed local requests to the external proxy rather than the local Ollama daemon.
+- **Resolution:**
+  1. Configured `httpx.Client(trust_env=False)` across Python client calls to bypass environment proxy settings for loopback communication.
+  2. Verified connection returned `200 OK` and model list `['qwen3.5:4b']`.
+  3. Applied pattern to `initial_model_benchmark.py` and documented for `ai_service` HTTP clients.
+
+---
+
+## Incident 7: Qwen 3.5 Default Reasoning Tokens Causing Latency Spikes (T002 Benchmark)
+- **Date:** 2026-11-20
+- **Context:** Generating questions via Ollama API with candidate model `qwen3.5:4b`.
+- **Symptom:** Initial generation requests took >120 seconds and timed out.
+- **Root Cause:** Qwen 3.5 activates deep reasoning by default, generating internal `<think>...</think>` chain-of-thought blocks before producing JSON answers.
+- **Resolution:**
+  1. Added `"think": False` to the Ollama options / request payload.
+  2. Latency dropped from >120s (timeout) to 31–34 seconds per question at 7.0–7.6 tokens/sec.
+  3. Enforced `"think": False` requirement across prompt builders and Ollama clients.
+
+---
+
+## Incident 8: Broken Windows Prebuild in `argon2@0.45.1` Causing STATUS_ACCESS_VIOLATION (T005–T010)
+- **Date:** 2026-11-20
+- **Context:** Executing Node.js tests importing `server/utils/auth.js` (`test_foundation_milestone.mjs`, `test_auth.mjs`).
+- **Symptom:** Node.js process crashed immediately upon requiring `argon2` with ExitCode `-1073741819` (`0xC0000005`, STATUS_ACCESS_VIOLATION) with no JavaScript error output.
+- **Root Cause:** The npm package `argon2@0.45.1` published a prebuild binary `argon2.glibc.node` under `win32-x64` that has an incompatible ABI/CRT structure on Windows with Node 22, causing an unhandled memory access violation upon `process.dlopen`.
+- **Resolution:**
+  1. Identified that `argon2@0.41.1` provides a fully compatible `win32-x64` prebuilt binary.
+  2. Installed `argon2@0.41.1` via `npm install argon2@0.41.1 --ignore-scripts` and updated `package.json`.
+  3. Verified `test_auth.mjs` (56/56 passing) and `test_foundation_milestone.mjs` (10/10 passing) with ExitCode 0.
+
+
+

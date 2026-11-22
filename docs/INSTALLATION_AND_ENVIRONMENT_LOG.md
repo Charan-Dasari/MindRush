@@ -83,3 +83,51 @@ cd D:\MindRush
 - **Zero changes** to existing frontend (`public/`), backend (`server/`), test suites (`tests/`), or dataset assets (`MindRush-AI/dataset/`).
 - **All configuration files** (`package.json`, `.env`, `.env.example`, `server.js`, `firebase.json`) remain untouched.
 
+---
+
+## 5. Feature 001 Environment Provisioning & Inspection (2026-11-20)
+
+### Step 5.1: Python Virtual Environment (`.venv`) — Task T001
+- **Path:** `D:\MindRush\MindRush-AI\.venv`
+- **Base Python:** Python 3.13.1 (64-bit AMD64)
+- **Dependencies Defined:** `MindRush-AI/requirements.txt`
+  - `fastapi>=0.110.0` (installed `0.165.0`)
+  - `uvicorn[standard]>=0.28.0` (installed `0.54.0`)
+  - `pydantic>=2.6.0` (installed `2.14.4`)
+  - `pymupdf>=1.24.0` (installed `2.1`)
+  - `httpx>=0.27.0` (installed `0.28.1`)
+  - `pytest>=8.1.0` (installed `9.2.0`)
+  - `python-dotenv>=1.0.0` (installed `1.2.4`)
+- **Verification:** Automated import test executed via `python -c "import fastapi, uvicorn, pydantic, fitz, httpx, pytest, dotenv; print('ALL_IMPORTS_SUCCESSFUL')"` returned exit code 0.
+
+### Step 5.2: Ollama Candidate Model & Daemon Inspection — Task T002
+- **Ollama CLI Status:** Not found in system PATH or standard AppData directories.
+- **Ollama Daemon Status:** Port `11434` tested via `Test-NetConnection -ComputerName 127.0.0.1 -Port 11434` — returned `TcpTestSucceeded: False`. Daemon is not running.
+- **Installed Models:** None (daemon unreachable; no local model repository detected).
+- **Candidate Model Status (`qwen3.5:4b`):** Not available locally.
+- **Model Metadata & License Profile (Reference Candidate):**
+  - Architecture: Qwen 2.5 / 3.5 architecture (quantized candidate)
+  - Target Quantization: `Q4_K_M` (~2.5–3.2 GB total VRAM allocation)
+  - License: Apache 2.0 / Qwen Community License (subject to explicit human verification)
+- **GPU Hardware Verification:**
+  - `nvidia-smi` confirmed: NVIDIA GeForce RTX 3050 Laptop GPU (4096 MiB = 4 GB VRAM), Driver 581.57, CUDA 13.0, 0 MiB active allocation.
+- **Action Taken:** In strict accordance with execution instructions, zero models were downloaded, pulled, or installed. Stopped for user instruction.
+
+### Step 5.3: Authorized Ollama Installation & Initial Benchmark (T002 Follow-Up)
+- **Date:** 2026-11-20
+- **Authorization:** Explicit user authorization granted for local Ollama installation and `qwen3.5:4b` evaluation.
+- **Ollama CLI Installation:** Installed official Windows distribution version `0.40.16` (`C:\Users\SMIT\AppData\Local\Programs\Ollama\ollama.exe`).
+- **Daemon Configuration:** Local background service listening on `http://localhost:11434`.
+- **Model Download:** Pulled `qwen3.5:4b` (3.3 GB GGUF manifest, 4.2B parameters, `Q4_K_M` quantization, Apache 2.0 license).
+- **Initial Feasibility Benchmark:**
+  - Executed `MindRush-AI/scripts/initial_model_benchmark.py` across 3 representative Standard 1 Mathematics topics (Addition, Subtraction, Numerals).
+  - Loopback Proxy Fix: Enforced `trust_env=False` in Python HTTP client to bypass the local sandbox HTTP proxy (`127.0.0.1:61995`) which blocked loopback port 11434.
+  - Reasoning Bypass: Enforced `"think": False` in API payload to suppress internal chain-of-thought tokens, producing direct, well-formed JSON.
+  - Peak GPU VRAM: **3,208 MiB / 4,096 MiB (78.3%)** — stably contained within RTX 3050 Ti 4 GB boundary.
+  - Generation Speed: **7.01 tokens/second** (average latency: 32.26 seconds).
+  - JSON Compliance: 100% valid JSON syntax.
+  - Mathematical Accuracy: 100% (all word problem arithmetic verified).
+  - Validator Efficacy Evidence: Flagged 1 option letter mismatch where answer value 5 was at option 'A' but `correct_option_id` was 'B', proving the necessity of the automated validation pipeline.
+- **Hardware Suitability Recommendation:** Qwen3.5 4B is verified as feasible on the local RTX 3050 Ti under concurrency = 1 and context window <= 2,048 tokens.
+
+

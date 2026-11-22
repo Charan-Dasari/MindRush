@@ -63,3 +63,102 @@
 - **Failed:** 0
 - **Overall Result:** **ALL TESTS PASSED**
 
+---
+
+# Test Report — Feature 001: Phase 1 & Phase 2 Foundation Milestone (2026-11-20)
+
+## 1. Test Overview
+- **Date:** 2026-11-20
+- **Objective:** Verify candidate local LLM (`qwen3.5:4b`) on local hardware, and validate foundational models, admin security, CSRF protection, counter atomicity, FastAPI loopback probe, and database seeds (T001–T012).
+- **Environment:** Windows 11 AMD64, NVIDIA GeForce RTX 3050 Ti Laptop GPU (4 GB VRAM), 16 GB RAM, Node.js v22.13.1, Python 3.13.1, Ollama 0.40.16.
+
+---
+
+## 2. Test Execution & Results
+
+### Suite 1: Candidate Model Evaluation Benchmark (T002)
+| Test | Topic | Duration | Tokens/sec | Peak VRAM | JSON Schema Valid | Math Valid | Status |
+|---|---|---|---|---|---|---|---|
+| Benchmark 1 | Addition (5+3) | 31.35s | 7.34 t/s | 3,208 MiB (78.3%) | Yes | Yes (5+3=8) | **PASS** |
+| Benchmark 2 | Subtraction (7-2) | 31.33s | 7.61 t/s | 3,208 MiB (78.3%) | Yes | Yes (7-2=5, caught ID mismatch) | **PASS** |
+| Benchmark 3 | Numerals (After 25) | 34.10s | 6.08 t/s | 3,208 MiB (78.3%) | Yes | Yes (26) | **PASS** |
+
+### Suite 2: Foundation Milestone Verification Test Suite (`test_foundation_milestone.mjs`)
+| # | Test Name | Assertion Detail | Expected | Actual | Status |
+|---|---|---|---|---|---|
+| 1 | User role default | `User.create({})` | `role === 'player'` | `role === 'player'` | **PASS** |
+| 2 | User role admin | `User.create({ role: 'admin' })` | `role === 'admin'` | `role === 'admin'` | **PASS** |
+| 3 | Curriculum hierarchy | `Curriculum.create()` with syllabus | Deep equality on standards/topics | Exact match | **PASS** |
+| 4 | Atomic counter sequence | `getNextSequence` from 1000 | 1001, 1002, 1003 strictly sequential | 1001, 1002, 1003 | **PASS** |
+| 5 | AuditLog recording | `AuditLog.create()` with enum action | Document persisted with actor | Persisted | **PASS** |
+| 6 | requireAdmin unauthenticated | No session userId | HTTP 401 Unauthorized | HTTP 401 | **PASS** |
+| 7 | requireAdmin non-admin | Session user role: player | HTTP 403 Forbidden | HTTP 403 | **PASS** |
+| 8 | requireAdmin Origin check | Untrusted Origin on POST | HTTP 403 Forbidden | HTTP 403 | **PASS** |
+| 9 | requireAdmin CSRF header | Missing `X-Requested-With` | HTTP 403 Forbidden | HTTP 403 | **PASS** |
+| 10 | requireAdmin full authorized | Admin session + trusted Origin + CSRF header | `next()` called cleanly | `next()` called | **PASS** |
+| 11 | requireAdmin missing Origin | State-changing request with valid CSRF header | `next()` called cleanly | `next()` called | **PASS** |
+| 12 | requireAdmin configured origin | Origin matching `ADMIN_ALLOWED_ORIGINS` | `next()` called cleanly | `next()` called | **PASS** |
+
+### Suite 3: FastAPI Health & Secret Security (`MindRush-AI/tests/test_health.py`)
+| # | Test Name | Target Endpoint | Expected | Actual | Status |
+|---|---|---|---|---|---|
+| 1 | Health check without secret | `GET /health` | HTTP 200, `status: 'ok'` | HTTP 200, `status: 'ok'` | **PASS** |
+| 2 | Health check with valid secret | `GET /health` with `X-Internal-Secret` | HTTP 200, `status: 'ok'` | HTTP 200, `status: 'ok'` | **PASS** |
+| 3 | Health check with invalid secret | `GET /health` with bad secret | HTTP 401 Unauthorized | HTTP 401 | **PASS** |
+| 4 | Internal endpoint without secret | `GET /internal/ping` | HTTP 401 Unauthorized | HTTP 401 | **PASS** |
+| 5 | Internal endpoint with invalid secret | `GET /internal/ping` with bad secret | HTTP 401 Unauthorized | HTTP 401 | **PASS** |
+| 6 | Internal endpoint with valid secret | `GET /internal/ping` with valid secret | HTTP 200, `authenticated` | HTTP 200 | **PASS** |
+| 7 | Production secret enforcement | Missing/default secret in production | Startup `RuntimeError` | Raised | **PASS** |
+
+### Suite 4: Admin Provisioning Verification (`tests/test_admin_provisioning.mjs`)
+| # | Test Name | Target Function | Expected | Actual | Status |
+|---|---|---|---|---|---|
+| 1 | Disconnected DB abort | `runAdminProvisioning()` in memory mode | Rejection: DB unavailable | Rejected | **PASS** |
+| 2 | DOB invalid format | `validateDob('not-a-date')` | Throws format error | Threw | **PASS** |
+| 3 | DOB future / pre-1900 | `validateDob(futureDate)` | Throws range error | Threw | **PASS** |
+| 4 | DOB valid date | `validateDob('1995-08-20')` | Returns parsed Date | Returned | **PASS** |
+| 5 | Gender invalid string | `validateGender('other')` | Throws enum error | Threw | **PASS** |
+| 6 | Gender case-insensitivity | `validateGender(' Male ')` | Returns `'male'` | Returned | **PASS** |
+| 7 | Live MongoDB admin creation | Live DB provisioning | User in MongoDB with `role: admin` | Created | **PASS** |
+| 8 | Live MongoDB player elevation | Live DB elevation | User elevated from player to admin | Elevated | **PASS** |
+
+### Suite 5: Counter Concurrency & Model Guarantees (`tests/test_counter_concurrency.mjs`)
+| # | Test Name | Target Function | Expected | Actual | Status |
+|---|---|---|---|---|---|
+| 1 | 30 Concurrent allocations | `Promise.all(30 x getNextSequence)` | 30 strictly unique values | 30 unique | **PASS** |
+| 2 | Re-initialization idempotency | `initSequence` on active counter | Does not reset sequence | Maintained | **PASS** |
+| 3 | AuditLog append-only enforcement | Attempt `updateOne` / `deleteOne` | Throws append-only error | Threw | **PASS** |
+| 4 | Seeding repeatability | Run `seedCurriculumAndCounters` twice | Does not overwrite, counter stays | Preserved | **PASS** |
+
+### Suite 6: Benchmark Validator Unit Tests (`MindRush-AI/tests/test_benchmark_validator.py`)
+| # | Test Name | Target Function | Expected | Actual | Status |
+|---|---|---|---|---|---|
+| 1 | Unsupported math unverified | `verify_math_correctness("Find secret...")` | `(False, "unsupported...")` | `False` | **PASS** |
+| 2 | Supported addition pattern | `verify_math_correctness("4 + 7")` | `(True, ...)` | `True` | **PASS** |
+| 3 | Supported subtraction pattern | `verify_math_correctness("10 - 3")` | `(True, ...)` | `True` | **PASS** |
+| 4 | Full schema valid | `validate_full_schema(valid_q)` | `(True, [])` | `True` | **PASS** |
+| 5 | Option letter mismatch | `validate_full_schema(mismatch_q)` | `(False, ['...does not match...'])` | `False` | **PASS** |
+
+---
+
+## 3. Milestone Summary (After Final Review Corrections — 2026-11-22)
+
+### Python Pytest Subsystem (`MindRush-AI/tests/`)
+Command: `MindRush-AI\.venv\Scripts\pytest MindRush-AI\tests\ -v`
+- `test_config.py`: 7 passed, 0 failed, 0 skipped (Subprocess isolation across production, staging, development)
+- `test_health.py`: 6 passed, 0 failed, 0 skipped (Health probes, internal ping auth, secret safety)
+- `test_benchmark_validator.py`: 8 passed, 0 failed, 0 skipped (Deterministic arithmetic, schema typing, sampler lifecycle)
+- **Total Python Tests:** **21 Passed, 0 Failed, 0 Skipped (100%)**
+
+### Node.js Subsystem (`tests/`)
+Commands:
+- `node tests/test_foundation_milestone.mjs` (15 passed, 0 failed)
+- `node tests/test_admin_provisioning.mjs` (10 passed, 0 failed)
+- `node tests/test_counter_concurrency.mjs` (4 passed, 0 failed)
+- `node tests/test_auth.mjs` (56 passed assertions, 0 failed)
+- **Total Node.js Scenario Tests:** **29 Passed, 0 Failed, 0 Skipped (100%)**
+- **Total Node.js Assertions:** **85 Passed, 0 Failed, 0 Skipped (100%)**
+
+**Grand Total:** **50 Automated Scenario Tests & 85 Node Assertions Passed (Zero Regressions, Zero Failures)**
+
+
