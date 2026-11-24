@@ -21,6 +21,8 @@ import { CollisionSystem } from './collision.js';
 import { AudioManager } from './audio.js';
 import { InputManager } from './input.js';
 import { EducationalScoringManager } from './educational-scoring.js';
+import { GestureInputManager } from './gesture-input.js';
+import { getGameSettings } from './settings.js';
 
 // -- Educational Mode fixed difficulty config (Semi-Hard / Hardcore-Lite) --
 // Speed sits between Fun Mode Medium (3.5) and Hard (4.5)
@@ -125,6 +127,8 @@ export class EducationalEngine {
     this.audio = new AudioManager();
     this.input = new InputManager();
     this.collision = new CollisionSystem();
+    this.gesture = new GestureInputManager();
+    this.gestureInput = this.gesture;
 
     // Scoring progression manager (isolated configuration & bounded variation)
     this.scoringManager = new EducationalScoringManager();
@@ -132,6 +136,8 @@ export class EducationalEngine {
 
     this.paddle = null;
     this.p5Instance = null;
+    this.isReady = typeof window === 'undefined';
+    this.cameraGate = null;
 
     // Educational session tracking
     this.eduState = EDU_STATES.SHOWING_QUESTION;
@@ -162,6 +168,73 @@ export class EducationalEngine {
     this.resultsModal = null;
 
     this._setupInputHandlers();
+    this._setupGestureInput();
+  }
+
+  _setupGestureInput() {
+    this.gesture.onGesture(({ normalizedX, isHandPresent }) => {
+      if (!isHandPresent || !this.state.isPlaying() || this.input.controlMode !== 'gesture') return;
+      // Do not overwrite horizontal position if user is actively pressing keyboard movement keys
+      const delta = this.input.getMovementDelta();
+      if (delta !== 0) return;
+
+      if (this.p5Instance && this.paddle) {
+        const halfW = this.paddle.w / 2;
+        const minCenter = halfW;
+        const maxCenter = this.p5Instance.width - halfW;
+        const targetX = minCenter + normalizedX * (maxCenter - minCenter);
+        this.input.setTargetX(targetX);
+      }
+    });
+
+    this.gesture.onPauseToggle(() => {
+      this.togglePause();
+    });
+
+    this.gesture.onStatus((statusObj) => {
+      this._updateSensorHUD(statusObj);
+    });
+
+    this.gesture.onCameraDisconnect((msg) => {
+      if (this.cameraGate) {
+        this.cameraGate.handleRuntimeDisconnect(msg);
+      } else {
+        this.pause();
+        this.input.setControlMode('keyboard');
+        this._showNotification(msg || 'Camera disconnected. Game paused safely.');
+        this._updateSensorHUD({ status: 'error', message: 'KEYBOARD SAFE MODE' });
+      }
+    });
+  }
+
+  _updateSensorHUD(statusObj) {
+    if (typeof document === 'undefined') return;
+    const label = document.querySelector('#hud-sensor-feedback .sensor-label');
+    const dot = document.querySelector('#hud-sensor-feedback .sensor-pulse-dot');
+    if (label && statusObj.message) {
+      label.textContent = statusObj.message.toUpperCase();
+    }
+    if (dot) {
+      dot.className = 'sensor-pulse-dot';
+      if (statusObj.status === 'active' || statusObj.status === 'tracking') dot.classList.add('active');
+      else if (statusObj.status === 'error' || statusObj.status === 'disconnected') dot.classList.add('error');
+    }
+  }
+
+  _showNotification(msg) {
+    if (typeof document === 'undefined') return;
+    let notif = document.getElementById('gesture-notification');
+    if (!notif) {
+      notif = document.createElement('div');
+      notif.id = 'gesture-notification';
+      notif.className = 'gesture-notification';
+      document.body.appendChild(notif);
+    }
+    notif.textContent = msg;
+    notif.classList.remove('hidden');
+    setTimeout(() => {
+      if (notif) notif.classList.add('hidden');
+    }, 4000);
   }
 
   _setupInputHandlers() {
@@ -192,6 +265,7 @@ export class EducationalEngine {
         const canvas = p.createCanvas(p.windowWidth, p.windowHeight);
         canvas.parent(container);
         self.paddle = new Paddle(EDU_CONFIG, p.width, p.height);
+        self.input.setMouseEnabled(false);
         self._loadFirstQuestion();
       };
 
@@ -288,10 +362,16 @@ export class EducationalEngine {
   }
 
   _gameLoop(p) {
+    if (!this.isReady) {
+      this._renderScene(p);
+      return;
+    }
+
     p.background(0);
 
     // State: Game Over (lost all lives)
     if (this.state.isGameOver()) {
+      this.input.restoreCursor();
       if (!this.state.gameOverHandled) {
         this.state.gameOverHandled = true;
         this.eduState = EDU_STATES.GAME_OVER;
@@ -305,6 +385,7 @@ export class EducationalEngine {
 
     // State: Session Complete
     if (this.eduState === EDU_STATES.SESSION_COMPLETE) {
+      this.input.restoreCursor();
       this._renderScene(p);
       this._renderQuestionHUD(p);
       return;
@@ -312,6 +393,7 @@ export class EducationalEngine {
 
     // State: Paused
     if (this.state.isPaused()) {
+      this.input.restoreCursor();
       this._showPauseModal();
       this._renderScene(p);
       this._renderQuestionHUD(p);
@@ -319,6 +401,20 @@ export class EducationalEngine {
     }
 
     this._hidePauseModal();
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
+    }
+    this.input.setMouseEnabled(false);
+
+    // Horizontal movement: Keyboard input (clamped strictly to playable paddle center boundaries)
+    const delta = this.input.getMovementDelta();
+    if (delta !== 0) {
+      const speed = 10;
+      const halfW = this.paddle ? this.paddle.w / 2 : 50;
+      const minCenter = halfW;
+      const maxCenter = Math.max(minCenter, p.width - halfW);
+      this.input.currentX = Math.max(minCenter, Math.min(maxCenter, this.input.currentX + delta * speed));
+    }
 
     // Update paddle
     if (this.paddle) {
@@ -720,16 +816,28 @@ export class EducationalEngine {
 
   pause() {
     this.state.pause();
+    this.input.restoreCursor();
     this._showPauseModal();
   }
 
   resume() {
     this.state.resume();
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
+    }
     this._hidePauseModal();
   }
 
   togglePause() {
     if (this.state.isGameOver() || this.eduState === EDU_STATES.SESSION_COMPLETE) return;
+
+    // Debounce to prevent synthetic or bubbling double-triggers
+    const now = Date.now();
+    if (this._lastPauseToggleTime && (now - this._lastPauseToggleTime < 250)) {
+      return;
+    }
+    this._lastPauseToggleTime = now;
+
     if (this.state.isPlaying()) {
       this.pause();
     } else {
@@ -757,10 +865,17 @@ export class EducationalEngine {
       if (el) el.classList.remove('active');
     });
 
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
+    }
     this._loadFirstQuestion();
   }
 
   exit() {
+    if (this.gesture) {
+      this.gesture.stop();
+    }
+    this.input.restoreCursor();
     window.location.href = 'educational-categories.html';
   }
 

@@ -5,7 +5,11 @@
 
 export const PROGRESSION_KEYS = {
   INSANE_UNLOCKED: 'mindrush_insane_unlocked',
-  HARD_BEATEN: 'mindrush_hard_beaten'
+  HARD_BEATEN: 'mindrush_hard_beaten',
+  SKYFALL_INSANE_UNLOCKED: 'mindrush_skyfall_insane_unlocked',
+  SKYFALL_HARD_BEATEN: 'mindrush_skyfall_hard_beaten',
+  INVADER_INSANE_UNLOCKED: 'mindrush_invader_insane_unlocked',
+  INVADER_HARD_BEATEN: 'mindrush_invader_hard_beaten'
 };
 
 export const EDU_PROGRESSION_KEYS = {
@@ -48,39 +52,102 @@ export function getProgressionKey(baseKey) {
 }
 
 /**
- * Checks if Insane difficulty has been unlocked by beating Hard mode
+ * Normalizes game mode string to canonical mode name
+ * @param {string|null} mode
+ * @returns {'skyfall'|'space-invader'|'educational'}
+ */
+export function normalizeProgressionMode(mode) {
+  const m = String(mode || 'skyfall').toLowerCase().trim();
+  if (m === 'invader' || m === 'space-invader') return 'space-invader';
+  if (m === 'educational' || m === 'edu') return 'educational';
+  return 'skyfall';
+}
+
+/**
+ * Checks if Insane difficulty has been unlocked for the given game mode.
+ * Completely isolates Skyfall from Space Invader progression.
+ * Safe migration: Skyfall falls back to legacy key if present; Space Invader requires its own unlock.
+ * @param {'skyfall'|'space-invader'|string} [mode='skyfall']
  * @returns {boolean}
  */
-export function isInsaneUnlocked() {
-  const key = getProgressionKey(PROGRESSION_KEYS.INSANE_UNLOCKED);
-  try {
-    if (typeof localStorage !== 'undefined') {
-      const val = localStorage.getItem(key);
-      if (val !== null) {
-        return val === 'true';
+export function isInsaneUnlocked(mode = 'skyfall') {
+  const normMode = normalizeProgressionMode(mode);
+
+  if (normMode === 'space-invader') {
+    const key = getProgressionKey(PROGRESSION_KEYS.INVADER_INSANE_UNLOCKED);
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const val = localStorage.getItem(key);
+        if (val !== null) return val === 'true';
+        return false;
       }
+      return _memoryStorage[key] === 'true';
+    } catch (e) {
       return false;
     }
-    return _memoryStorage[key] === 'true';
+  }
+
+  // Skyfall mode (and default fallback):
+  // Check isolated Skyfall key first
+  const skyfallKey = getProgressionKey(PROGRESSION_KEYS.SKYFALL_INSANE_UNLOCKED);
+  try {
+    if (typeof localStorage !== 'undefined') {
+      const sVal = localStorage.getItem(skyfallKey);
+      if (sVal !== null) return sVal === 'true';
+
+      // Safe migration: fallback to legacy shared key for Skyfall
+      const legacyKey = getProgressionKey(PROGRESSION_KEYS.INSANE_UNLOCKED);
+      const lVal = localStorage.getItem(legacyKey);
+      if (lVal !== null) return lVal === 'true';
+      return false;
+    }
+    if (_memoryStorage[skyfallKey] !== undefined) {
+      return _memoryStorage[skyfallKey] === 'true';
+    }
+    const legacyKey = getProgressionKey(PROGRESSION_KEYS.INSANE_UNLOCKED);
+    return _memoryStorage[legacyKey] === 'true';
   } catch (e) {
     return false;
   }
 }
 
 /**
- * Persists unlock status for Insane difficulty upon conquering Hard mode
+ * Persists unlock status for Insane difficulty for the specified game mode.
+ * Unlocking Skyfall does NOT unlock Space Invader, and vice versa.
+ * @param {'skyfall'|'space-invader'|string} [mode='skyfall']
  * @returns {boolean}
  */
-export function unlockInsane() {
-  const keyInsane = getProgressionKey(PROGRESSION_KEYS.INSANE_UNLOCKED);
-  const keyHard = getProgressionKey(PROGRESSION_KEYS.HARD_BEATEN);
+export function unlockInsane(mode = 'skyfall') {
+  const normMode = normalizeProgressionMode(mode);
   try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.setItem(keyInsane, 'true');
-      localStorage.setItem(keyHard, 'true');
+    if (normMode === 'space-invader') {
+      const keyInsane = getProgressionKey(PROGRESSION_KEYS.INVADER_INSANE_UNLOCKED);
+      const keyHard = getProgressionKey(PROGRESSION_KEYS.INVADER_HARD_BEATEN);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(keyInsane, 'true');
+        localStorage.setItem(keyHard, 'true');
+      }
+      _memoryStorage[keyInsane] = 'true';
+      _memoryStorage[keyHard] = 'true';
+      return true;
     }
-    _memoryStorage[keyInsane] = 'true';
-    _memoryStorage[keyHard] = 'true';
+
+    // Skyfall mode (and default fallback):
+    const keySkyfall = getProgressionKey(PROGRESSION_KEYS.SKYFALL_INSANE_UNLOCKED);
+    const keySkyfallHard = getProgressionKey(PROGRESSION_KEYS.SKYFALL_HARD_BEATEN);
+    const legacyKey = getProgressionKey(PROGRESSION_KEYS.INSANE_UNLOCKED);
+    const legacyKeyHard = getProgressionKey(PROGRESSION_KEYS.HARD_BEATEN);
+
+    if (typeof localStorage !== 'undefined') {
+      localStorage.setItem(keySkyfall, 'true');
+      localStorage.setItem(keySkyfallHard, 'true');
+      localStorage.setItem(legacyKey, 'true');
+      localStorage.setItem(legacyKeyHard, 'true');
+    }
+    _memoryStorage[keySkyfall] = 'true';
+    _memoryStorage[keySkyfallHard] = 'true';
+    _memoryStorage[legacyKey] = 'true';
+    _memoryStorage[legacyKeyHard] = 'true';
     return true;
   } catch (e) {
     return false;
@@ -88,23 +155,76 @@ export function unlockInsane() {
 }
 
 /**
- * Resets unlock progression back to initial locked state (for testing or profile resets)
+ * Resets unlock progression back to initial locked state.
+ * Supports isolated reset by mode ('skyfall' or 'space-invader').
+ * When mode is omitted, resets all Fun Mode progressions for backward compatibility.
+ * @param {'skyfall'|'space-invader'|string} [mode]
  * @returns {boolean}
  */
-export function resetProgression() {
-  const keyInsane = getProgressionKey(PROGRESSION_KEYS.INSANE_UNLOCKED);
-  const keyHard = getProgressionKey(PROGRESSION_KEYS.HARD_BEATEN);
+export function resetProgression(mode) {
   try {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem(keyInsane);
-      localStorage.removeItem(keyHard);
-      localStorage.removeItem(PROGRESSION_KEYS.INSANE_UNLOCKED);
-      localStorage.removeItem(PROGRESSION_KEYS.HARD_BEATEN);
+    if (mode) {
+      const normMode = normalizeProgressionMode(mode);
+      if (normMode === 'space-invader') {
+        const keyInsane = getProgressionKey(PROGRESSION_KEYS.INVADER_INSANE_UNLOCKED);
+        const keyHard = getProgressionKey(PROGRESSION_KEYS.INVADER_HARD_BEATEN);
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem(keyInsane);
+          localStorage.removeItem(keyHard);
+          localStorage.removeItem(PROGRESSION_KEYS.INVADER_INSANE_UNLOCKED);
+          localStorage.removeItem(PROGRESSION_KEYS.INVADER_HARD_BEATEN);
+        }
+        delete _memoryStorage[keyInsane];
+        delete _memoryStorage[keyHard];
+        delete _memoryStorage[PROGRESSION_KEYS.INVADER_INSANE_UNLOCKED];
+        delete _memoryStorage[PROGRESSION_KEYS.INVADER_HARD_BEATEN];
+        return true;
+      }
+      if (normMode === 'skyfall') {
+        const keySkyfall = getProgressionKey(PROGRESSION_KEYS.SKYFALL_INSANE_UNLOCKED);
+        const keySkyfallHard = getProgressionKey(PROGRESSION_KEYS.SKYFALL_HARD_BEATEN);
+        const legacyKey = getProgressionKey(PROGRESSION_KEYS.INSANE_UNLOCKED);
+        const legacyKeyHard = getProgressionKey(PROGRESSION_KEYS.HARD_BEATEN);
+        if (typeof localStorage !== 'undefined') {
+          localStorage.removeItem(keySkyfall);
+          localStorage.removeItem(keySkyfallHard);
+          localStorage.removeItem(legacyKey);
+          localStorage.removeItem(legacyKeyHard);
+          localStorage.removeItem(PROGRESSION_KEYS.SKYFALL_INSANE_UNLOCKED);
+          localStorage.removeItem(PROGRESSION_KEYS.SKYFALL_HARD_BEATEN);
+          localStorage.removeItem(PROGRESSION_KEYS.INSANE_UNLOCKED);
+          localStorage.removeItem(PROGRESSION_KEYS.HARD_BEATEN);
+        }
+        delete _memoryStorage[keySkyfall];
+        delete _memoryStorage[keySkyfallHard];
+        delete _memoryStorage[legacyKey];
+        delete _memoryStorage[legacyKeyHard];
+        delete _memoryStorage[PROGRESSION_KEYS.SKYFALL_INSANE_UNLOCKED];
+        delete _memoryStorage[PROGRESSION_KEYS.SKYFALL_HARD_BEATEN];
+        delete _memoryStorage[PROGRESSION_KEYS.INSANE_UNLOCKED];
+        delete _memoryStorage[PROGRESSION_KEYS.HARD_BEATEN];
+        return true;
+      }
     }
-    delete _memoryStorage[keyInsane];
-    delete _memoryStorage[keyHard];
-    delete _memoryStorage[PROGRESSION_KEYS.INSANE_UNLOCKED];
-    delete _memoryStorage[PROGRESSION_KEYS.HARD_BEATEN];
+
+    // Default (no mode specified): Reset all Fun Mode progressions
+    const allKeys = [
+      PROGRESSION_KEYS.INSANE_UNLOCKED,
+      PROGRESSION_KEYS.HARD_BEATEN,
+      PROGRESSION_KEYS.SKYFALL_INSANE_UNLOCKED,
+      PROGRESSION_KEYS.SKYFALL_HARD_BEATEN,
+      PROGRESSION_KEYS.INVADER_INSANE_UNLOCKED,
+      PROGRESSION_KEYS.INVADER_HARD_BEATEN
+    ];
+    for (const baseKey of allKeys) {
+      const scopedKey = getProgressionKey(baseKey);
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(scopedKey);
+        localStorage.removeItem(baseKey);
+      }
+      delete _memoryStorage[scopedKey];
+      delete _memoryStorage[baseKey];
+    }
     return true;
   } catch (e) {
     return false;
@@ -349,13 +469,13 @@ export function isNegativeObject(obj) {
   if (!obj) return false;
   const id = obj.id || obj.shape;
   return id === 'regular_red_ball' ||
-         id === 'spiky_red_ball' ||
-         id === 'red_ball' ||
-         id === 'orange_flame' ||
-         id === 'flame' ||
-         id === 'hazard_cross' ||
-         id === 'cross' ||
-         (typeof obj.lifeDelta === 'number' && obj.lifeDelta < 0);
+    id === 'spiky_red_ball' ||
+    id === 'red_ball' ||
+    id === 'orange_flame' ||
+    id === 'flame' ||
+    id === 'hazard_cross' ||
+    id === 'cross' ||
+    (typeof obj.lifeDelta === 'number' && obj.lifeDelta < 0);
 }
 
 export const NEW_BADGES = {
@@ -415,7 +535,7 @@ export const DIFFICULTIES = {
   easy: {
     id: 'easy',
     name: 'Easy',
-    ballSpeed: 3,
+    ballSpeed: 5,
     spawnRate: 45,
     spawnJitter: 12, // ±12 frame randomness on spawn timing
     maxBalls: 15,
@@ -509,7 +629,7 @@ export const DIFFICULTIES = {
   medium: {
     id: 'medium',
     name: 'Medium',
-    ballSpeed: 4,
+    ballSpeed: 6,
     spawnRate: 45,
     spawnJitter: 10, // ±10 frame randomness on spawn timing
     maxBalls: 15,
@@ -657,7 +777,7 @@ export const DIFFICULTIES = {
   hard: {
     id: 'hard',
     name: 'Hard',
-    ballSpeed: 4.5,
+    ballSpeed: 6.8,
     spawnRate: 45,
     spawnJitter: 8, // ±8 frame randomness on spawn timing
     maxBalls: 15,
@@ -825,7 +945,7 @@ export const DIFFICULTIES = {
   insane: {
     id: 'insane',
     name: 'Insane',
-    ballSpeed: 5.6,
+    ballSpeed: 8.25,
     spawnRate: 34,
     spawnJitter: 6, // ±6 frame randomness on spawn timing
     maxBalls: 12,

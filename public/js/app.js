@@ -10,6 +10,8 @@ import { EducationalInvaderEngine } from './game/educational-invader-engine.js?v
 import { FallingObject } from './game/objects.js?v=2';
 import { setBadgeUserContext } from './game/badges.js?v=2';
 import { getActiveUser, syncProgressFromServer } from './game/storage.js?v=2';
+import { getGameSettings, saveGameSettings, applyGameSettings } from './game/settings.js';
+import { CameraGate } from './game/camera-gate.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   // Prevent context menu and selection during gameplay
@@ -62,11 +64,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const engine = new EducationalInvaderEngine({ id: diffKey });
     engine.mount(container);
     window.__MINDRUSH_ENGINE__ = engine;
+    applyGameSettings(getGameSettings(), engine);
+    _setupControlModeUI(engine);
+    _setupInGameSettingsModal(engine);
+    const gate = new CameraGate({ engine });
+    engine.cameraGate = gate;
+    gate.start();
     return;
   }
 
-  // Enforce Insane difficulty progression lock: player must beat Hard mode first
-  if (difficultyParam && difficultyParam.trim().toLowerCase() === 'insane' && !isInsaneUnlocked()) {
+  // Enforce Insane difficulty progression lock: player must beat Hard mode first in the target mode
+  const targetProgressionMode = isInvaderMode ? 'space-invader' : 'skyfall';
+  if (difficultyParam && difficultyParam.trim().toLowerCase() === 'insane' && !isInsaneUnlocked(targetProgressionMode)) {
     const redirectUrl = isInvaderMode
       ? 'difficulty-select.html?mode=invader&locked=insane'
       : 'difficulty-select.html?locked=insane';
@@ -92,6 +101,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const engine = new SpaceInvaderEngine({ id: diffKey });
     engine.mount(container);
     window.__MINDRUSH_ENGINE__ = engine;
+    applyGameSettings(getGameSettings(), engine);
+    _setupControlModeUI(engine);
+    _setupInGameSettingsModal(engine);
+    const gate = new CameraGate({ engine });
+    engine.cameraGate = gate;
+    gate.start();
     return;
   }
 
@@ -104,6 +119,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (diffNameEl) {
     diffNameEl.textContent = `${config.name.toUpperCase()} MODE`;
   }
+  const exitBtn = document.getElementById('hud-btn-exit');
+  if (exitBtn) {
+    exitBtn.href = 'mode-select.html';
+  }
 
   // Mount game engine
   const container = document.getElementById('canvas-container');
@@ -112,6 +131,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Expose engine to window for debugging and automated testing
   window.__MINDRUSH_ENGINE__ = engine;
+  applyGameSettings(getGameSettings(), engine);
+  _setupControlModeUI(engine);
+  _setupInGameSettingsModal(engine);
+  const gate = new CameraGate({ engine });
+  engine.cameraGate = gate;
+  gate.start();
 
   // If difficulty=showcase or ?showcase=true, render all 5 new badges stationary across canvas
   if (config.id === 'showcase' || urlParams.get('showcase') === 'true') {
@@ -135,5 +160,108 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
       origGameLoop(p);
     };
+  }
+
+  function _setupControlModeUI(engine) {
+    if (!engine) return;
+    const previewContainer = document.getElementById('camera-preview-container');
+    const previewVideo = document.getElementById('gesture-camera-preview');
+    const gestureInst = engine.gestureInput || engine.gesture;
+
+    if (gestureInst) {
+      gestureInst.onStatus((statusObj) => {
+        if (previewContainer && previewVideo && gestureInst.videoElement && gestureInst.isActive) {
+          if (previewVideo.srcObject !== gestureInst.videoElement.srcObject) {
+            previewVideo.srcObject = gestureInst.videoElement.srcObject;
+            previewVideo.play().catch(() => {});
+          }
+          previewContainer.classList.remove('hidden');
+        } else if (previewContainer) {
+          previewContainer.classList.add('hidden');
+        }
+      });
+    }
+  }
+
+  function _setupInGameSettingsModal(engine) {
+    if (!engine) return;
+    const settingsBtn = document.getElementById('btn-pause-settings');
+    const settingsModal = document.getElementById('game-settings-modal');
+    const closeXBtn = document.getElementById('btn-settings-close-x');
+    const cancelBtn = document.getElementById('btn-settings-cancel');
+    const saveBtn = document.getElementById('btn-settings-save');
+    const optGesture = document.getElementById('opt-method-gesture');
+    const optKeyboard = document.getElementById('opt-method-keyboard');
+    const sfxCheckbox = document.getElementById('ingame-setting-sfx');
+    const musicCheckbox = document.getElementById('ingame-setting-music');
+    const volSlider = document.getElementById('ingame-setting-volume');
+    const volDisplay = document.getElementById('ingame-vol-display');
+
+    function populateModal() {
+      const s = getGameSettings();
+      if (s.controlMethod === 'keyboard') {
+        if (optKeyboard) optKeyboard.checked = true;
+      } else {
+        if (optGesture) optGesture.checked = true;
+      }
+      if (sfxCheckbox) sfxCheckbox.checked = !!s.sfx;
+      if (musicCheckbox) musicCheckbox.checked = !!s.music;
+      if (volSlider) volSlider.value = s.volume ?? 80;
+      if (volDisplay) volDisplay.textContent = (s.volume ?? 80) + '%';
+    }
+
+    function openSettings() {
+      populateModal();
+      if (settingsModal) settingsModal.classList.add('active');
+    }
+
+    function closeSettings() {
+      if (settingsModal) settingsModal.classList.remove('active');
+    }
+
+    // Modal priority safeguard: Esc key while settings is open closes settings modal only
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        if (settingsModal && settingsModal.classList.contains('active')) {
+          e.preventDefault();
+          e.stopImmediatePropagation();
+          closeSettings();
+        }
+      }
+    }, true);
+
+    if (settingsBtn) {
+      settingsBtn.onclick = (e) => {
+        e.preventDefault();
+        openSettings();
+      };
+    }
+    if (closeXBtn) {
+      closeXBtn.onclick = (e) => {
+        e.preventDefault();
+        closeSettings();
+      };
+    }
+    if (cancelBtn) {
+      cancelBtn.onclick = (e) => {
+        e.preventDefault();
+        closeSettings();
+      };
+    }
+    if (saveBtn) {
+      saveBtn.onclick = (e) => {
+        e.preventDefault();
+        const isKb = optKeyboard ? optKeyboard.checked : false;
+        const newSettings = {
+          controlMethod: isKb ? 'keyboard' : 'gesture',
+          sfx: sfxCheckbox ? sfxCheckbox.checked : true,
+          music: musicCheckbox ? musicCheckbox.checked : true,
+          volume: volSlider ? parseInt(volSlider.value, 10) : 80
+        };
+        saveGameSettings(newSettings);
+        applyGameSettings(newSettings, engine);
+        closeSettings();
+      };
+    }
   }
 });

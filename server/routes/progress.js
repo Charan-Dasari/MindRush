@@ -49,7 +49,9 @@ router.get('/progress', requireAuth, async (req, res) => {
       },
       badges: user.badges || [],
       highScore: user.highScore || 0,
-      insaneUnlocked: Boolean(user.insaneUnlocked)
+      insaneUnlocked: Boolean(user.insaneUnlocked),
+      skyfallInsaneUnlocked: Boolean(user.skyfallInsaneUnlocked || user.insaneUnlocked),
+      invaderInsaneUnlocked: Boolean(user.invaderInsaneUnlocked)
     });
   } catch (err) {
     console.error('[MindRush Progress] Fetch error:', err.message);
@@ -67,7 +69,7 @@ router.get('/progress', requireAuth, async (req, res) => {
  */
 router.post('/progress/sync', requireAuth, async (req, res) => {
   try {
-    const { badges, highScore, insaneUnlocked } = req.body || {};
+    const { badges, highScore, insaneUnlocked, skyfallInsaneUnlocked, invaderInsaneUnlocked, mode } = req.body || {};
 
     const cleanBadges = Array.isArray(badges)
       ? badges.filter(b => typeof b === 'string' && b.trim().length > 0)
@@ -78,11 +80,16 @@ router.post('/progress/sync', requireAuth, async (req, res) => {
       : undefined;
 
     const cleanInsane = typeof insaneUnlocked === 'boolean' ? insaneUnlocked : undefined;
+    const cleanSkyfall = typeof skyfallInsaneUnlocked === 'boolean' ? skyfallInsaneUnlocked : undefined;
+    const cleanInvader = typeof invaderInsaneUnlocked === 'boolean' ? invaderInsaneUnlocked : undefined;
 
     const updated = await User.updateProgress(req.session.userId, {
       badges: cleanBadges,
       highScore: cleanScore,
-      insaneUnlocked: cleanInsane
+      insaneUnlocked: cleanInsane,
+      skyfallInsaneUnlocked: cleanSkyfall,
+      invaderInsaneUnlocked: cleanInvader,
+      mode
     });
 
     if (!updated) {
@@ -96,7 +103,9 @@ router.post('/progress/sync', requireAuth, async (req, res) => {
       success: true,
       badges: updated.badges || [],
       highScore: updated.highScore || 0,
-      insaneUnlocked: Boolean(updated.insaneUnlocked)
+      insaneUnlocked: Boolean(updated.insaneUnlocked),
+      skyfallInsaneUnlocked: Boolean(updated.skyfallInsaneUnlocked || updated.insaneUnlocked),
+      invaderInsaneUnlocked: Boolean(updated.invaderInsaneUnlocked)
     });
   } catch (err) {
     console.error('[MindRush Progress] Sync error:', err.message);

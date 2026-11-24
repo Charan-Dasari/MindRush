@@ -24,9 +24,10 @@ import { GameState } from './state.js';
 import { AudioManager } from './audio.js';
 import { InputManager } from './input.js';
 import { UIManager } from './ui.js';
-import { GestureController } from './gesture.js';
+import { GestureInputManager } from './gesture-input.js';
 import { unlockInsane, isInsaneUnlocked } from './difficulty.js';
 import { getScopedStorageKey, submitScoreToServer } from './storage.js';
+import { getGameSettings } from './settings.js';
 
 // Configuration presets for all 4 difficulty tiers
 export const INVADER_CONFIGS = {
@@ -171,7 +172,8 @@ export class SpaceInvaderEngine {
     this.audio = new AudioManager();
     this.input = new InputManager();
     this.ui = new UIManager();
-    this.gesture = new GestureController();
+    this.gesture = new GestureInputManager();
+    this.gestureInput = this.gesture;
 
     this.p5Instance = null;
     this.container = null;
@@ -203,6 +205,9 @@ export class SpaceInvaderEngine {
     this.miniBossDefeated = false;
     this.finalBoss = null;
     this.finalBossDefeated = false;
+    this.isNextLevelModalOpen = false;
+    this.isReady = typeof window === 'undefined';
+    this.cameraGate = null;
 
     // Lightning bolt entities (Final Boss Lady attack)
     this.lightningBolts = [];
@@ -215,6 +220,11 @@ export class SpaceInvaderEngine {
     this.diveTimer = 0;
     this.animTick = 0;
     this._flightRecordSaved = false;
+
+    // Timing & Fixed-Timestep Simulation
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
+    this.simTicks = 0;
 
     // Active keyboard state for multi-key fluid movement
     this.keysDown = {};
@@ -243,42 +253,109 @@ export class SpaceInvaderEngine {
     if (typeof window === 'undefined') return;
 
     window.addEventListener('keydown', (e) => {
+      // In Gesture Mode: strictly ignore ALL gameplay keyboard inputs
+      if (this.input.controlMode === 'gesture') {
+        return;
+      }
+
       this.keysDown[e.code] = true;
       this.keysDown[e.key] = true;
 
       // Spacebar or 'K' to fire
       if (e.code === 'Space' || e.key === ' ' || e.code === 'KeyK') {
         e.preventDefault();
-        if (this.state.isPlaying()) {
+        if (this.state.isPlaying() && this.input.controlMode === 'keyboard') {
           this.firePlayerLaser();
         }
       }
     });
 
     window.addEventListener('keyup', (e) => {
+      if (this.input.controlMode === 'gesture') return;
       this.keysDown[e.code] = false;
       this.keysDown[e.key] = false;
     });
   }
 
   _setupGesture() {
-    this.gesture.onUpdate(({ normX, normY, isPinching, isHandPresent }) => {
-      if (!this.player || !this.p5Instance || !this.state.isPlaying()) return;
+    this.gesture.onGesture(({ normalizedX, isFist, isVSign, isPalmOpen, isHandPresent }) => {
+      if (!isHandPresent || !this.player || !this.p5Instance || !this.state.isPlaying() || this.input.controlMode !== 'gesture') return;
 
       const w = this.p5Instance.width;
 
       // Map horizontal only: entire canvas width with margin
-      const targetX = normX * (w - this.player.width - 20) + 10;
+      const targetX = normalizedX * (w - this.player.width - 20) + 10;
       this.player.x = Math.max(10, Math.min(targetX, w - this.player.width - 10));
 
       // Vertical position is strictly LOCKED — gesture does not affect Y
       this.player.y = this.player.fixedY;
+    });
 
-      // Gesture pinch to fire
-      if (isPinching) {
+    // Gesture 2: Closed fist shooting with cooldown
+    this.gesture.onShoot(() => {
+      if (this.state.isPlaying() && this.input.controlMode === 'gesture') {
         this.firePlayerLaser();
       }
     });
+
+    // Gesture 3: V-sign pause/resume (800ms stable hold)
+    this.gesture.onPauseToggle(() => {
+      this.togglePause();
+    });
+
+    this.gesture.onStatus((statusObj) => {
+      this._updateSensorHUD(statusObj);
+    });
+
+    this.gesture.onCameraDisconnect((msg) => {
+      if (this.cameraGate) {
+        this.cameraGate.handleRuntimeDisconnect(msg);
+      } else {
+        this.pause();
+        this.input.setControlMode('keyboard');
+        this._showNotification(msg || 'Camera disconnected. Game paused safely.');
+        this._updateSensorHUD({ status: 'error', message: 'KEYBOARD SAFE MODE' });
+      }
+    });
+  }
+
+  _updateSensorHUD(statusObj) {
+    if (typeof document === 'undefined') return;
+    const label = document.querySelector('#hud-sensor-feedback .sensor-label');
+    const dot = document.querySelector('#hud-sensor-feedback .sensor-pulse-dot');
+    if (this.input && this.input.controlMode === 'keyboard') {
+      if (label) label.textContent = 'KEYBOARD ACTIVE';
+      if (dot) dot.className = 'sensor-pulse-dot';
+      return;
+    }
+    if (label && statusObj.message) {
+      if (statusObj.status === 'active' || statusObj.status === 'tracking') {
+        label.textContent = 'GESTURE ACTIVE';
+      } else {
+        label.textContent = statusObj.message.toUpperCase();
+      }
+    }
+    if (dot) {
+      dot.className = 'sensor-pulse-dot';
+      if (statusObj.status === 'active' || statusObj.status === 'tracking') dot.classList.add('active');
+      else if (statusObj.status === 'error' || statusObj.status === 'disconnected') dot.classList.add('error');
+    }
+  }
+
+  _showNotification(msg) {
+    if (typeof document === 'undefined') return;
+    let notif = document.getElementById('gesture-notification');
+    if (!notif) {
+      notif = document.createElement('div');
+      notif.id = 'gesture-notification';
+      notif.className = 'gesture-notification';
+      document.body.appendChild(notif);
+    }
+    notif.textContent = msg;
+    notif.classList.remove('hidden');
+    setTimeout(() => {
+      if (notif) notif.classList.add('hidden');
+    }, 4000);
   }
 
   _setupVisibilityChange() {
@@ -287,6 +364,8 @@ export class SpaceInvaderEngine {
       if (document.hidden && this.state.isPlaying()) {
         this.pause();
       }
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
     });
   }
 
@@ -310,12 +389,6 @@ export class SpaceInvaderEngine {
         // Nearest-neighbor scaling for crisp retro pixel art
         if (p.drawingContext) {
           p.drawingContext.imageSmoothingEnabled = false;
-        }
-
-        // Hide centered loading indicator once setup is complete
-        if (typeof document !== 'undefined') {
-          const loadEl = document.getElementById('p5_loading');
-          if (loadEl) loadEl.style.display = 'none';
         }
 
         this._initPlayer(p.width, p.height);
@@ -496,7 +569,7 @@ export class SpaceInvaderEngine {
       isAlive: true
     });
 
-    this.audio.play('paddle');
+    // Shooting audio removed per user request (prevents repetitive sound on firing/holding fist)
   }
 
   spawnEnemyLaser(source, spreadDx = 0) {
@@ -534,10 +607,15 @@ export class SpaceInvaderEngine {
   }
 
   _gameLoop(p) {
-    this.animTick++;
+    if (!this.isReady) {
+      this._renderBackground(p);
+      return;
+    }
 
     // 1. Game Over State
     if (this.state.isGameOver()) {
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
       if (!this.state.gameOverHandled) {
         this.state.gameOverHandled = true;
         this.audio.play('gameOver');
@@ -552,23 +630,54 @@ export class SpaceInvaderEngine {
 
     // 2. Paused State
     if (this.state.isPaused()) {
-      this.ui.showPauseModal();
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
+      if (!this.isNextLevelModalOpen) {
+        this.ui.showPauseModal();
+      }
       this._renderBackground(p);
       this._renderEntities(p);
       this._renderHUD(p);
       return;
     }
 
-    // 3. Active Play Updates
-    this._updatePlayer(p);
-    this._updateUFOs(p);
-    this._updateBosses(p);
-    this._updateLasers(p);
-    this._checkCollisions(p);
-    this._updateExplosions();
-    this._checkObjectives(p);
+    // Fixed-timestep simulation accumulator
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (!this._lastFrameTime) {
+      this._lastFrameTime = now;
+      this._accumulator = 0;
+    }
 
-    // 4. Render
+    let frameTime = now - this._lastFrameTime;
+    this._lastFrameTime = now;
+
+    const FIXED_STEP = 1000 / 60; // 16.6667ms per tick (60 FPS baseline)
+    const MAX_STEPS = 6;
+    const MAX_FRAME_TIME = MAX_STEPS * FIXED_STEP; // 100ms clamp (max 6 ticks)
+
+    // Safety clamp: max 100ms per frame to prevent catch-up spiral
+    if (frameTime > MAX_FRAME_TIME) frameTime = MAX_FRAME_TIME;
+    if (frameTime < 0) frameTime = 0;
+
+    this._accumulator += frameTime;
+
+    let steps = 0;
+
+    while (this._accumulator >= FIXED_STEP - 0.001 && steps < MAX_STEPS) {
+      this._simulationStep(p);
+      this._accumulator = Math.max(0, this._accumulator - FIXED_STEP);
+      steps++;
+      if (this.state.isGameOver() || this.state.isPaused()) {
+        this._accumulator = 0;
+        break;
+      }
+    }
+
+    if (steps >= MAX_STEPS) {
+      this._accumulator = 0;
+    }
+
+    // 4. Render once per frame
     this._renderBackground(p);
     this._renderEntities(p);
     this._renderHUD(p);
@@ -580,17 +689,32 @@ export class SpaceInvaderEngine {
     }
   }
 
+  /**
+   * Discrete 60 FPS simulation tick advancing all gameplay logic independently of rendering framerate
+   * @param {any} p - p5 instance
+   */
+  _simulationStep(p) {
+    this.animTick++;
+    this._updatePlayer(p);
+    this._updateUFOs(p);
+    this._updateBosses(p);
+    this._updateLasers(p);
+    this._checkCollisions(p);
+    this._updateExplosions();
+    this._checkObjectives(p);
+    this.simTicks++;
+  }
+
   _updatePlayer(p) {
     if (!this.player) return;
 
-    // Keyboard movement — horizontal only
-    let moveX = 0;
-
-    if (this.keysDown['ArrowLeft'] || this.keysDown['KeyA']) moveX -= 1;
-    if (this.keysDown['ArrowRight'] || this.keysDown['KeyD']) moveX += 1;
-    // Up/Down/W/S keys are deliberately ignored — strictly horizontal movement
-
-    this.player.x += moveX * this.player.speed;
+    // Keyboard movement — horizontal only (active only in keyboard mode)
+    if (this.input.controlMode === 'keyboard') {
+      let moveX = 0;
+      if (this.keysDown['ArrowLeft'] || this.keysDown['KeyA'] || this.keysDown['a'] || this.keysDown['A']) moveX -= 1;
+      if (this.keysDown['ArrowRight'] || this.keysDown['KeyD'] || this.keysDown['d'] || this.keysDown['D']) moveX += 1;
+      this.player.x += moveX * this.player.speed;
+    }
 
     // Mouse movement is disabled for spaceship — keyboard only
     // (gesture horizontal tracking still applies via _setupGesture)
@@ -657,9 +781,9 @@ export class SpaceInvaderEngine {
       }
     }
 
-    // Controlled respawn if all UFOs cleared and no boss currently active
+    // Controlled respawn if all UFOs cleared and no boss currently active (and next level modal not open)
     const livingCount = this.ufos.filter(u => u.isAlive).length;
-    if (livingCount === 0 && !this.miniBoss && !this.finalBoss && !this.easyCompleted) {
+    if (livingCount === 0 && !this.miniBoss && !this.finalBoss && !this.isNextLevelModalOpen) {
       this._initUFOFleet(p.width, p.height);
     }
   }
@@ -1046,7 +1170,10 @@ export class SpaceInvaderEngine {
 
           // In Hard mode, defeating the Mini-Boss conquers Hard and unlocks Insane!
           if (this.difficultyKey === 'hard') {
-            unlockInsane();
+            unlockInsane('space-invader');
+            this.pause();
+            this.isNextLevelModalOpen = true;
+            this.ui.hidePauseModal();
             this.ui.showNextLevelModal('VICTORY! Mini-Boss UFO eradicated. Hard difficulty conquered! INSANE mode is now permanently UNLOCKED!');
           }
         }
@@ -1071,6 +1198,9 @@ export class SpaceInvaderEngine {
             this.spawnExplosion(this.finalBoss.x + (k % 3) * 30, this.finalBoss.y + Math.floor(k / 3) * 30, 68);
           }
 
+          this.pause();
+          this.isNextLevelModalOpen = true;
+          this.ui.hidePauseModal();
           this.ui.showNextLevelModal('SUPREME VICTORY! Boss Lady annihilated. You have mastered MindRush Space Invader!');
         }
       }
@@ -1144,6 +1274,8 @@ export class SpaceInvaderEngine {
         this.audio.play('levelUp');
         this._saveFlightRecord();
         this.pause();
+        this.isNextLevelModalOpen = true;
+        this.ui.hidePauseModal();
         this.ui.showNextLevelModal('EASY SECTOR CLEARED! Outstanding flight control. All 10 alien reconnaissance targets destroyed. Proceed to Medium difficulty?');
         return;
       }
@@ -1511,8 +1643,8 @@ export class SpaceInvaderEngine {
     p.fill(148, 163, 184);
     p.textSize(8);
     const hint = this.gesture.isActive
-      ? 'GESTURE CONTROL: PINCH TO SHOOT'
-      : 'CONTROLS: LEFT/RIGHT + SPACEBAR TO SHOOT';
+      ? 'GESTURE: OPEN PALM = MOVE | FIST = SHOOT | V-SIGN = PAUSE'
+      : 'CONTROLS: ARROWS/WASD = MOVE | SPACE = SHOOT | ESC = PAUSE';
     p.text(hint, 24, p.height - 20);
 
     p.pop();
@@ -1542,7 +1674,9 @@ export class SpaceInvaderEngine {
           credentials: 'include',
           body: JSON.stringify({
             highScore: this.state.score,
-            insaneUnlocked: isInsaneUnlocked()
+            insaneUnlocked: isInsaneUnlocked('space-invader'),
+            invaderInsaneUnlocked: isInsaneUnlocked('space-invader'),
+            mode: 'space-invader'
           })
         }).catch(() => {});
       } catch (e) {}
@@ -1550,19 +1684,39 @@ export class SpaceInvaderEngine {
   }
 
   pause() {
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
     if (this.state.isPlaying()) {
+      this.input.restoreCursor();
       this.state.pause();
     }
   }
 
   resume() {
-    if (this.state.isPaused()) {
-      this.ui.hidePauseModal();
-      this.state.resume();
+    this._accumulator = 0;
+    this._lastFrameTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    this.isNextLevelModalOpen = false;
+    this.ui.hidePauseModal();
+    this.ui.hideNextLevelModal();
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
     }
+    this.state.resume();
   }
 
   togglePause() {
+    if (this.state.isGameOver()) return;
+
+    // Check modal priority: if settings modal is open, close it only and keep game paused
+    const activeModal = (this.ui && typeof this.ui.getActiveModal === 'function') ? this.ui.getActiveModal() : null;
+    if (activeModal === 'settings') {
+      this.ui.hideSettingsModal();
+      return;
+    }
+    if (activeModal && activeModal !== 'pause') {
+      return;
+    }
+
     if (this.state.isPlaying()) {
       this.pause();
     } else if (this.state.isPaused()) {
@@ -1571,6 +1725,10 @@ export class SpaceInvaderEngine {
   }
 
   restart() {
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
+    this.simTicks = 0;
+    this.isNextLevelModalOpen = false;
     this._flightRecordSaved = false;
     this.targetsDestroyed = 0;
     this.easyCompleted = false;
@@ -1598,6 +1756,7 @@ export class SpaceInvaderEngine {
       this._saveFlightRecord();
     }
     this.gesture.stop();
+    this.input.restoreCursor();
     window.location.href = 'difficulty-select.html?mode=invader';
   }
 
@@ -1611,7 +1770,7 @@ export class SpaceInvaderEngine {
     if (currIdx >= 0 && currIdx < tiers.length - 1) {
       const nextTier = tiers[currIdx + 1];
       if (this.difficultyKey === 'hard') {
-        unlockInsane();
+        unlockInsane('space-invader');
       }
       window.location.href = `game.html?mode=invader&difficulty=${nextTier}`;
     } else {
@@ -1620,7 +1779,22 @@ export class SpaceInvaderEngine {
   }
 
   declineNextLevel() {
+    this.isNextLevelModalOpen = false;
     this.ui.hideNextLevelModal();
+    this.ui.hidePauseModal();
+    if (this.config.targetObjective) {
+      this.config.targetObjective += 10;
+    }
+    this.easyCompleted = false;
     this.state.resume();
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
+    }
+    if (this.p5Instance) {
+      const living = this.ufos.filter(u => u.isAlive).length;
+      if (living === 0) {
+        this._initUFOFleet(this.p5Instance.width, this.p5Instance.height);
+      }
+    }
   }
 }

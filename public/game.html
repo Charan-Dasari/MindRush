@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MindRush — Game</title>
-  <link rel="icon" type="image/png" href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
+  <link rel="icon" type="image/png"
+    href="assets/images/skyfall-high-resolution-logo-color-on-transparent-background.png">
 
   <!-- Space-Arcade Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@500;700&display=swap"
+    rel="stylesheet">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/main.css">
@@ -22,16 +26,27 @@
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
+
 <body>
   <!-- Centered Space-Arcade Loading Screen -->
   <div id="p5_loading" class="p5_loading_screen">
-    <div class="loading-box">
-      <div class="loading-orbit-spinner">
+    <div class="loading-box" id="loading-box-content">
+      <div class="loading-orbit-spinner" id="loading-spinner">
         <div class="orbit-ring"></div>
         <div class="orbit-core">🛸</div>
       </div>
-      <div class="loading-title">INITIALIZING MINDRUSH...</div>
-      <div class="loading-subtitle">MOUNTING FLIGHT SYSTEMS & RETRO GFX</div>
+      <div class="loading-title" id="loading-title-el">INITIALIZING MINDRUSH...</div>
+      <div class="loading-subtitle" id="loading-subtitle-el">MOUNTING FLIGHT SYSTEMS & RETRO GFX</div>
+
+      <!-- Action buttons when camera initialization fails or permission is denied -->
+      <div id="loading-error-actions" class="loading-error-actions hidden"
+        style="margin-top: 20px; display: none; flex-direction: column; gap: 12px; width: 100%; max-width: 320px;">
+        <button id="btn-gate-retry" class="btn-game btn-primary" style="font-size: 13px; padding: 10px 18px;">🔄 RETRY
+          CAMERA</button>
+        <button id="btn-gate-keyboard" class="btn-game"
+          style="font-size: 13px; padding: 10px 18px; background: rgba(56, 189, 248, 0.15); border: 1px solid var(--cyan, #38BDF8);">⌨️
+          SWITCH TO KEYBOARD MODE</button>
+      </div>
     </div>
   </div>
 
@@ -41,33 +56,49 @@
   <!-- Consistent Gameplay HUD Topbar Overlay (Top Row Only) -->
   <header id="hud-header" class="hud-topbar" aria-label="Game HUD">
     <div class="hud-left-group">
-      <a href="difficulty-select.html" class="hud-btn-nav" id="hud-btn-exit" title="Exit to Difficulty Selection">
+      <a href="mode-select.html" class="hud-btn-nav" id="hud-btn-exit" title="Exit to Mode Selection">
         &larr; Exit
       </a>
       <div class="hud-mode-pill" id="hud-difficulty-tag">
         <span class="hud-indicator-dot"></span>
         <span id="hud-diff-name">OBJECT FALLING</span>
       </div>
-      <div class="hud-mode-pill hidden" id="hud-progress-tag" style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35);">
+      <div class="hud-mode-pill hidden" id="hud-progress-tag"
+        style="background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.35);">
         <span style="color: var(--cyan); font-weight: 700; font-family: var(--font-mono, monospace);">PROGRESS:</span>
-        <span id="hud-progress-val" style="font-family: var(--font-arcade, monospace); color: #fff; margin-left: 4px;">LVL 1 • Q 1/5</span>
+        <span id="hud-progress-val"
+          style="font-family: var(--font-arcade, monospace); color: #fff; margin-left: 4px;">LVL 1 • Q 1/5</span>
       </div>
-      <div class="hud-mode-pill" id="hud-score-tag" style="background: rgba(250, 204, 21, 0.12); border: 1px solid rgba(250, 204, 21, 0.35);">
-        <span style="color: var(--gold, #FACC15); font-weight: 700; font-family: var(--font-mono, monospace);">SCORE:</span>
-        <span id="hud-score-val" style="font-family: var(--font-arcade, monospace); color: #fff; margin-left: 4px;">0</span>
+      <div class="hud-mode-pill" id="hud-score-tag"
+        style="background: rgba(250, 204, 21, 0.12); border: 1px solid rgba(250, 204, 21, 0.35);">
+        <span
+          style="color: var(--gold, #FACC15); font-weight: 700; font-family: var(--font-mono, monospace);">SCORE:</span>
+        <span id="hud-score-val"
+          style="font-family: var(--font-arcade, monospace); color: #fff; margin-left: 4px;">0</span>
       </div>
     </div>
 
     <div class="hud-right-group">
       <!-- Camera Gesture Sensor Status Feedback -->
-      <div class="hud-sensor-status" id="hud-sensor-feedback" title="Hand tracking readiness">
+      <div class="hud-sensor-status" id="hud-sensor-feedback" title="Hand tracking sensor status">
         <span class="sensor-pulse-dot"></span>
-        <span class="sensor-label">CAMERA: STANDBY (KEYBOARD/MOUSE)</span>
+        <span class="sensor-label">CAMERA: STANDBY</span>
       </div>
 
       <button id="btn-pause-header" class="pause-btn" title="Pause Game (Esc)">⏸ PAUSE</button>
     </div>
   </header>
+
+  <!-- Camera Gesture Preview (Unobtrusive Picture-in-Picture) -->
+  <div id="camera-preview-container" class="camera-preview-box hidden">
+    <video id="gesture-camera-preview" class="camera-preview-video" playsinline muted autoplay></video>
+    <div class="camera-preview-overlay">
+      <span class="camera-preview-tag">GESTURE SENSOR</span>
+    </div>
+  </div>
+
+  <!-- Runtime Notification Alert (Safe Mode / Camera Disconnected) -->
+  <div id="gesture-notification" class="gesture-notification hidden" role="alert"></div>
 
   <!-- Educational Mode Dedicated Question & Timer Panel (Prominent, centered below topbar) -->
   <section id="edu-hud-container" class="edu-question-area hidden" aria-label="Current Question">
@@ -100,21 +131,111 @@
   <!-- Pause Modal Overlay -->
   <div id="pause-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="pause-title">
     <div class="modal-content glass-panel">
-      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">MISSION PAUSED</div>
+      <div
+        style="font-family: var(--font-mono); font-size: 11px; color: var(--cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">
+        MISSION PAUSED</div>
       <h2 id="pause-title" class="modal-title" style="color: var(--cyan);">GAME PAUSED</h2>
       <p class="modal-subtitle">Press ESC or click Resume to return to the mission</p>
       <div class="modal-actions">
         <button id="btn-pause-resume" class="btn-game btn-primary">RESUME FLIGHT</button>
+        <button id="btn-pause-settings" class="btn-game">SETTINGS</button>
         <button id="btn-pause-restart" class="btn-game">RESTART MISSION</button>
         <button id="btn-pause-exit" class="btn-game btn-danger">EXIT TO HUB</button>
       </div>
     </div>
   </div>
 
+  <!-- Game Settings Modal Overlay -->
+  <div id="game-settings-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+    <div class="modal-content glass-panel" style="max-width: 480px; text-align: left;">
+      <div
+        style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-dim, rgba(255,255,255,0.1)); padding-bottom: 10px;">
+        <div>
+          <div
+            style="font-family: var(--font-mono, monospace); font-size: 11px; color: var(--cyan, #38BDF8); letter-spacing: 2px; text-transform: uppercase;">
+            PREFERENCES</div>
+          <h2 id="settings-title" class="modal-title" style="color: var(--cyan, #38BDF8); margin: 0; font-size: 20px;">
+            GAME SETTINGS</h2>
+        </div>
+        <button id="btn-settings-close-x"
+          style="background: transparent; border: none; color: #fff; font-size: 18px; cursor: pointer; padding: 4px 8px;">✕</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Control Method -->
+        <div
+          style="padding: 12px; background: rgba(17, 19, 29, 0.7); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 8px;">
+          <div style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px;">Control Method</div>
+          <div style="font-size: 12px; color: var(--text-muted, #94a3b8); margin-bottom: 10px;">Choose how you want to
+            control MindRush.</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <label
+              style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #fff;">
+              <input type="radio" name="ingame-control-method" value="gesture" id="opt-method-gesture"
+                style="accent-color: var(--cyan, #38BDF8);">
+              <span>🖐️ <strong>Gesture Controls</strong> <span
+                  style="font-size: 11px; color: var(--text-muted, #94a3b8);">(Webcam hand tracking)</span></span>
+            </label>
+            <label
+              style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; color: #fff;">
+              <input type="radio" name="ingame-control-method" value="keyboard" id="opt-method-keyboard"
+                style="accent-color: var(--cyan, #38BDF8);">
+              <span>⌨️ <strong>Keyboard Controls</strong> <span
+                  style="font-size: 11px; color: var(--text-muted, #94a3b8);">(Safe / manual mode)</span></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- SFX Toggle -->
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(17, 19, 29, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;">
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: #fff;">Sound Effects (SFX)</div>
+            <div style="font-size: 11px; color: var(--text-muted, #94a3b8);">Game chimes and collision sounds</div>
+          </div>
+          <input type="checkbox" id="ingame-setting-sfx" checked
+            style="width: 18px; height: 18px; accent-color: var(--cyan, #38BDF8); cursor: pointer;">
+        </div>
+
+        <!-- Music Toggle -->
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: rgba(17, 19, 29, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;">
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: #fff;">Background Music</div>
+            <div style="font-size: 11px; color: var(--text-muted, #94a3b8);">Retro synth soundtrack</div>
+          </div>
+          <input type="checkbox" id="ingame-setting-music" checked
+            style="width: 18px; height: 18px; accent-color: var(--gold, #FACC15); cursor: pointer;">
+        </div>
+
+        <!-- Volume Slider -->
+        <div
+          style="padding: 10px 12px; background: rgba(17, 19, 29, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px;">
+          <div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;">
+            <span style="font-weight: 600; color: #fff;">Audio Volume</span>
+            <span id="ingame-vol-display"
+              style="font-family: var(--font-mono, monospace); color: var(--cyan, #38BDF8);">80%</span>
+          </div>
+          <input type="range" min="0" max="100" value="80" id="ingame-setting-volume"
+            style="width: 100%; accent-color: var(--cyan, #38BDF8); cursor: pointer;"
+            oninput="document.getElementById('ingame-vol-display').textContent = this.value + '%'">
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 18px; justify-content: flex-end;">
+        <button id="btn-settings-cancel" class="btn-game" style="font-size: 12px;">CANCEL</button>
+        <button id="btn-settings-save" class="btn-game btn-primary" style="font-size: 12px;">SAVE & APPLY</button>
+      </div>
+    </div>
+  </div>
+  </div>
+
   <!-- Game Over Modal Overlay -->
   <div id="game-over-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="gameover-title">
     <div class="modal-content glass-panel">
-      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--danger); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">MISSION TERMINATED</div>
+      <div
+        style="font-family: var(--font-mono); font-size: 11px; color: var(--danger); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">
+        MISSION TERMINATED</div>
       <h2 id="gameover-title" class="modal-title" style="color: var(--danger);">GAME OVER</h2>
       <div class="modal-score">FINAL SCORE: <span id="final-score-val">0</span></div>
       <div class="modal-actions">
@@ -127,12 +248,33 @@
   <!-- Next Level Modal Overlay -->
   <div id="next-level-modal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="nextlevel-title">
     <div class="modal-content glass-panel">
-      <div style="font-family: var(--font-mono); font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">VICTORY MILESTONE</div>
+      <div
+        style="font-family: var(--font-mono); font-size: 11px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">
+        VICTORY MILESTONE</div>
       <h2 id="nextlevel-title" class="modal-title" style="color: var(--gold);">MILESTONE REACHED!</h2>
-      <p id="next-level-message" class="modal-subtitle">Congratulations! Do you want to proceed to the next difficulty?</p>
+      <p id="next-level-message" class="modal-subtitle">Congratulations! Do you want to proceed to the next difficulty?
+      </p>
       <div class="modal-actions">
-        <button id="btn-nextlevel-yes" class="btn-game btn-accent" style="background: var(--gold); color: var(--void); border-color: var(--gold);">YES, NEXT LEVEL</button>
+        <button id="btn-nextlevel-yes" class="btn-game btn-accent"
+          style="background: var(--gold); color: var(--void); border-color: var(--gold);">YES, NEXT LEVEL</button>
         <button id="btn-nextlevel-no" class="btn-game">KEEP PLAYING</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Runtime Camera Disconnect Modal -->
+  <div id="runtime-disconnect-modal" class="modal-overlay" role="dialog" aria-modal="true"
+    aria-labelledby="disconnect-title">
+    <div class="modal-content glass-panel" style="max-width: 440px;">
+      <div
+        style="font-family: var(--font-mono, monospace); font-size: 11px; color: var(--gold, #FACC15); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;">
+        SENSOR INTERRUPTED</div>
+      <h2 id="disconnect-title" class="modal-title" style="color: var(--gold, #FACC15);">CAMERA DISCONNECTED</h2>
+      <p class="modal-subtitle">Hand tracking feed was lost. Flight mission has been safely paused to preserve your
+        score and lives.</p>
+      <div class="modal-actions" style="flex-direction: column; gap: 10px; margin-top: 20px;">
+        <button id="btn-disconnect-retry" class="btn-game btn-primary">🔄 RECONNECT CAMERA</button>
+        <button id="btn-disconnect-keyboard" class="btn-game">⌨️ CONTINUE WITH KEYBOARD</button>
       </div>
     </div>
   </div>
@@ -140,4 +282,5 @@
   <!-- ES Modules Application Entry Point -->
   <script type="module" src="js/app.js?v=2"></script>
 </body>
+
 </html>

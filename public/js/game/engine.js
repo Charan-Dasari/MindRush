@@ -10,9 +10,11 @@ import { CollisionSystem } from './collision.js';
 import { AudioManager } from './audio.js';
 import { InputManager } from './input.js';
 import { UIManager } from './ui.js';
+import { GestureInputManager } from './gesture-input.js';
 import { unlockInsane, isInsaneUnlocked } from './difficulty.js';
 import { getUnlockedBadges } from './badges.js';
 import { getScopedStorageKey, submitScoreToServer } from './storage.js';
+import { getGameSettings } from './settings.js';
 
 export class GameEngine {
   constructor(difficultyConfig) {
@@ -21,6 +23,7 @@ export class GameEngine {
     this.audio = new AudioManager();
     this.input = new InputManager();
     this.ui = new UIManager();
+    this.gestureInput = new GestureInputManager();
     this.collision = new CollisionSystem();
     this.spawner = new ObjectSpawner(this.config);
 
@@ -29,13 +32,95 @@ export class GameEngine {
     this.p5Instance = null;
     this.floatingPopups = [];
 
+    // Timing & Fixed-Timestep Simulation
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
+    this.simTicks = 0;
+
     // Readiness & lifecycle management
     this.isReady = typeof window === 'undefined'; // Ready immediately in headless Node environments
     this.initError = null;
     this._isMounted = false;
 
     this._setupUI();
+    this._setupGestureInput();
     this._setupVisibilityChange();
+  }
+
+  _setupGestureInput() {
+    this.gestureInput.onGesture(({ normalizedX, isFist, isVSign, isPalmOpen, isHandPresent }) => {
+      if (!isHandPresent || !this.state.isPlaying() || this.input.controlMode !== 'gesture') return;
+      // Do not overwrite position if user is actively pressing keyboard movement keys
+      const delta = this.input.getMovementDelta();
+      if (delta !== 0) return;
+
+      if (this.p5Instance && this.paddle) {
+        const halfW = this.paddle.w / 2;
+        const minCenter = halfW;
+        const maxCenter = this.p5Instance.width - halfW;
+        const targetX = minCenter + normalizedX * (maxCenter - minCenter);
+        this.input.setTargetX(targetX);
+      }
+      // Note: Fun Mode Skyfall does not shoot on fist (spec requirement)
+    });
+
+    this.gestureInput.onPauseToggle(() => {
+      this.togglePause();
+    });
+
+    this.gestureInput.onStatus((statusObj) => {
+      this._updateSensorHUD(statusObj);
+    });
+
+    this.gestureInput.onCameraDisconnect((msg) => {
+      if (this.cameraGate) {
+        this.cameraGate.handleRuntimeDisconnect(msg);
+      } else {
+        this.pause();
+        this.input.setControlMode('keyboard');
+        this._showNotification('Camera disconnected. Game paused safely.');
+        this._updateSensorHUD({ status: 'error', message: 'KEYBOARD SAFE MODE' });
+      }
+    });
+  }
+
+  _updateSensorHUD(statusObj) {
+    if (typeof document === 'undefined') return;
+    const label = document.querySelector('#hud-sensor-feedback .sensor-label');
+    const dot = document.querySelector('#hud-sensor-feedback .sensor-pulse-dot');
+    if (this.input && this.input.controlMode === 'keyboard') {
+      if (label) label.textContent = 'KEYBOARD ACTIVE';
+      if (dot) dot.className = 'sensor-pulse-dot';
+      return;
+    }
+    if (label && statusObj.message) {
+      if (statusObj.status === 'active' || statusObj.status === 'tracking') {
+        label.textContent = 'GESTURE ACTIVE';
+      } else {
+        label.textContent = statusObj.message.toUpperCase();
+      }
+    }
+    if (dot) {
+      dot.className = 'sensor-pulse-dot';
+      if (statusObj.status === 'active' || statusObj.status === 'tracking') dot.classList.add('active');
+      else if (statusObj.status === 'error' || statusObj.status === 'disconnected') dot.classList.add('error');
+    }
+  }
+
+  _showNotification(msg) {
+    if (typeof document === 'undefined') return;
+    let notif = document.getElementById('gesture-notification');
+    if (!notif) {
+      notif = document.createElement('div');
+      notif.id = 'gesture-notification';
+      notif.className = 'gesture-notification';
+      document.body.appendChild(notif);
+    }
+    notif.textContent = msg;
+    notif.classList.remove('hidden');
+    setTimeout(() => {
+      if (notif) notif.classList.add('hidden');
+    }, 4000);
   }
 
   _setupUI() {
@@ -60,6 +145,8 @@ export class GameEngine {
       if (document.hidden && this.state.isPlaying()) {
         this.pause();
       }
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
     });
   }
 
@@ -92,20 +179,8 @@ export class GameEngine {
 
           this.paddle = new Paddle(this.config, p.width, p.height);
 
-          // Verify document font readiness in browser if available
-          if (typeof document !== 'undefined' && document.fonts && typeof document.fonts.ready?.then === 'function') {
-            try {
-              await document.fonts.ready;
-            } catch (fontErr) {
-              console.warn('[GameEngine] Font readiness check warning (non-fatal):', fontErr);
-            }
-          }
-
-          // Mark game engine as genuinely ready
-          this.isReady = true;
-
-          // Dismiss loading screen overlay
-          this._dismissLoadingScreen();
+          // Disable mouse movement for active gameplay
+          this.input.setMouseEnabled(false);
 
           // Trigger welcome achievement after initial mount
           this._triggerOnLoadAchievement();
@@ -203,6 +278,9 @@ export class GameEngine {
 
     // State 1: Game Over
     if (this.state.isGameOver()) {
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
+      this.input.restoreCursor();
       if (!this.state.gameOverHandled) {
         this.state.gameOverHandled = true;
         this.audio.play('gameOver');
@@ -218,6 +296,9 @@ export class GameEngine {
 
     // State 2: Paused
     if (this.state.isPaused()) {
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
+      this.input.restoreCursor();
       this.ui.showPauseModal();
       this._renderScene(p);
       this._renderHUD(p);
@@ -226,6 +307,68 @@ export class GameEngine {
 
     // State 3: Active Playing
     this.ui.hidePauseModal();
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
+    }
+    this.input.setMouseEnabled(false);
+
+    // Fixed-timestep simulation accumulator
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (!this._lastFrameTime) {
+      this._lastFrameTime = now;
+      this._accumulator = 0;
+    }
+
+    let frameTime = now - this._lastFrameTime;
+    this._lastFrameTime = now;
+
+    const FIXED_STEP = 1000 / 60; // 16.6667ms per tick (60 FPS baseline)
+    const MAX_STEPS = 6;
+    const MAX_FRAME_TIME = MAX_STEPS * FIXED_STEP; // 100ms clamp (max 6 ticks)
+
+    // Safety clamp: max 100ms per frame to prevent catch-up spiral of death
+    if (frameTime > MAX_FRAME_TIME) frameTime = MAX_FRAME_TIME;
+    if (frameTime < 0) frameTime = 0;
+
+    this._accumulator += frameTime;
+
+    let steps = 0;
+
+    while (this._accumulator >= FIXED_STEP - 0.001 && steps < MAX_STEPS) {
+      this._simulationStep(p);
+      this._accumulator = Math.max(0, this._accumulator - FIXED_STEP);
+      steps++;
+      if (this.state.isGameOver() || this.state.isPaused()) {
+        this._accumulator = 0;
+        break;
+      }
+    }
+
+    if (steps >= MAX_STEPS) {
+      this._accumulator = 0;
+    }
+
+    // Render once per frame
+    this._renderScene(p);
+    this._renderHUD(p);
+  }
+
+  /**
+   * Discrete 60 FPS simulation tick advancing all gameplay logic independently of rendering framerate
+   * @param {any} p - p5 instance
+   */
+  _simulationStep(p) {
+    // Horizontal movement: Keyboard input (clamped strictly to playable paddle center boundaries)
+    if (this.input.controlMode === 'keyboard') {
+      const delta = this.input.getMovementDelta();
+      if (delta !== 0) {
+        const speed = 10;
+        const halfW = this.paddle ? this.paddle.w / 2 : 50;
+        const minCenter = halfW;
+        const maxCenter = Math.max(minCenter, p.width - halfW);
+        this.input.currentX = Math.max(minCenter, Math.min(maxCenter, this.input.currentX + delta * speed));
+      }
+    }
 
     // Check Next Level milestone
     if (
@@ -235,7 +378,7 @@ export class GameEngine {
     ) {
       this.state.nextLevelShown = true;
       if (this.config.id === 'hard') {
-        unlockInsane();
+        unlockInsane('skyfall');
       }
       this.pause();
       this.audio.play('levelUp');
@@ -251,8 +394,8 @@ export class GameEngine {
       this.paddle.update(this.input, p.width, p.height);
     }
 
-    // Spawn falling objects
-    const newBall = this.spawner.spawnIfReady(p.frameCount, this.balls.length, p.width, this.state.score);
+    // Spawn falling objects based on monotonic simulation ticks
+    const newBall = this.spawner.spawnIfReady(this.simTicks, this.balls.length, p.width, this.state.score);
     if (newBall) {
       this.balls.push(newBall);
     }
@@ -302,16 +445,20 @@ export class GameEngine {
         }
         continue;
       }
-
-      // Render falling object
-      ball.draw(p);
     }
 
-    // Render paddle & HUD
-    if (this.paddle) {
-      this.paddle.display(p);
+    // Update & animate floating popups
+    for (let j = this.floatingPopups.length - 1; j >= 0; j--) {
+      const pop = this.floatingPopups[j];
+      pop.y -= 1.2;
+      pop.ticks++;
+      pop.alpha = Math.max(0, 255 - pop.ticks * 5);
+      if (pop.alpha <= 0) {
+        this.floatingPopups.splice(j, 1);
+      }
     }
-    this._renderHUD(p);
+
+    this.simTicks++;
   }
 
   _renderScene(p) {
@@ -322,13 +469,9 @@ export class GameEngine {
       this.paddle.display(p);
     }
 
-    // Render & animate floating score/hazard popups
+    // Pure rendering for floating score/hazard popups (state advanced in _simulationStep)
     for (let j = this.floatingPopups.length - 1; j >= 0; j--) {
       const pop = this.floatingPopups[j];
-      pop.y -= 1.2;
-      pop.ticks++;
-      pop.alpha = Math.max(0, 255 - pop.ticks * 5);
-
       p.push();
       p.textFont('Press Start 2P');
       p.textSize(12);
@@ -337,10 +480,6 @@ export class GameEngine {
       p.noStroke();
       p.text(pop.text, pop.x, pop.y);
       p.pop();
-
-      if (pop.alpha <= 0) {
-        this.floatingPopups.splice(j, 1);
-      }
     }
   }
 
@@ -369,7 +508,9 @@ export class GameEngine {
           body: JSON.stringify({
             badges: getUnlockedBadges(),
             highScore: this.state.score,
-            insaneUnlocked: isInsaneUnlocked()
+            insaneUnlocked: isInsaneUnlocked('skyfall'),
+            skyfallInsaneUnlocked: isInsaneUnlocked('skyfall'),
+            mode: 'skyfall'
           })
         }).catch(() => {});
       } catch (e) {}
@@ -420,17 +561,36 @@ export class GameEngine {
   }
 
   pause() {
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
     this.state.pause();
+    this.input.restoreCursor();
     this.ui.showPauseModal();
   }
 
   resume() {
+    this._accumulator = 0;
+    this._lastFrameTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     this.state.resume();
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
+    }
     this.ui.hidePauseModal();
   }
 
   togglePause() {
     if (this.state.isGameOver()) return;
+
+    // Check modal priority: if settings modal is open, close it only and keep game paused
+    const activeModal = (this.ui && typeof this.ui.getActiveModal === 'function') ? this.ui.getActiveModal() : null;
+    if (activeModal === 'settings') {
+      this.ui.hideSettingsModal();
+      return;
+    }
+    if (activeModal && activeModal !== 'pause') {
+      return;
+    }
+
     if (this.state.isPlaying()) {
       this.pause();
     } else {
@@ -439,6 +599,9 @@ export class GameEngine {
   }
 
   restart() {
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
+    this.simTicks = 0;
     this.state.reset();
     this.balls = [];
     this.floatingPopups = [];
@@ -448,14 +611,21 @@ export class GameEngine {
       if (hudScoreEl) hudScoreEl.textContent = '0';
     }
     this.ui.hideAllModals();
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
+    }
     this._triggerOnLoadAchievement();
   }
 
   exit() {
+    if (this.gestureInput) {
+      this.gestureInput.stop();
+    }
+    this.input.restoreCursor();
     if (this.state.score > 0 && !this.state.isGameOver()) {
       this._saveFlightRecord();
     }
-    window.location.href = 'dashboard.html';
+    window.location.href = 'mode-select.html';
   }
 
   proceedToNextLevel() {

@@ -13,6 +13,8 @@ export class UIManager {
       this.achievementNameEl = document.getElementById('achievement-toast-name');
       this.finalScoreEl = document.getElementById('final-score-val');
       this.pauseBtn = document.getElementById('btn-pause-header');
+      this.settingsModal = document.getElementById('game-settings-modal');
+      this.disconnectModal = document.getElementById('runtime-disconnect-modal');
     } else {
       this.pauseModal = null;
       this.gameOverModal = null;
@@ -21,6 +23,8 @@ export class UIManager {
       this.achievementNameEl = null;
       this.finalScoreEl = null;
       this.pauseBtn = null;
+      this.settingsModal = null;
+      this.disconnectModal = null;
     }
 
     this.toastTimer = null;
@@ -30,7 +34,7 @@ export class UIManager {
    * Binds UI events for buttons
    * @param {object} handlers
    */
-  bindEvents({ onResume, onRestart, onExit, onNextLevelYes, onNextLevelNo, onTogglePause }) {
+  bindEvents({ onResume, onRestart, onExit, onNextLevelYes, onNextLevelNo, onTogglePause, onSettings }) {
     if (typeof document === 'undefined') return;
     // Header Pause button
     if (this.pauseBtn) {
@@ -40,6 +44,9 @@ export class UIManager {
     // Pause Modal Buttons
     const resumeBtn = document.getElementById('btn-pause-resume');
     if (resumeBtn) resumeBtn.addEventListener('click', () => onResume());
+
+    const settingsBtn = document.getElementById('btn-pause-settings') || document.getElementById('edu-btn-settings');
+    if (settingsBtn && onSettings) settingsBtn.addEventListener('click', () => onSettings());
 
     const restartBtn = document.getElementById('btn-pause-restart');
     if (restartBtn) restartBtn.addEventListener('click', () => onRestart());
@@ -83,11 +90,19 @@ export class UIManager {
     if (this.gameOverModal) this.gameOverModal.classList.remove('active');
   }
 
-  showNextLevelModal(message) {
+  showNextLevelModal(message, { yesText = 'YES, NEXT LEVEL', noText = 'KEEP PLAYING' } = {}) {
     if (typeof document === 'undefined') return;
     const msgEl = document.getElementById('next-level-message');
     if (msgEl && message) {
       msgEl.textContent = message;
+    }
+    const yesBtn = document.getElementById('btn-nextlevel-yes');
+    if (yesBtn) {
+      yesBtn.textContent = yesText;
+    }
+    const noBtn = document.getElementById('btn-nextlevel-no');
+    if (noBtn) {
+      noBtn.textContent = noText;
     }
     if (this.nextLevelModal) {
       this.nextLevelModal.classList.add('active');
@@ -96,6 +111,37 @@ export class UIManager {
 
   hideNextLevelModal() {
     if (this.nextLevelModal) this.nextLevelModal.classList.remove('active');
+  }
+
+  showSettingsModal() {
+    if (this.settingsModal) this.settingsModal.classList.add('active');
+  }
+
+  hideSettingsModal() {
+    if (this.settingsModal) this.settingsModal.classList.remove('active');
+  }
+
+  /**
+   * Returns the topmost active modal type in hierarchical priority
+   * @returns {'settings'|'disconnect'|'nextLevel'|'gameOver'|'pause'|null}
+   */
+  getActiveModal() {
+    if (this.settingsModal && this.settingsModal.classList.contains('active')) {
+      return 'settings';
+    }
+    if (this.disconnectModal && this.disconnectModal.classList.contains('active')) {
+      return 'disconnect';
+    }
+    if (this.nextLevelModal && this.nextLevelModal.classList.contains('active')) {
+      return 'nextLevel';
+    }
+    if (this.gameOverModal && this.gameOverModal.classList.contains('active')) {
+      return 'gameOver';
+    }
+    if (this.pauseModal && this.pauseModal.classList.contains('active')) {
+      return 'pause';
+    }
+    return null;
   }
 
   /**
@@ -120,5 +166,6 @@ export class UIManager {
     this.hidePauseModal();
     this.hideGameOverModal();
     this.hideNextLevelModal();
+    this.hideSettingsModal();
   }
 }

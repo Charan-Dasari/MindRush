@@ -26,7 +26,7 @@ import { GameState } from './state.js';
 import { AudioManager } from './audio.js';
 import { InputManager } from './input.js';
 import { UIManager } from './ui.js';
-import { GestureController } from './gesture.js';
+import { GestureInputManager } from './gesture-input.js';
 import {
   EDU_INVADER_CONFIGS,
   getEduInvaderConfig,
@@ -34,6 +34,7 @@ import {
   unlockEduDifficulty,
   checkEduUnlockEligibility
 } from './difficulty.js';
+import { getGameSettings } from './settings.js';
 import { EDUCATIONAL_QUESTIONS, QuestionDeck } from './educational-questions.js';
 import { getScopedStorageKey, submitScoreToServer } from './storage.js';
 
@@ -48,7 +49,8 @@ export class EducationalInvaderEngine {
     this.audio = new AudioManager();
     this.input = new InputManager();
     this.ui = new UIManager();
-    this.gesture = new GestureController();
+    this.gesture = new GestureInputManager();
+    this.gestureInput = this.gesture;
 
     this.p5Instance = null;
     this.container = null;
@@ -85,10 +87,17 @@ export class EducationalInvaderEngine {
     this.totalCorrectCount = 0;
     this.totalQuestionsAnswered = 0;
 
-    // Question Timer (in seconds)
+    // Question Timer (in seconds) - Monotonic Real-Time Clock
     this.questionTimeMax = this.config.timer;
     this.questionTimeRemaining = this.config.timer;
     this.timerTickCounter = 0;
+    this._timerLastCheck = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    this._timerAccumulatedMs = 0;
+
+    // Timing & Fixed-Timestep Simulation
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
+    this.simTicks = 0;
 
     // Answer UFOs
     this.ufos = [];
@@ -117,11 +126,27 @@ export class EducationalInvaderEngine {
     this.pendingNextQuestion = false;
     this.gameLoopRunning = true;
     this.unlockedNextTier = null;
+    this.isReady = typeof window === 'undefined';
+    this.cameraGate = null;
 
     // Initialize systems
     this._setupUI();
     this._setupKeyboard();
     this._setupGesture();
+    this._setupVisibilityChange();
+  }
+
+  _setupVisibilityChange() {
+    if (typeof document === 'undefined') return;
+    this._visibilityHandler = () => {
+      if (document.hidden && this.state.isPlaying() && !this.isPaused) {
+        this.pause();
+      }
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
+      this._timerLastCheck = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    };
+    document.addEventListener('visibilitychange', this._visibilityHandler);
   }
 
   // ==========================================================================
@@ -143,35 +168,52 @@ export class EducationalInvaderEngine {
     if (this.input && typeof this.input.onPauseToggle === 'function') {
       this.input.onPauseToggle(() => this.togglePause());
     }
-
-    // Direct header pause button binding fallback
-    const headerPauseBtn = document.getElementById('btn-pause-header');
-    if (headerPauseBtn) {
-      headerPauseBtn.onclick = (e) => {
-        e.preventDefault();
-        this.togglePause();
-      };
-    }
   }
 
   resume() {
     this.isPaused = false;
+    this._accumulator = 0;
+    this._lastFrameTime = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    this._timerLastCheck = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     if (this.state.isPaused()) {
       this.state.resume();
+    }
+    if (this.input.controlMode === 'gesture') {
+      this.input.hideCursor();
     }
     this.ui.hidePauseModal();
   }
 
   pause() {
     this.isPaused = true;
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
     if (this.state.isPlaying()) {
       this.state.pause();
     }
+    this.input.restoreCursor();
     this.ui.showPauseModal();
   }
 
   togglePause() {
     if (this.state.isGameOver()) return;
+
+    // Check modal priority: if settings modal is open, close it only and keep game paused
+    const activeModal = (this.ui && typeof this.ui.getActiveModal === 'function') ? this.ui.getActiveModal() : null;
+    if (activeModal === 'settings') {
+      this.ui.hideSettingsModal();
+      return;
+    }
+    if (activeModal && activeModal !== 'pause') {
+      return;
+    }
+
+    // Debounce to prevent synthetic or bubbling double-triggers
+    const now = Date.now();
+    if (this._lastPauseToggleTime && (now - this._lastPauseToggleTime < 250)) {
+      return;
+    }
+    this._lastPauseToggleTime = now;
 
     if (this.isPaused || this.state.isPaused()) {
       this.resume();
@@ -188,13 +230,21 @@ export class EducationalInvaderEngine {
   }
 
   proceedToNextLevel() {
+    this.isNextLevelModalOpen = false;
     this.ui.hideNextLevelModal();
+    if (this.unlockedNextTier && typeof window !== 'undefined') {
+      window.location.href = `game.html?mode=educational&difficulty=${this.unlockedNextTier}`;
+      return;
+    }
     const w = this.container ? this.container.clientWidth || 900 : 900;
     const h = this.container ? this.container.clientHeight || 650 : 650;
     this._advanceToNextLevel(w, h);
   }
 
   declineNextLevel() {
+    // Quit selected from milestone modal: exit to difficulty selection
+    this.isNextLevelModalOpen = false;
+    this.ui.hideNextLevelModal();
     this.exit();
   }
 
@@ -206,24 +256,30 @@ export class EducationalInvaderEngine {
     if (typeof window === 'undefined') return;
 
     this._keyDownHandler = (e) => {
+      // In Gesture Mode: strictly ignore ALL gameplay keyboard inputs
+      if (this.input.controlMode === 'gesture') {
+        return;
+      }
+
       this.keysDown[e.code] = true;
       this.keysDown[e.key] = true;
 
       // Prevent page scrolling on Space and Arrow keys
       if (e.code === 'Space' || e.key === ' ' || e.code === 'KeyK') {
         e.preventDefault();
-        if (this.state.isPlaying() && !this.isPaused) {
+        if (this.state.isPlaying() && !this.isPaused && this.input.controlMode === 'keyboard') {
           this.firePlayerLaser();
         }
       } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         e.preventDefault();
-      } else if (e.key === 'Escape' || e.key === 'p' || e.key === 'P') {
+      } else if (e.key === 'p' || e.key === 'P') {
         e.preventDefault();
         this.togglePause();
       }
     };
 
     this._keyUpHandler = (e) => {
+      if (this.input.controlMode === 'gesture') return;
       this.keysDown[e.code] = false;
       this.keysDown[e.key] = false;
     };
@@ -238,24 +294,84 @@ export class EducationalInvaderEngine {
   }
 
   _setupGesture() {
-    if (!this.gesture || typeof this.gesture.onUpdate !== 'function') return;
-
-    this.gesture.onUpdate(({ normX, normY, isPinching, isHandPresent }) => {
-      if (!isHandPresent || !this.player || !this.state.isPlaying() || this.isPaused) return;
+    this.gesture.onGesture(({ normalizedX, isFist, isVSign, isPalmOpen, isHandPresent }) => {
+      if (!isHandPresent || !this.player || !this.state.isPlaying() || this.isPaused || this.input.controlMode !== 'gesture') return;
 
       const canvasWidth = this.container ? this.container.clientWidth || 900 : 900;
-      const targetX = normX * canvasWidth - this.player.width / 2;
+      const targetX = normalizedX * canvasWidth - this.player.width / 2;
       this.player.x += (targetX - this.player.x) * 0.35;
 
       const minX = 15;
       const maxX = canvasWidth - this.player.width - 15;
       this.player.x = Math.max(minX, Math.min(this.player.x, maxX));
       this.player.y = this.player.fixedY;
+    });
 
-      if (isPinching) {
+    // Gesture 2: Closed fist shooting with cooldown
+    this.gesture.onShoot(() => {
+      if (this.state.isPlaying() && !this.isPaused && this.input.controlMode === 'gesture') {
         this.firePlayerLaser();
       }
     });
+
+    // Gesture 3: V-sign pause/resume (800ms stable hold)
+    this.gesture.onPauseToggle(() => {
+      this.togglePause();
+    });
+
+    this.gesture.onStatus((statusObj) => {
+      this._updateSensorHUD(statusObj);
+    });
+
+    this.gesture.onCameraDisconnect((msg) => {
+      if (this.cameraGate) {
+        this.cameraGate.handleRuntimeDisconnect(msg);
+      } else {
+        this.pause();
+        this.input.setControlMode('keyboard');
+        this._showNotification(msg || 'Camera disconnected. Game paused safely.');
+        this._updateSensorHUD({ status: 'error', message: 'KEYBOARD SAFE MODE' });
+      }
+    });
+  }
+
+  _updateSensorHUD(statusObj) {
+    if (typeof document === 'undefined') return;
+    const label = document.querySelector('#hud-sensor-feedback .sensor-label');
+    const dot = document.querySelector('#hud-sensor-feedback .sensor-pulse-dot');
+    if (this.input && this.input.controlMode === 'keyboard') {
+      if (label) label.textContent = 'KEYBOARD ACTIVE';
+      if (dot) dot.className = 'sensor-pulse-dot';
+      return;
+    }
+    if (label && statusObj.message) {
+      if (statusObj.status === 'active' || statusObj.status === 'tracking') {
+        label.textContent = 'GESTURE ACTIVE';
+      } else {
+        label.textContent = statusObj.message.toUpperCase();
+      }
+    }
+    if (dot) {
+      dot.className = 'sensor-pulse-dot';
+      if (statusObj.status === 'active' || statusObj.status === 'tracking') dot.classList.add('active');
+      else if (statusObj.status === 'error' || statusObj.status === 'disconnected') dot.classList.add('error');
+    }
+  }
+
+  _showNotification(msg) {
+    if (typeof document === 'undefined') return;
+    let notif = document.getElementById('gesture-notification');
+    if (!notif) {
+      notif = document.createElement('div');
+      notif.id = 'gesture-notification';
+      notif.className = 'gesture-notification';
+      document.body.appendChild(notif);
+    }
+    notif.textContent = msg;
+    notif.classList.remove('hidden');
+    setTimeout(() => {
+      if (notif) notif.classList.add('hidden');
+    }, 4000);
   }
 
   firePlayerLaser() {
@@ -285,7 +401,6 @@ export class EducationalInvaderEngine {
       vy: -9
     });
 
-    this.audio.play('paddle');
     return true;
   }
 
@@ -362,8 +477,6 @@ export class EducationalInvaderEngine {
       this._spawnBoss(w, h);
     }
 
-    // Dismiss loading overlay
-    this._dismissLoadingScreen();
     this._updateHUD();
   }
 
@@ -417,6 +530,8 @@ export class EducationalInvaderEngine {
     this.currentQuestion = this.deck.drawNextQuestion();
     this.questionTimeRemaining = this.config.timer;
     this.timerTickCounter = 0;
+    this._timerAccumulatedMs = 0;
+    this._timerLastCheck = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
     this.pendingNextQuestion = false;
 
     // Clear lingering lasers so they don't immediately hit newly spawned UFOs
@@ -601,7 +716,7 @@ export class EducationalInvaderEngine {
   // ==========================================================================
 
   update(w, h) {
-    if (this.isPaused || !this.state.isPlaying()) return;
+    if (this.isPaused || !this.state.isPlaying() || !this.isReady) return;
 
     // 1. Question Countdown Timer
     this._updateTimer(w, h);
@@ -642,9 +757,13 @@ export class EducationalInvaderEngine {
   }
 
   _updateTimer(w, h) {
-    if (this.feedbackPauseTicks > 0) return; // Freeze timer during victory feedback
+    if (this.feedbackPauseTicks > 0) {
+      // Freeze timer during victory feedback
+      return;
+    }
 
     this.timerTickCounter++;
+
     if (this.timerTickCounter >= 60) {
       this.timerTickCounter = 0;
       this.questionTimeRemaining = Math.max(0, this.questionTimeRemaining - 1);
@@ -679,6 +798,8 @@ export class EducationalInvaderEngine {
       // Reset timer so student can keep solving the active question
       this.questionTimeRemaining = this.config.timer;
       this.timerTickCounter = 0;
+      this._timerAccumulatedMs = 0;
+      this._timerLastCheck = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
       this._updateHUDTimer();
     }
   }
@@ -686,12 +807,13 @@ export class EducationalInvaderEngine {
   _updatePlayer(w, h) {
     if (!this.player) return;
 
-    // Keyboard movement from multi-key map
-    let moveX = 0;
-    if (this.keysDown['ArrowLeft'] || this.keysDown['KeyA'] || this.keysDown['a'] || this.keysDown['A']) moveX -= 1;
-    if (this.keysDown['ArrowRight'] || this.keysDown['KeyD'] || this.keysDown['d'] || this.keysDown['D']) moveX += 1;
-
-    this.player.x += moveX * this.player.speed;
+    // Keyboard movement from multi-key map (active only in keyboard mode)
+    if (this.input.controlMode === 'keyboard') {
+      let moveX = 0;
+      if (this.keysDown['ArrowLeft'] || this.keysDown['KeyA'] || this.keysDown['a'] || this.keysDown['A']) moveX -= 1;
+      if (this.keysDown['ArrowRight'] || this.keysDown['KeyD'] || this.keysDown['d'] || this.keysDown['D']) moveX += 1;
+      this.player.x += moveX * this.player.speed;
+    }
 
     // Strict boundary clamping
     const minX = 15;
@@ -1136,6 +1258,7 @@ export class EducationalInvaderEngine {
 
   _triggerLevelComplete(w, h) {
     this.isPaused = true;
+    this.isNextLevelModalOpen = true;
     this.audio.play('levelUp');
 
     // Check if player unlocks next difficulty tier (requires >= 4 of 5 correct)
@@ -1153,8 +1276,11 @@ export class EducationalInvaderEngine {
 
     const message = `Great job! You answered ${this.levelCorrectCount} / ${this.questionsPerLevel} questions correctly. Remaining Lives: ${this.state.lives} carried over! ${unlockText}`;
 
-    // Display modal via standard UIManager
-    this.ui.showNextLevelModal(message);
+    // Display modal via standard UIManager with NEXT LEVEL or QUIT options
+    this.ui.showNextLevelModal(message, {
+      yesText: 'NEXT LEVEL',
+      noText: 'QUIT'
+    });
   }
 
   _advanceToNextLevel(w, h) {
@@ -1197,6 +1323,11 @@ export class EducationalInvaderEngine {
   }
 
   reset() {
+    this._accumulator = 0;
+    this._lastFrameTime = 0;
+    this._timerAccumulatedMs = 0;
+    this._timerLastCheck = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    this.simTicks = 0;
     this.ui.hideAllModals();
     this.state.reset();
     this.state.lives = this.config.lives;
@@ -1337,9 +1468,56 @@ export class EducationalInvaderEngine {
     const w = p.width;
     const h = p.height;
 
-    // Update game logic
-    this.update(w, h);
+    if (this.isPaused || !this.state.isPlaying() || !this.isReady) {
+      this._accumulator = 0;
+      this._lastFrameTime = 0;
+      this._timerLastCheck = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+      this._renderScene(p, w, h);
+      return;
+    }
 
+    // Fixed-timestep simulation accumulator
+    const now = (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now();
+    if (!this._lastFrameTime) {
+      this._lastFrameTime = now;
+      this._accumulator = 0;
+    }
+
+    let frameTime = now - this._lastFrameTime;
+    this._lastFrameTime = now;
+
+    const FIXED_STEP = 1000 / 60; // 16.6667ms per tick (60 FPS baseline)
+    const MAX_STEPS = 6;
+    const MAX_FRAME_TIME = MAX_STEPS * FIXED_STEP; // 100ms clamp (max 6 ticks)
+
+    // Safety clamp: max 100ms per frame to prevent catch-up spiral of death
+    if (frameTime > MAX_FRAME_TIME) frameTime = MAX_FRAME_TIME;
+    if (frameTime < 0) frameTime = 0;
+
+    this._accumulator += frameTime;
+
+    let steps = 0;
+
+    while (this._accumulator >= FIXED_STEP - 0.001 && steps < MAX_STEPS) {
+      this.update(w, h);
+      this.simTicks++;
+      this._accumulator = Math.max(0, this._accumulator - FIXED_STEP);
+      steps++;
+      if (this.isPaused || !this.state.isPlaying()) {
+        this._accumulator = 0;
+        break;
+      }
+    }
+
+    if (steps >= MAX_STEPS) {
+      this._accumulator = 0;
+    }
+
+    // Render once per frame
+    this._renderScene(p, w, h);
+  }
+
+  _renderScene(p, w, h) {
     // Deep cosmic background
     p.background(7, 9, 15);
 
@@ -1644,6 +1822,9 @@ export class EducationalInvaderEngine {
 
   destroy() {
     this.gameLoopRunning = false;
+    if (this._visibilityHandler && typeof document !== 'undefined') {
+      document.removeEventListener('visibilitychange', this._visibilityHandler);
+    }
     if (this._keyDownHandler && typeof window !== 'undefined') {
       window.removeEventListener('keydown', this._keyDownHandler);
     }
@@ -1655,6 +1836,9 @@ export class EducationalInvaderEngine {
     }
     if (this.gesture) {
       this.gesture.stop();
+    }
+    if (this.input) {
+      this.input.restoreCursor();
     }
     if (this.p5Instance) {
       this.p5Instance.remove();

@@ -87,4 +87,17 @@ export class AudioManager {
       }
     }
   }
+
+  /**
+   * Sets master playback volume across all sound effects
+   * @param {number} volumeFraction - Value between 0.0 and 1.0
+   */
+  setVolume(volumeFraction) {
+    const vol = Math.max(0, Math.min(1, typeof volumeFraction === 'number' ? volumeFraction : 0.8));
+    for (const audio of Object.values(this.sounds)) {
+      try {
+        audio.volume = vol;
+      } catch (e) {}
+    }
+  }
 }

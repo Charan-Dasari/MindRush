@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -509,12 +509,9 @@
 
   <!-- Shared Footer -->
   <footer class="footer-nav">
-    <a href="mode-select.html">Mode Select</a>
-    <a href="difficulty-select.html">Difficulty Select</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="about.html">About</a>
-    <a href="terms.html">Terms</a>
-    <a href="contact.html">Contact</a>
+    <span style="font-size: 11px; font-family: var(--font-mono, monospace); color: var(--text-muted); letter-spacing: 1px;">
+      MINDRUSH &bull; OLYMPIAD CURRICULUM
+    </span>
   </footer>
 
   <script>
@@ -575,10 +572,21 @@
       }
     }
 
-    // Close on Escape
+    // Global Escape navigation: close modal or return to Mode Select
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') {
-        closePrototypeModal();
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        const activeEl = document.activeElement;
+        const tag = activeEl ? activeEl.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || activeEl?.isContentEditable) {
+          activeEl.blur();
+          return;
+        }
+        const modal = document.getElementById('proto-modal');
+        if (modal && modal.classList.contains('active')) {
+          closePrototypeModal();
+          return;
+        }
+        window.location.href = 'mode-select.html';
       }
     });
 

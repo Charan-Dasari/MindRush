@@ -439,14 +439,11 @@
     </div>
   </main>
 
-  <!-- Footer Navigation -->
+  <!-- Shared Footer -->
   <footer class="mode-footer">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="difficulty-select.html">Difficulty Select</a>
-    <a href="about.html">About</a>
-    <a href="credits.html">Credits</a>
-    <a href="terms.html">Terms</a>
-    <a href="contact.html">Contact</a>
+    <span style="font-size: 11px; font-family: var(--font-mono, monospace); color: var(--text-muted); letter-spacing: 1px;">
+      MINDRUSH &bull; MISSION CONTROL &bull; ALL SYSTEMS OPERATIONAL
+    </span>
   </footer>
 
   <!-- Starfield Canvas Script -->
@@ -534,6 +531,19 @@
       }
     }
     window.selectSubgame = selectSubgame;
+
+    // Global Escape navigation: Esc returns to Dashboard
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        const activeEl = document.activeElement;
+        const tag = activeEl ? activeEl.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || activeEl?.isContentEditable) {
+          activeEl.blur();
+          return;
+        }
+        window.location.href = 'dashboard.html';
+      }
+    });
   </script>
 </body>
 </html>

@@ -130,6 +130,12 @@ canvas {
   animation: pulse-dot 2s infinite ease-in-out;
 }
 
+.sensor-pulse-dot.error {
+  background: var(--danger, #EF4444);
+  box-shadow: 0 0 8px var(--danger, #EF4444);
+  animation: none;
+}
+
 @keyframes pulse-dot {
   0%, 100% { opacity: 0.6; transform: scale(0.9); }
   50% { opacity: 1; transform: scale(1.2); }
@@ -651,5 +657,138 @@ canvas {
   font-size: 11px;
   color: var(--text-muted, #94a3b8);
   letter-spacing: 1px;
+}
+
+/* ------------------------------------------------------------- */
+/*  Phase 3: Gesture Controls & Safe Mode UI Styles             */
+/* ------------------------------------------------------------- */
+
+/* Hide cursor when gesture controls are actively driving the player */
+body.gesture-active-cursor,
+body.gesture-active-cursor canvas {
+  cursor: none !important;
+}
+
+/* Control Mode Toggle Buttons in HUD */
+.hud-control-toggle {
+  display: flex;
+  align-items: center;
+  background: rgba(17, 19, 29, 0.85);
+  border: 1px solid var(--border-dim, #2d334a);
+  border-radius: 8px;
+  padding: 2px;
+  gap: 2px;
+}
+
+.btn-mode-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-muted, #9aa5c4);
+  font-family: var(--font-mono, 'JetBrains Mono', monospace);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-mode-toggle:hover {
+  color: var(--cyan, #38BDF8);
+}
+
+.btn-mode-toggle.active {
+  background: rgba(56, 189, 248, 0.2);
+  color: var(--cyan, #38BDF8);
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.25);
+}
+
+/* Sensor feedback clickable toggle/retry indicator */
+.hud-sensor-status {
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s ease;
+}
+
+.hud-sensor-status:hover {
+  border-color: var(--cyan, #38BDF8);
+}
+
+/* Unobtrusive picture-in-picture camera preview */
+.camera-preview-box {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 130px;
+  height: 98px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  background: #000;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.7), 0 0 12px rgba(56, 189, 248, 0.2);
+  z-index: 25;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.camera-preview-box.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.9);
+  display: none !important;
+}
+
+.camera-preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* mirror */
+  display: block;
+}
+
+.camera-preview-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 2px 4px;
+  background: rgba(11, 15, 26, 0.75);
+  display: flex;
+  justify-content: center;
+}
+
+.camera-preview-tag {
+  font-family: var(--font-mono, monospace);
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  color: var(--cyan, #38BDF8);
+}
+
+/* Floating Notification Banner for Safe Mode & Camera Events */
+.gesture-notification {
+  position: fixed;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95);
+  border: 1.5px solid var(--cyan, #38BDF8);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(56, 189, 248, 0.3);
+  color: #fff;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 10px 24px;
+  border-radius: 10px;
+  z-index: 9999;
+  letter-spacing: 0.5px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+}
+
+.gesture-notification.hidden {
+  opacity: 0;
+  transform: translateX(-50%) translateY(-10px);
+  pointer-events: none;
 }
 

@@ -261,6 +261,181 @@
         padding: 14px 16px;
       }
     }
+
+    /* Gesture Instructions Modal Styling */
+    .gesture-step-card {
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: rgba(22, 25, 38, 0.85);
+      border: 1px solid var(--border-dim);
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+
+    .gesture-step-card:hover {
+      border-color: var(--border-mid);
+      background: rgba(26, 30, 46, 0.95);
+      transform: translateY(-1px);
+    }
+
+    .gesture-step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    .gesture-thumb-box {
+      width: 82px;
+      height: 82px;
+      border-radius: 10px;
+      background: rgba(11, 14, 24, 0.95);
+      border: 1.5px solid var(--border-dim);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .gesture-step-card:hover .gesture-thumb-box {
+      border-color: var(--cyan);
+      box-shadow: 0 4px 18px rgba(56, 189, 248, 0.2);
+    }
+
+    .gesture-thumb-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      padding: 3px;
+      display: block;
+    }
+
+    .gesture-step-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 0;
+      text-align: left;
+    }
+
+    .gesture-step-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .gesture-step-title {
+      font-family: var(--font-sans);
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: 0.3px;
+    }
+
+    .gesture-step-scope {
+      font-family: var(--font-mono);
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border-dim);
+      background: rgba(17, 19, 29, 0.8);
+      color: var(--cyan);
+      white-space: nowrap;
+    }
+
+    .gesture-step-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .gesture-step-note {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--gold);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .keyboard-grid-reference {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 6px;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .keyboard-ref-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11.5px;
+      color: var(--text-muted);
+    }
+
+    .keyboard-ref-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .gesture-kbd {
+      display: inline-block;
+      padding: 2px 6px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--cyan);
+      background: rgba(56, 189, 248, 0.12);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      border-radius: 5px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.4);
+    }
+
+    @media (max-width: 580px) {
+      .gesture-step-card {
+        padding: 12px;
+        gap: 12px;
+      }
+      .gesture-thumb-box {
+        width: 64px;
+        height: 64px;
+      }
+      .gesture-step-title {
+        font-size: 13.5px;
+      }
+      .gesture-step-desc {
+        font-size: 11.5px;
+      }
+      .keyboard-ref-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 3px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -599,13 +774,22 @@
       </div>
 
       <div style="padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 180px); display: flex; flex-direction: column; gap: 20px;">
-        <!-- Gesture Sensor Reticle -->
-        <div style="display: flex; align-items: center; justify-content: space-between;">
+        <!-- Control Method -->
+        <div style="display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--border-dim);">
           <div>
-            <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">Hand Tracking Reticle</div>
-            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Display interactive glowing cursor over tracked palm</div>
+            <div style="font-size: 14px; font-weight: 600; color: var(--text-main);">Control Method</div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Choose how you want to control MindRush.</div>
           </div>
-          <input type="checkbox" checked id="setting-reticle" style="width: 20px; height: 20px; accent-color: var(--cyan); cursor: pointer;">
+          <div style="display: flex; gap: 20px; margin-top: 4px;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-main);">
+              <input type="radio" name="control-method" value="gesture" id="setting-control-gesture" style="accent-color: var(--cyan); cursor: pointer;">
+              <span>🖐️ Gesture Controls</span>
+            </label>
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--text-main);">
+              <input type="radio" name="control-method" value="keyboard" id="setting-control-keyboard" style="accent-color: var(--cyan); cursor: pointer;">
+              <span>⌨️ Keyboard Controls</span>
+            </label>
+          </div>
         </div>
 
         <!-- Audio Sound Effects -->
@@ -637,7 +821,7 @@
       </div>
 
       <div style="padding: 14px 24px; border-top: 1px solid var(--border-dim); background: rgba(17, 19, 29, 0.5); display: flex; justify-content: flex-end;">
-        <button class="top-action-btn" style="background: var(--cyan); color: var(--void); border-color: var(--cyan); font-weight: 700;" onclick="closeModal('settingsModal')">SAVE & CLOSE</button>
+        <button id="btn-save-settings" class="top-action-btn" style="background: var(--cyan); color: var(--void); border-color: var(--cyan); font-weight: 700;">SAVE & CLOSE</button>
       </div>
     </div>
   </div>
@@ -656,45 +840,103 @@
       </div>
 
       <div style="padding: 20px 24px; overflow-y: auto; max-height: calc(100vh - 180px); display: flex; flex-direction: column; gap: 14px;">
-        <!-- Step 1 -->
-        <div style="padding: 12px 16px; border-radius: 12px; background: rgba(22, 25, 38, 0.8); border: 1px solid var(--border-dim); display: flex; gap: 14px; align-items: flex-start;">
-          <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(56, 189, 248, 0.2); border: 1px solid var(--cyan); color: var(--cyan); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; flex-shrink: 0;">1</div>
-          <div>
-            <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main);">Position Yourself & Controls</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Sit 2–3 feet in front of your screen. You can control the paddle using your mouse, touchpad, arrow keys, or webcam gesture tracking.</p>
+        <!-- Step 1: Open Palm -->
+        <div class="gesture-step-card">
+          <div class="gesture-step-num" style="background: rgba(56, 189, 248, 0.2); border: 1px solid var(--cyan); color: var(--cyan);">1</div>
+          <div class="gesture-thumb-box">
+            <img src="assets/images/gesture-open-palm.png" alt="Open Palm Hand Gesture for Movement" class="gesture-thumb-img">
+          </div>
+          <div class="gesture-step-content">
+            <div class="gesture-step-header">
+              <h3 class="gesture-step-title">Open Palm: Movement</h3>
+              <span class="gesture-step-scope">Skyfall &amp; Space Invader</span>
+            </div>
+            <p class="gesture-step-desc">Show your open palm and move your hand left or right to control the paddle or spaceship.</p>
           </div>
         </div>
 
-        <!-- Step 2 -->
-        <div style="padding: 12px 16px; border-radius: 12px; background: rgba(22, 25, 38, 0.8); border: 1px solid var(--border-dim); display: flex; gap: 14px; align-items: flex-start;">
-          <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(250, 204, 21, 0.2); border: 1px solid var(--gold); color: var(--gold); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; flex-shrink: 0;">2</div>
-          <div>
-            <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main);">Collect High-Value Badges</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Catch Droplets (+10), Sunbursts (+20), Spiral Shells (+25), and Bronze Stars (+50). Grab Heart-Diamonds for 1UP extra lives!</p>
+        <!-- Step 2: V Sign -->
+        <div class="gesture-step-card">
+          <div class="gesture-step-num" style="background: rgba(250, 204, 21, 0.2); border: 1px solid var(--gold); color: var(--gold);">2</div>
+          <div class="gesture-thumb-box">
+            <img src="assets/images/gesture-v-sign.png" alt="V Sign Hand Gesture for Pause and Resume" class="gesture-thumb-img">
+          </div>
+          <div class="gesture-step-content">
+            <div class="gesture-step-header">
+              <h3 class="gesture-step-title">V Sign: Pause / Resume</h3>
+              <span class="gesture-step-scope" style="color: var(--gold); border-color: rgba(250, 204, 21, 0.4);">All Modes</span>
+            </div>
+            <p class="gesture-step-desc">Raise your index and middle fingers in a V shape to pause or resume the game.</p>
+            <div class="gesture-step-note">
+              <span>⏱️</span>
+              <span>Hold the gesture steadily for a brief moment to activate.</span>
+            </div>
           </div>
         </div>
 
-        <!-- Step 3 -->
-        <div style="padding: 12px 16px; border-radius: 12px; background: rgba(22, 25, 38, 0.8); border: 1px solid var(--border-dim); display: flex; gap: 14px; align-items: flex-start;">
-          <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(248, 113, 113, 0.2); border: 1px solid var(--danger); color: var(--danger); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; flex-shrink: 0;">3</div>
-          <div>
-            <h3 style="font-size: 14px; font-weight: 700; color: var(--danger);">Avoid Deadly Hazards & Traps</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Steer clear of spiky naval mine hazard bombs (-1 life), purple trap shurikens (-20 pts), and cross hazards.</p>
+        <!-- Step 3: Closed Fist -->
+        <div class="gesture-step-card">
+          <div class="gesture-step-num" style="background: rgba(244, 114, 182, 0.2); border: 1px solid var(--pink-neon); color: var(--pink-neon);">3</div>
+          <div class="gesture-thumb-box">
+            <img src="assets/images/gesture-closed-fist.png" alt="Closed Fist Hand Gesture for Continuous Shooting" class="gesture-thumb-img">
+          </div>
+          <div class="gesture-step-content">
+            <div class="gesture-step-header">
+              <h3 class="gesture-step-title">Closed Fist: Shoot</h3>
+              <span class="gesture-step-scope" style="color: var(--pink-neon); border-color: rgba(244, 114, 182, 0.4);">Edu Space Invader</span>
+            </div>
+            <p class="gesture-step-desc">Make a fist to shoot continuously in Educational Space Invader. Release your fist to stop shooting.</p>
+            <div class="gesture-step-note" style="color: var(--cyan);">
+              <span>🎯</span>
+              <span>Applies to Educational Space Invader only — Skyfall uses paddle catching.</span>
+            </div>
           </div>
         </div>
 
-        <!-- Step 4 -->
-        <div style="padding: 12px 16px; border-radius: 12px; background: rgba(22, 25, 38, 0.8); border: 1px solid var(--border-dim); display: flex; gap: 14px; align-items: flex-start;">
-          <div style="width: 28px; height: 28px; border-radius: 8px; background: rgba(52, 211, 153, 0.2); border: 1px solid var(--success); color: var(--success); display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-weight: 700; flex-shrink: 0;">4</div>
-          <div>
-            <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main);">Conquer Hard to Unlock Insane</h3>
-            <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Scoring 1,000+ points on Hard mode permanently unlocks the high-octane Insane difficulty tier!</p>
+        <!-- Step 4: Keyboard Controls (Optional) -->
+        <div class="gesture-step-card">
+          <div class="gesture-step-num" style="background: rgba(52, 211, 153, 0.2); border: 1px solid var(--success); color: var(--success);">4</div>
+          <div class="gesture-thumb-box" style="flex-direction: column; background: rgba(14, 28, 24, 0.95); border-color: rgba(52, 211, 153, 0.35);">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.4));">
+              <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+              <line x1="6" y1="8" x2="6.01" y2="8"></line>
+              <line x1="10" y1="8" x2="10.01" y2="8"></line>
+              <line x1="14" y1="8" x2="14.01" y2="8"></line>
+              <line x1="18" y1="8" x2="18.01" y2="8"></line>
+              <line x1="6" y1="12" x2="6.01" y2="12"></line>
+              <line x1="10" y1="12" x2="10.01" y2="12"></line>
+              <line x1="14" y1="12" x2="14.01" y2="12"></line>
+              <line x1="18" y1="12" x2="18.01" y2="12"></line>
+              <line x1="7" y1="16" x2="17" y2="16"></line>
+            </svg>
+            <span style="font-family: var(--font-mono); font-size: 8px; color: var(--success); letter-spacing: 0.5px; margin-top: 2px; font-weight: 700;">OPTIONAL</span>
+          </div>
+          <div class="gesture-step-content">
+            <div class="gesture-step-header">
+              <h3 class="gesture-step-title">Keyboard Controls Available</h3>
+              <span class="gesture-step-scope" style="color: var(--success); border-color: rgba(52, 211, 153, 0.4);">Optional</span>
+            </div>
+            <p class="gesture-step-desc">Prefer keyboard controls? Switch to Keyboard Controls from the Control Method setting in the pause menu.</p>
+            <div class="keyboard-grid-reference">
+              <div class="keyboard-ref-item">
+                <span class="keyboard-ref-label">Skyfall</span>
+                <span><kbd class="gesture-kbd">←</kbd> <kbd class="gesture-kbd">→</kbd> or <kbd class="gesture-kbd">A</kbd> <kbd class="gesture-kbd">D</kbd> to move</span>
+              </div>
+              <div class="keyboard-ref-item">
+                <span class="keyboard-ref-label">Educational Space Invader</span>
+                <span><kbd class="gesture-kbd">←</kbd> <kbd class="gesture-kbd">→</kbd> or <kbd class="gesture-kbd">A</kbd> <kbd class="gesture-kbd">D</kbd> to move &bull; <kbd class="gesture-kbd">Space</kbd> to shoot</span>
+              </div>
+              <div class="keyboard-ref-item">
+                <span class="keyboard-ref-label">Pause / Resume</span>
+                <span><kbd class="gesture-kbd">Esc</kbd></span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       <div style="padding: 14px 24px; border-top: 1px solid var(--border-dim); background: rgba(17, 19, 29, 0.5); display: flex; justify-content: space-between; align-items: center;">
-        <span style="font-family: var(--font-mono); font-size: 11px; color: var(--cyan);">KEYBOARD & MOUSE SUPPORTED</span>
+        <span style="font-family: var(--font-mono); font-size: 11px; color: var(--cyan);">GESTURE &amp; KEYBOARD SUPPORTED</span>
         <button class="top-action-btn" style="background: var(--cyan); color: var(--void); border-color: var(--cyan); font-weight: 700;" onclick="closeModal('instructionsModal')">GOT IT, LET'S PLAY</button>
       </div>
     </div>
@@ -751,15 +993,6 @@
 
   <!-- Dashboard Footer -->
   <footer class="dashboard-footer">
-    <div class="footer-sublinks">
-      <a href="mode-select.html">Game Modes</a>
-      <a href="difficulty-select.html">Difficulty</a>
-      <a href="about.html">About</a>
-      <a href="credits.html">Credits</a>
-      <a href="terms.html">Terms</a>
-      <a href="contact.html">Contact</a>
-    </div>
-
     <div class="footer-status-row">
       <div style="display: flex; align-items: center; gap: 8px;">
         <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan);"></span>
@@ -823,6 +1056,54 @@
       getScopedStorageKey,
       syncProgressFromServer
     } from './js/game/storage.js?v=4';
+    import {
+      getGameSettings,
+      saveGameSettings
+    } from './js/game/settings.js?v=4';
+
+    function populateSettingsUI() {
+      const s = getGameSettings();
+      if (s.controlMethod === 'keyboard') {
+        const kb = document.getElementById('setting-control-keyboard');
+        if (kb) kb.checked = true;
+      } else {
+        const gest = document.getElementById('setting-control-gesture');
+        if (gest) gest.checked = true;
+      }
+      const sfxEl = document.getElementById('setting-sfx');
+      if (sfxEl) sfxEl.checked = !!s.sfx;
+      const musEl = document.getElementById('setting-music');
+      if (musEl) musEl.checked = !!s.music;
+      const volEl = document.getElementById('setting-volume');
+      const volDisp = document.getElementById('vol-display');
+      if (volEl) volEl.value = s.volume ?? 80;
+      if (volDisp) volDisp.textContent = (s.volume ?? 80) + '%';
+    }
+
+    function saveSettingsFromUI() {
+      const isKb = document.getElementById('setting-control-keyboard')?.checked;
+      const sfx = document.getElementById('setting-sfx')?.checked ?? true;
+      const music = document.getElementById('setting-music')?.checked ?? true;
+      const volume = parseInt(document.getElementById('setting-volume')?.value || '80', 10);
+      saveGameSettings({
+        controlMethod: isKb ? 'keyboard' : 'gesture',
+        sfx,
+        music,
+        volume
+      });
+    }
+
+    const cardSettings = document.getElementById('card-btn-settings');
+    if (cardSettings) {
+      cardSettings.addEventListener('click', populateSettingsUI);
+    }
+    const saveSettingsBtn = document.getElementById('btn-save-settings');
+    if (saveSettingsBtn) {
+      saveSettingsBtn.addEventListener('click', () => {
+        saveSettingsFromUI();
+        closeModal('settingsModal');
+      });
+    }
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {

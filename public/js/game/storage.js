@@ -98,6 +98,14 @@ export async function syncProgressFromServer() {
           const maxScore = Math.max(currentLocal, data.highScore);
           localStorage.setItem(scoreKey, String(maxScore));
         }
+        if (typeof data.skyfallInsaneUnlocked === 'boolean') {
+          const skyfallKey = `mindrush_skyfall_insane_unlocked_${uid}`;
+          localStorage.setItem(skyfallKey, data.skyfallInsaneUnlocked ? 'true' : 'false');
+        }
+        if (typeof data.invaderInsaneUnlocked === 'boolean') {
+          const invaderKey = `mindrush_invader_insane_unlocked_${uid}`;
+          localStorage.setItem(invaderKey, data.invaderInsaneUnlocked ? 'true' : 'false');
+        }
         if (typeof data.insaneUnlocked === 'boolean') {
           const insaneKey = `mindrush_insane_unlocked_${uid}`;
           localStorage.setItem(insaneKey, data.insaneUnlocked ? 'true' : 'false');

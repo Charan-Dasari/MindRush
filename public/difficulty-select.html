@@ -816,11 +816,9 @@
 
   <!-- Shared Footer -->
   <footer class="diff-footer">
-    <a href="mode-select.html">Mode Select</a>
-    <a href="dashboard.html">Dashboard</a>
-    <a href="about.html">About</a>
-    <a href="terms.html">Terms</a>
-    <a href="contact.html">Contact</a>
+    <span style="font-size: 11px; font-family: var(--font-mono, monospace); color: var(--text-muted); letter-spacing: 1px;">
+      MINDRUSH &bull; DIFFICULTY SELECT &bull; FLIGHT ACADEMY
+    </span>
   </footer>
 
   <!-- Starfield Canvas Script -->
@@ -968,7 +966,12 @@
     }
 
     window.handleInsaneClick = function() {
-      const isEdu = (new URLSearchParams(window.location.search).get('mode') || '').toLowerCase().trim() === 'educational';
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentMode = (urlParams.get('mode') || '').toLowerCase().trim();
+      const isEdu = currentMode === 'educational' || currentMode === 'edu';
+      const isInvader = currentMode === 'invader' || currentMode === 'space-invader';
+      const targetMode = isInvader ? 'space-invader' : 'skyfall';
+
       if (isEdu) {
         if (isEduDifficultyUnlocked('insane')) {
           openDifficultyGuide('insane');
@@ -976,10 +979,13 @@
           showToast('🔒 Insane mode is locked! Complete Hard mode with >= 4/5 questions correct to unlock.');
         }
       } else {
-        if (isInsaneUnlocked()) {
+        if (isInsaneUnlocked(targetMode)) {
           openDifficultyGuide('insane');
         } else {
-          showToast('🔒 Insane mode is locked! Conquer Hard mode with 1,000+ points to unlock.');
+          const reqText = isInvader
+            ? 'Defeat the Hard mode Mini-Boss to unlock.'
+            : 'Conquer Hard mode with 1,000+ points to unlock.';
+          showToast(`🔒 Insane mode is locked! ${reqText}`);
         }
       }
     };
@@ -995,9 +1001,15 @@
           showToast(`🔒 ${tierKey.toUpperCase()} mode is locked! Complete ${prev} mode with >= 4/5 correct to unlock.`);
           return;
         }
-      } else if (tierKey === 'insane' && !isInsaneUnlocked()) {
-        showToast('🔒 Insane mode is locked! Conquer Hard mode with 1,000+ points to unlock.');
-        return;
+      } else if (tierKey === 'insane') {
+        const targetMode = isInvader ? 'space-invader' : 'skyfall';
+        if (!isInsaneUnlocked(targetMode)) {
+          const reqText = isInvader
+            ? 'Defeat the Hard mode Mini-Boss to unlock.'
+            : 'Conquer Hard mode with 1,000+ points to unlock.';
+          showToast(`🔒 Insane mode is locked! ${reqText}`);
+          return;
+        }
       }
 
       currentSelectedTier = tierKey;
@@ -1299,8 +1311,21 @@
     };
 
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closeDifficultyGuide();
+      if (e.key === 'Escape' || e.code === 'Escape') {
+        const activeEl = document.activeElement;
+        const tag = activeEl ? activeEl.tagName.toLowerCase() : '';
+        if (tag === 'input' || tag === 'textarea' || tag === 'select' || activeEl?.isContentEditable) {
+          activeEl.blur();
+          return;
+        }
+
+        const modal = document.getElementById('pregame-guide-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+          closeDifficultyGuide();
+          return;
+        }
+
+        window.location.href = 'mode-select.html';
       }
     });
 
@@ -1355,7 +1380,13 @@
       const iconInsane = document.getElementById('icon-insane');
       const btnInsane = document.getElementById('btn-play-insane');
 
-      const unlocked = isInsaneUnlocked();
+      const urlParams = new URLSearchParams(window.location.search);
+      const currentMode = (urlParams.get('mode') || '').toLowerCase().trim();
+      const isEdu = currentMode === 'educational' || currentMode === 'edu';
+      const isInvader = currentMode === 'invader' || currentMode === 'space-invader';
+      const targetMode = isInvader ? 'space-invader' : 'skyfall';
+
+      const unlocked = isEdu ? isEduDifficultyUnlocked('insane') : isInsaneUnlocked(targetMode);
 
       if (unlocked) {
         if (cardInsane) cardInsane.classList.remove('diff-locked');

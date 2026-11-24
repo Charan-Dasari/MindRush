@@ -56,6 +56,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  skyfallInsaneUnlocked: {
+    type: Boolean,
+    default: false
+  },
+  invaderInsaneUnlocked: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -129,6 +137,8 @@ class MemoryUserStore {
       badges: Array.isArray(userData.badges) ? [...userData.badges] : [],
       highScore: Number(userData.highScore) || 0,
       insaneUnlocked: Boolean(userData.insaneUnlocked),
+      skyfallInsaneUnlocked: Boolean(userData.skyfallInsaneUnlocked || userData.insaneUnlocked),
+      invaderInsaneUnlocked: Boolean(userData.invaderInsaneUnlocked),
       passwordHash: userData.passwordHash,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -142,7 +152,7 @@ class MemoryUserStore {
     return sanitized;
   }
 
-  async updateProgress(id, { badges, highScore, insaneUnlocked }) {
+  async updateProgress(id, { badges, highScore, insaneUnlocked, skyfallInsaneUnlocked, invaderInsaneUnlocked, mode }) {
     const user = this.users.get(String(id));
     if (!user) return null;
     if (Array.isArray(badges)) {
@@ -153,8 +163,12 @@ class MemoryUserStore {
     if (typeof highScore === 'number') {
       user.highScore = Math.max(user.highScore || 0, highScore);
     }
-    if (insaneUnlocked === true) {
+    if (skyfallInsaneUnlocked === true || (insaneUnlocked === true && mode !== 'space-invader')) {
+      user.skyfallInsaneUnlocked = true;
       user.insaneUnlocked = true;
+    }
+    if (invaderInsaneUnlocked === true || (insaneUnlocked === true && mode === 'space-invader')) {
+      user.invaderInsaneUnlocked = true;
     }
     user.updatedAt = new Date();
     const sanitized = { ...user };
@@ -246,7 +260,7 @@ export const User = {
     }
   },
 
-  async updateProgress(id, { badges, highScore, insaneUnlocked }) {
+  async updateProgress(id, { badges, highScore, insaneUnlocked, skyfallInsaneUnlocked, invaderInsaneUnlocked, mode }) {
     this.checkConnection();
     if (this.isUsingMongo()) {
       const update = {};
@@ -256,13 +270,16 @@ export const User = {
       if (typeof highScore === 'number') {
         update.$max = { highScore: Math.max(0, highScore) };
       }
-      if (insaneUnlocked === true) {
-        update.$set = { ...(update.$set || {}), insaneUnlocked: true };
+      if (skyfallInsaneUnlocked === true || (insaneUnlocked === true && mode !== 'space-invader')) {
+        update.$set = { ...(update.$set || {}), skyfallInsaneUnlocked: true, insaneUnlocked: true };
+      }
+      if (invaderInsaneUnlocked === true || (insaneUnlocked === true && mode === 'space-invader')) {
+        update.$set = { ...(update.$set || {}), invaderInsaneUnlocked: true };
       }
       const updated = await MongoUserModel.findByIdAndUpdate(id, update, { returnDocument: 'after' });
       return updated ? updated.toJSON() : null;
     } else {
-      return await memoryUserStore.updateProgress(id, { badges, highScore, insaneUnlocked });
+      return await memoryUserStore.updateProgress(id, { badges, highScore, insaneUnlocked, skyfallInsaneUnlocked, invaderInsaneUnlocked, mode });
     }
   }
 };
